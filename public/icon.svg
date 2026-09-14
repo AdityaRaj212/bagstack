@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181824"/>
+      <stop offset="100%" stop-color="#0b0c10"/>
+    </linearGradient>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="subtleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#4f46e5" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- Background container -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)"/>
+  <rect width="508" height="508" x="2" y="2" rx="126" fill="none" stroke="url(#subtleGrad)" stroke-width="3"/>
+
+  <!-- Glowing Emblem: Modern 'L' Ledger Layers -->
+  <g filter="url(#glow)">
+    <!-- Top Layer / Bar of the L -->
+    <rect x="156" y="136" width="68" height="240" rx="34" fill="url(#brandGrad)"/>
+    <!-- Bottom Shelf of the L -->
+    <rect x="156" y="308" width="200" height="68" rx="34" fill="url(#brandGrad)"/>
+    <!-- Accent Point -->
+    <circle cx="356" cy="220" r="28" fill="#38bdf8"/>
+  </g>
+</svg>

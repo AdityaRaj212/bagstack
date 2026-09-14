@@ -1,0 +1,50 @@
+import { NextResponse } from 'next/server';
+import { OtpService } from '@/lib/otp-service';
+
+export const runtime = 'nodejs';
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { email, code } = body;
+
+    if (!email || !code) {
+      return NextResponse.json({ error: 'Email and verification code are required' }, { status: 400 });
+    }
+
+    const otpService = new OtpService();
+    const result = await otpService.verifyOtp(email, code);
+
+    if (!result.success || !result.token) {
+      return NextResponse.json({ error: result.error || 'Verification failed' }, { status: 400 });
+    }
+
+    const response = NextResponse.json({
+      success: true,
+      user: result.user,
+    });
+
+    // Set secure HTTP-only session cookie for 30 days
+    response.cookies.set('apex_session_token', result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+    });
+
+    // Also set finance_user_id for backwards compatibility with existing services
+    response.cookies.set('finance_user_id', result.user.id, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60,
+    });
+
+    return response;
+  } catch (error: any) {
+    console.error('Verify OTP error:', error);
+    return NextResponse.json({ error: error.message || 'Verification failed' }, { status: 500 });
+  }
+}

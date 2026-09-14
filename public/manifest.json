@@ -1,0 +1,19 @@
+{
+  "name": "Ledgr — Personal Financial Command Center",
+  "short_name": "Ledgr",
+  "description": "Production-grade personal financial command center with deterministic financial math, accounts, budgets, goals, and analytics.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0b0e",
+  "theme_color": "#0a0b0e",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

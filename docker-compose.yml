@@ -1,0 +1,21 @@
+services:
+  ledgr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ledgr_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - SMTP_USER=${SMTP_USER:-adityaraj212.work@gmail.com}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - DATABASE_PATH=/app/data/finance.db
+    volumes:
+      - ledgr_data:/app/data
+
+volumes:
+  ledgr_data:
+    driver: local
