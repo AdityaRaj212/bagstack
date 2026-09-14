@@ -2,9 +2,20 @@ import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import fs from 'node:fs';
 
-let globalDb: DatabaseSync | null = null;
+let globalDb: any = null;
+let syncTimer: any = null;
 
-export function getDb(dbPath?: string): DatabaseSync {
+export function syncTurso() {
+  if (globalDb && typeof globalDb.sync === 'function') {
+    try {
+      globalDb.sync();
+    } catch (e) {
+      console.warn('[TURSO SYNC ERROR]', e);
+    }
+  }
+}
+
+export function getDb(dbPath?: string): any {
   if (globalDb && !dbPath) {
     return globalDb;
   }
@@ -18,10 +29,42 @@ export function getDb(dbPath?: string): DatabaseSync {
     resolvedPath = path.join(dataDir, 'finance.db');
   }
 
-  const db = new DatabaseSync(resolvedPath);
+  const tursoUrl = process.env.TURSO_DATABASE_URL;
+  const tursoToken = process.env.TURSO_AUTH_TOKEN;
+
+  let db: any;
+  if (tursoUrl && tursoToken && !dbPath) {
+    try {
+      // Use native Libsql with cloud sync to Turso
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const LibsqlDatabase = require('libsql');
+      db = new LibsqlDatabase(resolvedPath, { syncUrl: tursoUrl, authToken: tursoToken });
+      console.log('[TURSO] Connected to Turso cloud SQLite at:', tursoUrl);
+      try {
+        db.sync();
+        console.log('[TURSO] Successfully synchronized with Turso cloud.');
+      } catch (syncErr) {
+        console.warn('[TURSO] Initial sync warning:', syncErr);
+      }
+
+      // Schedule periodic background sync every 15 seconds
+      if (!syncTimer && typeof setInterval !== 'undefined') {
+        syncTimer = setInterval(() => {
+          syncTurso();
+        }, 15000);
+      }
+    } catch (err) {
+      console.warn('[TURSO] Falling back to local node:sqlite:', err);
+      db = new DatabaseSync(resolvedPath);
+    }
+  } else {
+    db = new DatabaseSync(resolvedPath);
+  }
   
   // Pragmas for performance and integrity
-  db.exec('PRAGMA foreign_keys = ON;');
+  try {
+    db.exec('PRAGMA foreign_keys = ON;');
+  } catch {}
   try {
     db.exec('PRAGMA journal_mode = WAL;');
   } catch {

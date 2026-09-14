@@ -120,36 +120,29 @@ npm run build
 
 ---
 
-## Production Deployment (Fly.io)
+## Production Deployment (Render + Turso Cloud SQLite)
 
-Bagstack is optimized for zero-cost deployment on **Fly.io** with an isolated persistent volume for the SQLite database.
+Bagstack supports **zero-cost 24/7 cloud deployment** using Render for compute and Turso for distributed SQLite cloud persistence. Even when the free container sleeps or rebuilds, all user accounts, transactions, and settings remain permanently saved.
 
-### 1. Install Fly CLI & Authenticate
-```bash
-brew install flyctl
-fly auth login
-```
+### 1. Database Setup (Turso)
+1. Sign up for free at [turso.tech](https://turso.tech) (using GitHub).
+2. Create a database: `bagstack` in region `sin` (Singapore) or `aws-ap-south-1` (Mumbai).
+3. Copy your **Database URL** (`libsql://...`) and **Auth Token**.
 
-### 2. Create the Persistent Volume (1GB)
-```bash
-fly volumes create bagstack_data --size 1 --region sin
-```
+### 2. Deploy to Render (No Credit Card Required)
+1. Go to [dashboard.render.com](https://dashboard.render.com) and click **New +** → **Web Service**.
+2. Connect your GitHub repository `AdityaRaj212/bagstack`.
+3. Choose runtime: **Docker** on the **Free ($0)** instance plan.
+4. Add Environment Variables:
+   - `PORT` = `3000`
+   - `NODE_ENV` = `production`
+   - `SMTP_USER` = `your-email@gmail.com`
+   - `SMTP_PASS` = `your-google-app-password`
+   - `TURSO_DATABASE_URL` = `libsql://bagstack-yourname.turso.io`
+   - `TURSO_AUTH_TOKEN` = `your-turso-token`
+5. Click **Deploy Web Service**.
 
-### 3. Set Production Secrets
-```bash
-fly secrets set SMTP_USER="your-email@gmail.com" SMTP_PASS="your-app-password"
-```
-
-### 4. Deploy
-```bash
-fly deploy
-```
-Your app will be live at `https://bagstack.fly.dev` with automatic SSL.
-
-### Developer Telemetry & Management
-- **Live Console Logs**: `fly logs`
-- **SSH into Container**: `fly ssh console`
-- **Backup Live Database**: `fly sftp get /app/data/finance.db ./backup-finance.db`
+Your app is now live with automatic SSL at `https://bagstack.onrender.com`!
 
 ---
 
