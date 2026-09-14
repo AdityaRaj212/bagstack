@@ -18,6 +18,9 @@ function getTransporter() {
     host: 'smtp.gmail.com',
     port: 465,
     secure: true, // SSL
+    connectionTimeout: 5000, // 5 seconds max (never hang)
+    greetingTimeout: 5000,
+    socketTimeout: 5000,
     auth: {
       user,
       pass,
@@ -115,11 +118,45 @@ export async function sendVerificationEmail(
 </html>
   `;
 
+  // 1. Prioritize Resend HTTPS Delivery (Port 443 - Never blocked on Render/Vercel, delivered in 200ms)
+  const resendApiKey = process.env.RESEND_API_KEY?.trim();
+  if (resendApiKey) {
+    try {
+      const fromAddress = process.env.EMAIL_FROM || 'Bagstack <onboarding@resend.dev>';
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: fromAddress,
+          to: [toEmail],
+          subject: `${otpCode} is your Bagstack login code`,
+          html: htmlContent,
+          text: `Your Bagstack one-time verification code is: ${otpCode}. It expires in 10 minutes.`,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || data.error?.message || 'Failed to deliver email via Resend');
+      }
+
+      console.log(`[RESEND HTTPS] Verification email delivered to ${toEmail}. Message ID: ${data.id}`);
+      return { success: true, messageId: data.id };
+    } catch (err: any) {
+      console.error(`[RESEND ERROR] Failed to deliver via HTTPS:`, err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  // 2. Fallback to SMTP with strict 5-second timeout (Prevents hanging on cloud hosts)
   if (!transporter) {
-    console.warn(`[DEV AUTH] No SMTP_PASS configured. Dev OTP for ${toEmail} is: ${otpCode}`);
+    console.warn(`[DEV AUTH] No email credentials configured. Dev OTP for ${toEmail} is: ${otpCode}`);
     return {
       success: false,
-      error: 'SMTP credentials not configured. Please supply a valid Google App Password in .env.local.',
+      error: 'Email credentials not configured. Please supply RESEND_API_KEY or SMTP_PASS.',
     };
   }
 
@@ -140,7 +177,9 @@ export async function sendVerificationEmail(
     return {
       success: false,
       error: errorMsg.includes('BadCredentials') || errorMsg.includes('535')
-        ? 'Google SMTP rejected the App Password (535 Bad Credentials). Ensure the App Password was generated for ' + SMTP_USER + ' and that 2-Step Verification is active.'
+        ? 'Google SMTP rejected the App Password (535 Bad Credentials).'
+        : errorMsg.includes('ETIMEDOUT') || errorMsg.includes('timeout')
+        ? 'SMTP connection timed out. Free cloud hosts block outbound SMTP ports; please configure RESEND_API_KEY.'
         : errorMsg,
     };
   }
