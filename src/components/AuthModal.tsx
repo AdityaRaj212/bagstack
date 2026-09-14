@@ -71,7 +71,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setStep('otp');
       setCountdown(60);
 
-      if (!data.emailSent && data.devCode) {
+      if (process.env.NODE_ENV !== 'production' && !data.emailSent && data.devCode) {
         setDevOtpNotice({ code: data.devCode, error: data.smtpError });
         showToast('Google SMTP rejected credentials. Fallback OTP provided on screen.', 'error');
         // Auto-fill the code for testing convenience
@@ -303,7 +303,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         ) : (
           /* Step 2: 6-Digit OTP Code Input */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {devOtpNotice && (
+            {process.env.NODE_ENV !== 'production' && devOtpNotice && (
               <div
                 style={{
                   padding: '0.85rem',

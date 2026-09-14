@@ -54,6 +54,12 @@ export class OtpService {
       };
     }
 
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    if (isProduction) {
+      throw new Error(mailResult.error || 'Failed to send verification email. Please check your SMTP settings.');
+    }
+
     return {
       success: true,
       emailSent: false,

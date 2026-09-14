@@ -7,15 +7,23 @@ const FROM_EMAIL = SMTP_USER;
 
 // Create reusable Nodemailer transporter
 function getTransporter() {
-  if (!SMTP_PASS) {
+  const user = (process.env.SMTP_USER || 'adityaraj212.work@gmail.com').trim();
+  const pass = (process.env.SMTP_PASS || '').replace(/['"\s]+/g, '').trim();
+
+  if (!pass) {
     return null;
   }
 
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // SSL
     auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
+      user,
+      pass,
+    },
+    tls: {
+      rejectUnauthorized: true,
     },
   });
 }
