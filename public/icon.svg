@@ -8,6 +8,10 @@
       <stop offset="0%" stop-color="#6366f1"/>
       <stop offset="100%" stop-color="#a855f7"/>
     </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
     <linearGradient id="subtleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.15"/>
       <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
@@ -21,13 +25,16 @@
   <rect width="512" height="512" rx="128" fill="url(#bgGrad)"/>
   <rect width="508" height="508" x="2" y="2" rx="126" fill="none" stroke="url(#subtleGrad)" stroke-width="3"/>
 
-  <!-- Glowing Emblem: Modern 'L' Ledger Layers -->
+  <!-- Glowing Emblem: Modern 'B' Stacked Ledger Layers -->
   <g filter="url(#glow)">
-    <!-- Top Layer / Bar of the L -->
-    <rect x="156" y="136" width="68" height="240" rx="34" fill="url(#brandGrad)"/>
-    <!-- Bottom Shelf of the L -->
-    <rect x="156" y="308" width="200" height="68" rx="34" fill="url(#brandGrad)"/>
-    <!-- Accent Point -->
-    <circle cx="356" cy="220" r="28" fill="#38bdf8"/>
+    <!-- Vertical Spine of the B -->
+    <rect x="140" y="128" width="60" height="256" rx="30" fill="url(#brandGrad)"/>
+    <!-- Top Stack Arc / Loop -->
+    <path d="M 180 128 H 280 C 330 128 356 156 356 196 C 356 236 330 256 280 256 H 180 Z" fill="url(#accentGrad)"/>
+    <!-- Bottom Stack Arc / Loop -->
+    <path d="M 180 256 H 296 C 350 256 376 284 376 324 C 376 364 350 384 296 384 H 180 Z" fill="url(#brandGrad)"/>
+    <!-- Inner Cutouts for sharp B shape -->
+    <rect x="200" y="166" width="68" height="52" rx="16" fill="#181824"/>
+    <rect x="200" y="294" width="84" height="52" rx="16" fill="#181824"/>
   </g>
 </svg>

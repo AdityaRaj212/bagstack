@@ -1,6 +1,6 @@
 {
-  "name": "Ledgr — Personal Financial Command Center",
-  "short_name": "Ledgr",
+  "name": "Bagstack — Personal Financial Command Center",
+  "short_name": "Bagstack",
   "description": "Production-grade personal financial command center with deterministic financial math, accounts, budgets, goals, and analytics.",
   "start_url": "/",
   "id": "/",

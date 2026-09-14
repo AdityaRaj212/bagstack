@@ -231,7 +231,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
             <div>
               <h2 style={{ fontSize: '1.15rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
-                {step === 'email' ? 'Sign in to Ledgr' : 'Verify Email Code'}
+                {step === 'email' ? 'Sign in to Bagstack' : 'Verify Email Code'}
               </h2>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 {step === 'email' ? 'Passwordless instant sign in with email OTP' : `Code sent to ${email}`}

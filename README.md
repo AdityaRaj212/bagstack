@@ -1,4 +1,4 @@
-# Ledgr — Personal Financial Command Center
+# Bagstack — Personal Financial Command Center
 
 > **A production-grade, local-first personal financial command center built with deterministic financial math, multi-account ledgering, automated recurring obligations, deep analytics, and PWA mobile support.**
 
@@ -69,8 +69,8 @@
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/ledgr.git
-cd ledgr
+git clone https://github.com/AdityaRaj212/bagstack.git
+cd bagstack
 ```
 
 ### 2. Install dependencies
@@ -120,33 +120,48 @@ npm run build
 
 ---
 
-## Docker & Production Deployment
+## Phase 1 Deployment ($0 Cost Options)
 
-Ledgr includes a multi-stage Docker build producing a lightweight standalone container (~120MB).
+Bagstack includes a multi-stage Docker build producing a lightweight standalone container (~120MB).
 
-### Deploy with Docker Compose
+### Option A: Cloudflare Tunnel (Zero-Cost Hosting from Home/Office Machine)
+Run Bagstack on an existing Mac, PC, or server and expose it securely with free SSL and DDoS protection:
 ```bash
-# Start container with persistent SQLite volume
+# 1. Start the container
 docker compose up -d --build
-```
-Your SQLite database will be securely persisted in the `ledgr_data` Docker volume at `/app/data/finance.db`.
 
-### Deploy to a Linux VPS (Oracle Always-Free, Hetzner, DigitalOcean)
-1. Install Docker & Docker Compose on your server.
-2. Clone the repo and set your `.env.local`.
-3. Put Ledgr behind a reverse proxy (Caddy, Nginx, or Cloudflare Tunnel) with automatic HTTPS:
+# 2. Expose via Cloudflare Tunnel
+cloudflared tunnel --url http://localhost:3000
+```
+
+### Option B: Deploy to Oracle Cloud Always-Free Tier ($0/mo Forever)
+1. Launch an Ampere ARM compute instance (free 4 OCPUs, 24GB RAM).
+2. Install Docker & Docker Compose.
+3. Clone repository and run:
+   ```bash
+   docker compose up -d --build
+   ```
+4. Put Bagstack behind Caddy for automated HTTPS:
    ```caddy
-   ledgr.yourdomain.com {
+   bagstack.tech {
        reverse_proxy localhost:3000
    }
    ```
+
+### Option C: Fly.io Deployment
+```bash
+# Launch with persistent volume
+fly launch
+fly volumes create bagstack_data --size 1
+fly deploy
+```
 
 ---
 
 ## Architecture & Project Structure
 
 ```
-ledgr/
+bagstack/
 ├── src/
 │   ├── app/                    # Next.js App Router pages & API routes
 │   │   ├── accounts/           # Financial accounts management

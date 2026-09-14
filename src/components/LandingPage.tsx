@@ -90,7 +90,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
           <div>
             <span style={{ fontWeight: 800, fontSize: '1.25rem', letterSpacing: '-0.03em', color: '#ffffff' }}>
-              Ledgr
+              Bagstack
             </span>
           </div>
         </div>
@@ -270,7 +270,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#f59e0b' }} />
               <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#10b981' }} />
               <span style={{ marginLeft: '12px', fontSize: '0.8125rem', color: '#6b7280', fontFamily: 'monospace' }}>
-                https://ledgr.app/command-center
+                https://bagstack.tech/command-center
               </span>
             </div>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -457,7 +457,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-          <span style={{ fontWeight: 600, color: '#9ca3af' }}>Ledgr Financial Command Center</span>
+          <span style={{ fontWeight: 600, color: '#9ca3af' }}>Bagstack Financial Command Center</span>
           <span>•</span>
           <span>Contact: <a href="mailto:adityaraj212.work@gmail.com" style={{ color: '#818cf8' }}>adityaraj212.work@gmail.com</a></span>
         </div>

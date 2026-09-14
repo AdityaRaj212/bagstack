@@ -1,9 +1,9 @@
 services:
-  ledgr:
+  bagstack:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ledgr_app
+    container_name: bagstack_app
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -14,8 +14,8 @@ services:
       - SMTP_PASS=${SMTP_PASS:-}
       - DATABASE_PATH=/app/data/finance.db
     volumes:
-      - ledgr_data:/app/data
+      - bagstack_data:/app/data
 
 volumes:
-  ledgr_data:
+  bagstack_data:
     driver: local

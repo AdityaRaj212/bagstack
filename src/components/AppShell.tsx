@@ -29,7 +29,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-app)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', color: 'var(--text-muted)' }}>
           <div style={{ width: '28px', height: '28px', border: '3px solid var(--border-default)', borderTopColor: 'var(--brand-primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-          <span style={{ fontSize: '0.85rem' }}>Loading Ledgr...</span>
+          <span style={{ fontSize: '0.85rem' }}>Loading Bagstack...</span>
         </div>
       </div>
     );
@@ -133,7 +133,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
               <Sparkles size={12} /> LIVE DEMO SANDBOX
             </span>
             <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-              You are exploring Ledgr with preloaded sample data.
+              You are exploring Bagstack with preloaded sample data.
             </span>
           </div>
 
@@ -184,7 +184,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
         isOpen={showExitConfirm}
         title="Exit Demo Sandbox"
         message="Are you sure you want to leave the demo sandbox and return to the homepage?"
-        details="You will be returned to the Ledgr public homepage. You can re-enter demo mode anytime or sign in with your email."
+        details="You will be returned to the Bagstack public homepage. You can re-enter demo mode anytime or sign in with your email."
         confirmText="Exit Demo"
         cancelText="Stay in Demo"
         variant="warning"

@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 
 const SMTP_USER = process.env.SMTP_USER || 'adityaraj212.work@gmail.com';
 const SMTP_PASS = (process.env.SMTP_PASS || '').replace(/\s+/g, '');
-const FROM_NAME = 'Ledgr';
+const FROM_NAME = 'Bagstack';
 const FROM_EMAIL = SMTP_USER;
 
 // Create reusable Nodemailer transporter
@@ -37,7 +37,7 @@ export async function sendVerificationEmail(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ledgr Verification Code</title>
+  <title>Bagstack Verification Code</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f3f4f6;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0b0f19; padding: 40px 20px;">
@@ -48,9 +48,9 @@ export async function sendVerificationEmail(
           <tr>
             <td style="padding: 32px 32px 20px 32px; border-bottom: 1px solid #1f2937; text-align: center;">
               <div style="display: inline-block; width: 44px; height: 44px; line-height: 44px; border-radius: 12px; background: linear-gradient(135deg, #4f46e5, #8b5cf6); color: #ffffff; font-weight: 800; font-size: 20px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);">
-                L
+                B
               </div>
-              <h1 style="margin: 12px 0 4px 0; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: #ffffff;">Ledgr</h1>
+              <h1 style="margin: 12px 0 4px 0; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: #ffffff;">Bagstack</h1>
               <p style="margin: 0; font-size: 13px; color: #9ca3af;">Personal Financial Command Center</p>
             </td>
           </tr>
@@ -85,7 +85,7 @@ export async function sendVerificationEmail(
               <!-- Security Notice -->
               <div style="background-color: rgba(79, 70, 229, 0.08); border-left: 3px solid #6366f1; padding: 12px 16px; border-radius: 4px;">
                 <p style="margin: 0; font-size: 12px; color: #c7d2fe; line-height: 1.4;">
-                  <strong>Zero data tracking</strong>: Ledgr strictly seals your financial ledger behind verified sessions.
+                  <strong>Zero data tracking</strong>: Bagstack strictly seals your financial ledger behind verified sessions.
                 </p>
               </div>
             </td>
@@ -119,8 +119,8 @@ export async function sendVerificationEmail(
     const info = await transporter.sendMail({
       from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
       to: toEmail,
-      subject: `${otpCode} is your Ledgr login code`,
-      text: `Your Ledgr one-time verification code is: ${otpCode}. It expires in 10 minutes.`,
+      subject: `${otpCode} is your Bagstack login code`,
+      text: `Your Bagstack one-time verification code is: ${otpCode}. It expires in 10 minutes.`,
       html: htmlContent,
     });
     console.log(`[SMTP] Verification email sent to ${toEmail}. Message ID: ${info.messageId}`);

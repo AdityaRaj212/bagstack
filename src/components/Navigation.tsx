@@ -108,7 +108,7 @@ export const Sidebar = () => {
             <Layers size={18} />
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: '1.05rem', letterSpacing: '-0.02em', lineHeight: 1.1 }}>Ledgr</div>
+            <div style={{ fontWeight: 700, fontSize: '1.05rem', letterSpacing: '-0.02em', lineHeight: 1.1 }}>Bagstack</div>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Financial Command Center</div>
           </div>
         </Link>
