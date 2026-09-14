@@ -120,41 +120,46 @@ npm run build
 
 ---
 
-## Phase 1 Deployment ($0 Cost Options)
+## Production Deployment (Fly.io)
 
-Bagstack includes a multi-stage Docker build producing a lightweight standalone container (~120MB).
+Bagstack is optimized for zero-cost deployment on **Fly.io** with an isolated persistent volume for the SQLite database.
 
-### Option A: Cloudflare Tunnel (Zero-Cost Hosting from Home/Office Machine)
-Run Bagstack on an existing Mac, PC, or server and expose it securely with free SSL and DDoS protection:
+### 1. Install Fly CLI & Authenticate
 ```bash
-# 1. Start the container
-docker compose up -d --build
-
-# 2. Expose via Cloudflare Tunnel
-cloudflared tunnel --url http://localhost:3000
+brew install flyctl
+fly auth login
 ```
 
-### Option B: Deploy to Oracle Cloud Always-Free Tier ($0/mo Forever)
-1. Launch an Ampere ARM compute instance (free 4 OCPUs, 24GB RAM).
-2. Install Docker & Docker Compose.
-3. Clone repository and run:
-   ```bash
-   docker compose up -d --build
-   ```
-4. Put Bagstack behind Caddy for automated HTTPS:
-   ```caddy
-   bagstack.tech {
-       reverse_proxy localhost:3000
-   }
-   ```
-
-### Option C: Fly.io Deployment
+### 2. Create the Persistent Volume (1GB)
 ```bash
-# Launch with persistent volume
-fly launch
-fly volumes create bagstack_data --size 1
+fly volumes create bagstack_data --size 1 --region sin
+```
+
+### 3. Set Production Secrets
+```bash
+fly secrets set SMTP_USER="your-email@gmail.com" SMTP_PASS="your-app-password"
+```
+
+### 4. Deploy
+```bash
 fly deploy
 ```
+Your app will be live at `https://bagstack.fly.dev` with automatic SSL.
+
+### Developer Telemetry & Management
+- **Live Console Logs**: `fly logs`
+- **SSH into Container**: `fly ssh console`
+- **Backup Live Database**: `fly sftp get /app/data/finance.db ./backup-finance.db`
+
+---
+
+## Local Docker Setup
+
+To run the production container locally with Docker Compose:
+```bash
+docker compose up -d --build
+```
+Your SQLite database will be persisted in the local Docker volume `bagstack_data`.
 
 ---
 
