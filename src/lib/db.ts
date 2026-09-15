@@ -22,9 +22,14 @@ export function getDb(dbPath?: string): any {
 
   let resolvedPath = dbPath;
   if (!resolvedPath) {
-    const dataDir = path.join(process.cwd(), 'data');
+    const isVercel = Boolean(process.env.VERCEL);
+    const dataDir = isVercel ? '/tmp' : path.join(process.cwd(), 'data');
     if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
+      try {
+        fs.mkdirSync(dataDir, { recursive: true });
+      } catch (err) {
+        console.warn('[DB] Could not create data directory:', err);
+      }
     }
     resolvedPath = path.join(dataDir, 'finance.db');
   }
