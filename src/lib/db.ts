@@ -4,19 +4,44 @@ import fs from 'node:fs';
 
 let globalDb: any = null;
 let syncTimer: any = null;
+let lastSyncTime = 0;
 
-export function syncTurso() {
+export function syncTurso(force = false) {
   if (globalDb && typeof globalDb.sync === 'function') {
-    try {
-      globalDb.sync();
-    } catch (e) {
-      console.warn('[TURSO SYNC ERROR]', e);
+    const now = Date.now();
+    // On reads, sync at most once every 1500ms; on writes (force=true), sync immediately
+    if (force || now - lastSyncTime > 1500) {
+      try {
+        globalDb.sync();
+        lastSyncTime = Date.now();
+      } catch (e) {
+        console.warn('[TURSO SYNC ERROR]', e);
+      }
     }
   }
 }
 
+function attachAutoSync(db: any) {
+  if (!db || typeof db.prepare !== 'function' || typeof db.sync !== 'function') return;
+  const originalPrepare = db.prepare.bind(db);
+  db.prepare = function (sql: string) {
+    const stmt = originalPrepare(sql);
+    const isWrite = /^\s*(INSERT|UPDATE|DELETE|REPLACE|ALTER|CREATE|DROP)\b/i.test(sql);
+    if (isWrite && typeof stmt.run === 'function') {
+      const originalRun = stmt.run.bind(stmt);
+      stmt.run = function (...args: any[]) {
+        const result = originalRun(...args);
+        syncTurso(true); // Push changes to Turso cloud immediately on write!
+        return result;
+      };
+    }
+    return stmt;
+  };
+}
+
 export function getDb(dbPath?: string): any {
   if (globalDb && !dbPath) {
+    syncTurso(false); // Quick pull (80ms) if last sync was > 1.5s ago
     return globalDb;
   }
 
@@ -43,20 +68,37 @@ export function getDb(dbPath?: string): any {
       // Use native Libsql with cloud sync to Turso
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const LibsqlDatabase = require('libsql');
-      db = new LibsqlDatabase(resolvedPath, { syncUrl: tursoUrl, authToken: tursoToken });
+      try {
+        db = new LibsqlDatabase(resolvedPath, { syncUrl: tursoUrl, authToken: tursoToken });
+      } catch (openErr: any) {
+        if (openErr?.message?.includes('InvalidLocalState') || openErr?.message?.includes('metadata')) {
+          console.warn('[TURSO] Self-healing local replica state...');
+          for (const ext of ['', '-info', '-wal', '-shm']) {
+            try { fs.unlinkSync(resolvedPath + ext); } catch {}
+          }
+          db = new LibsqlDatabase(resolvedPath, { syncUrl: tursoUrl, authToken: tursoToken });
+        } else {
+          throw openErr;
+        }
+      }
       console.log('[TURSO] Connected to Turso cloud SQLite at:', tursoUrl);
       try {
         db.sync();
+        lastSyncTime = Date.now();
         console.log('[TURSO] Successfully synchronized with Turso cloud.');
       } catch (syncErr) {
         console.warn('[TURSO] Initial sync warning:', syncErr);
       }
 
+      // Automatically sync writes to Turso cloud
+      attachAutoSync(db);
+
       // Schedule periodic background sync every 15 seconds
       if (!syncTimer && typeof setInterval !== 'undefined') {
         syncTimer = setInterval(() => {
-          syncTurso();
+          syncTurso(false);
         }, 15000);
+        if (syncTimer?.unref) syncTimer.unref();
       }
     } catch (err) {
       console.warn('[TURSO] Falling back to local node:sqlite:', err);
@@ -85,6 +127,16 @@ export function getDb(dbPath?: string): any {
 }
 
 export function initSchema(db: DatabaseSync) {
+  // Fast path: Check if tables are already created & migrated (0ms vs 4000ms cold start)
+  try {
+    const isReady = (db as any).prepare("SELECT 1 FROM pragma_table_info('goals') WHERE name = 'notes'").get();
+    if (isReady) {
+      return;
+    }
+  } catch {
+    // Needs full initialization
+  }
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,

@@ -75,13 +75,30 @@ export default function GoalsPage() {
         }),
       });
       if (!res.ok) throw new Error('Failed to create goal');
+      const data = await res.json();
 
+      const createdGoal = {
+        id: data.id || `gol_${Date.now()}`,
+        name: name.trim(),
+        target_amount: targetMinor,
+        current_amount: currMinor,
+        target_date: targetDate,
+        notes,
+        status: currMinor >= targetMinor ? 'completed' : 'in_progress',
+        percent: targetMinor > 0 ? Math.min(100, Math.round((currMinor / targetMinor) * 100)) : 0,
+        remainingAmount: Math.max(0, targetMinor - currMinor),
+        monthsRemaining: 12,
+        calculatedMonthlyTarget: Math.round(Math.max(0, targetMinor - currMinor) / 12),
+      };
+
+      setGoals(prev => [createdGoal, ...prev]);
       showToast('Savings goal created!');
       setIsOpen(false);
       setName('');
       setTargetAmountStr('');
       setCurrentAmountStr('0');
       triggerRefresh();
+      loadData();
     } catch (err: any) {
       showToast(err.message, 'error');
     }
@@ -113,9 +130,23 @@ export default function GoalsPage() {
           ? 'Goal contribution saved & transaction recorded!'
           : 'Goal contribution recorded!'
       );
+      setGoals(prev => prev.map(g => {
+        if (g.id === contributeGoal.id) {
+          const newCurr = g.current_amount + addMinor;
+          return {
+            ...g,
+            current_amount: newCurr,
+            percent: g.target_amount > 0 ? Math.min(100, Math.round((newCurr / g.target_amount) * 100)) : 0,
+            remainingAmount: Math.max(0, g.target_amount - newCurr),
+            status: newCurr >= g.target_amount ? 'completed' : g.status,
+          };
+        }
+        return g;
+      }));
       setContributeGoal(null);
       setContribStr('');
       triggerRefresh();
+      loadData();
     } catch (err: any) {
       showToast(err.message, 'error');
     }
@@ -152,8 +183,24 @@ export default function GoalsPage() {
       if (!res.ok) throw new Error('Failed to update goal');
 
       showToast('Goal updated successfully!');
+      setGoals(prev => prev.map(g => {
+        if (g.id === editGoal.id) {
+          return {
+            ...g,
+            name: editName.trim(),
+            target_amount: targetMinor,
+            current_amount: currMinor,
+            target_date: editTargetDate,
+            notes: editNotes,
+            percent: targetMinor > 0 ? Math.min(100, Math.round((currMinor / targetMinor) * 100)) : 0,
+            remainingAmount: Math.max(0, targetMinor - currMinor),
+          };
+        }
+        return g;
+      }));
       setEditGoal(null);
       triggerRefresh();
+      loadData();
     } catch (err: any) {
       showToast(err.message, 'error');
     }
@@ -169,8 +216,10 @@ export default function GoalsPage() {
     try {
       const res = await fetch(`/api/goals?id=${goalToDelete.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
+      setGoals(prev => prev.filter(g => g.id !== goalToDelete.id));
       showToast(`Goal "${goalToDelete.name}" deleted`);
       triggerRefresh();
+      loadData();
     } catch {
       showToast('Failed to delete goal', 'error');
     } finally {
