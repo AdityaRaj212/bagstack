@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const user = getCurrentUser(req);
     const body = await req.json();
 
-    if (!body.accountId || !body.name || !body.principal || !body.interestRate || !body.tenureMonths || !body.startDate) {
+    if (!body.accountId || !body.name || !body.principal || body.interestRate === undefined || !body.tenureMonths || !body.startDate) {
       return NextResponse.json({ error: 'accountId, name, principal, interestRate, tenureMonths, and startDate are required' }, { status: 400 });
     }
 
@@ -35,6 +35,8 @@ export async function POST(req: Request) {
       tenureMonths: body.tenureMonths,
       startDate: body.startDate,
       emiDay: body.emiDay || 5,
+      type: body.type || 'loan',
+      notes: body.notes,
     });
 
     return NextResponse.json({ id }, { status: 201 });

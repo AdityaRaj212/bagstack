@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
 import { toMinorUnits } from '@/lib/money';
-import { X, Plus, Trash2, AlertCircle, Calendar, Tag as TagIcon, Settings2, Check, Search, ChevronDown } from 'lucide-react';
+import { X, Plus, Minus, Calculator, Trash2, AlertCircle, Calendar, Tag as TagIcon, Settings2, Check, Search, ChevronDown } from 'lucide-react';
 import { PayeeTagManagerModal } from './PayeeTagManagerModal';
 import { ModernDatePicker } from './ModernDatePicker';
 
@@ -36,6 +36,10 @@ interface TagItem {
   name: string;
   color: string;
 }
+
+import { evaluateAmountInput, AmountEvaluation } from '@/lib/amount-evaluator';
+export { evaluateAmountInput };
+export type { AmountEvaluation };
 
 export const TransactionModal = () => {
   const {
@@ -87,6 +91,44 @@ export const TransactionModal = () => {
   const categoryRef = useRef<HTMLDivElement>(null);
   const categoryInputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
+
+  const amountEvaluation = React.useMemo(() => evaluateAmountInput(amountStr), [amountStr]);
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Restrict strictly to numbers, decimal point, +, -, and spaces
+    const clean = e.target.value.replace(/[^0-9.+\-\s]/g, '');
+    setAmountStr(clean);
+  };
+
+  const handleApplyEvaluation = () => {
+    if (amountEvaluation.isValid && amountEvaluation.isPositive) {
+      setAmountStr(amountEvaluation.value.toString());
+    }
+  };
+
+  const handleAppendOperator = (op: '+' | '-') => {
+    setAmountStr(prev => {
+      const trimmed = prev.trim();
+      if (!trimmed) return '';
+      if (/[+\-]$/.test(trimmed)) {
+        return trimmed.slice(0, -1).trim() + ` ${op} `;
+      }
+      return `${trimmed} ${op} `;
+    });
+    setTimeout(() => amountInputRef.current?.focus(), 20);
+  };
+
+  const handleQuickAddAmount = (val: number) => {
+    setAmountStr(prev => {
+      const trimmed = prev.trim();
+      if (!trimmed || trimmed === '0') return val.toString();
+      if (/[+\-]$/.test(trimmed)) {
+        return `${trimmed} ${val}`;
+      }
+      return `${trimmed} + ${val}`;
+    });
+    setTimeout(() => amountInputRef.current?.focus(), 20);
+  };
 
   const loadMerchantsAndTags = async () => {
     try {
@@ -315,7 +357,13 @@ export const TransactionModal = () => {
   };
 
   const handleSubmit = async (confirmDup = false, keepOpen = false) => {
-    const minorAmount = toMinorUnits(amountStr);
+    if (!amountEvaluation.isValid || !amountEvaluation.isPositive) {
+      showToast(amountEvaluation.errorMessage || 'Please enter a valid amount greater than zero', 'error');
+      return;
+    }
+
+    const resolvedAmountStr = amountEvaluation.value.toString();
+    const minorAmount = toMinorUnits(resolvedAmountStr);
     if (minorAmount <= 0) {
       showToast('Please enter a valid amount greater than zero', 'error');
       return;
@@ -373,7 +421,7 @@ export const TransactionModal = () => {
         triggerRefresh();
 
         if (keepOpen) {
-          showToast(`Transfer of ₹${amountStr} recorded! Ready for next on ${date}.`);
+          showToast(`Transfer of ₹${resolvedAmountStr} recorded! Ready for next on ${date}.`);
           setAmountStr('');
           setNotes('');
           setTimeout(() => {
@@ -414,7 +462,7 @@ export const TransactionModal = () => {
         triggerRefresh();
 
         if (keepOpen) {
-          showToast(`${type === 'expense' ? 'Expense' : 'Income'} of ₹${amountStr} saved! Ready for next on ${date}.`);
+          showToast(`${type === 'expense' ? 'Expense' : 'Income'} of ₹${resolvedAmountStr} saved! Ready for next on ${date}.`);
           // Clear inputs for next transaction
           setAmountStr('');
           setMerchantName('');
@@ -526,9 +574,86 @@ export const TransactionModal = () => {
 
           {/* Amount Input */}
           <div style={{ marginBottom: '1.25rem' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.375rem', letterSpacing: '0.05em' }}>
-              AMOUNT (₹)
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem', flexWrap: 'wrap', gap: '0.25rem' }}>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
+                AMOUNT (₹)
+              </label>
+
+              {/* Math Operators & Quick Amount Chips */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <button
+                  type="button"
+                  onClick={() => handleAppendOperator('+')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                    fontSize: '0.72rem',
+                    padding: '0.15rem 0.45rem',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'var(--bg-subtle)',
+                    border: '1px solid var(--border-default)',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                  title="Add amount (+)"
+                >
+                  <Plus size={11} /> Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAppendOperator('-')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                    fontSize: '0.72rem',
+                    padding: '0.15rem 0.45rem',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'var(--bg-subtle)',
+                    border: '1px solid var(--border-default)',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                  title="Subtract amount (-)"
+                >
+                  <Minus size={11} /> Sub
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickAddAmount(100)}
+                  style={{
+                    fontSize: '0.72rem',
+                    padding: '0.15rem 0.4rem',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'var(--bg-subtle)',
+                    border: '1px solid var(--border-default)',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  +100
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickAddAmount(500)}
+                  style={{
+                    fontSize: '0.72rem',
+                    padding: '0.15rem 0.4rem',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'var(--bg-subtle)',
+                    border: '1px solid var(--border-default)',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  +500
+                </button>
+              </div>
+            </div>
+
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <span
                 style={{
@@ -546,15 +671,26 @@ export const TransactionModal = () => {
                 type="text"
                 autoFocus
                 value={amountStr}
-                onChange={e => setAmountStr(e.target.value)}
-                placeholder="0"
+                onChange={handleAmountChange}
+                onBlur={() => {
+                  if (amountEvaluation.hasExpression && amountEvaluation.isValid && amountEvaluation.isPositive) {
+                    setAmountStr(amountEvaluation.value.toString());
+                  }
+                }}
+                placeholder="0 (e.g. 1200 + 450 - 50)"
                 style={{
                   width: '100%',
                   padding: '0.75rem 1rem 0.75rem 2.5rem',
                   fontSize: '1.75rem',
                   fontWeight: 700,
                   backgroundColor: 'var(--bg-subtle)',
-                  border: '1px solid var(--border-default)',
+                  border: `1px solid ${
+                    amountEvaluation.hasExpression && !amountEvaluation.isPositive && amountEvaluation.errorMessage
+                      ? 'var(--color-expense)'
+                      : amountEvaluation.hasExpression && amountEvaluation.isValid
+                      ? 'var(--brand-primary)'
+                      : 'var(--border-default)'
+                  }`,
                   borderRadius: 'var(--radius-lg)',
                   color: 'var(--text-primary)',
                   fontVariantNumeric: 'tabular-nums',
@@ -562,6 +698,67 @@ export const TransactionModal = () => {
                 }}
               />
             </div>
+
+            {/* Live Expression Evaluation Badge */}
+            {amountEvaluation.hasExpression && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginTop: '0.45rem',
+                  padding: '0.4rem 0.75rem',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: !amountEvaluation.isPositive && amountEvaluation.errorMessage
+                    ? 'var(--color-expense-subtle)'
+                    : 'var(--brand-light)',
+                  border: `1px solid ${
+                    !amountEvaluation.isPositive && amountEvaluation.errorMessage
+                      ? 'rgba(239, 68, 68, 0.3)'
+                      : 'rgba(99, 102, 241, 0.3)'
+                  }`,
+                  fontSize: '0.8rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Calculator
+                    size={14}
+                    style={{
+                      color: !amountEvaluation.isPositive && amountEvaluation.errorMessage
+                        ? 'var(--color-expense)'
+                        : 'var(--brand-primary)',
+                    }}
+                  />
+                  {amountEvaluation.isValid && amountEvaluation.isPositive ? (
+                    <span style={{ fontWeight: 600, color: 'var(--brand-primary)' }}>
+                      Net Sum = ₹{amountEvaluation.value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </span>
+                  ) : (
+                    <span style={{ color: 'var(--color-expense)', fontWeight: 600 }}>
+                      {amountEvaluation.errorMessage || 'Net sum must be positive (> ₹0)'}
+                    </span>
+                  )}
+                </div>
+
+                {amountEvaluation.isValid && amountEvaluation.isPositive && (
+                  <button
+                    type="button"
+                    onClick={handleApplyEvaluation}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--brand-primary)',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      padding: '0 4px',
+                    }}
+                  >
+                    Apply ₹{amountEvaluation.value}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Duplicate Warning Prompt */}

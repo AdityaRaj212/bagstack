@@ -8,6 +8,8 @@ import { AuthModal } from './AuthModal';
 import { Lock, ArrowRight, Sparkles } from 'lucide-react';
 import { ConfirmDialog } from './ConfirmDialog';
 
+import { LoadingScreen } from './LoadingScreen';
+
 export const AppShell = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const {
@@ -25,14 +27,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
 
   // While checking initial auth session
   if (!authChecked) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-app)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', color: 'var(--text-muted)' }}>
-          <div style={{ width: '28px', height: '28px', border: '3px solid var(--border-default)', borderTopColor: 'var(--brand-primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-          <span style={{ fontSize: '0.85rem' }}>Loading Bagstack...</span>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Initializing your private ledger..." />;
   }
 
   // If on homepage and not authenticated: render full landing page directly without sidebar!

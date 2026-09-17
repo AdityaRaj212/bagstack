@@ -14,6 +14,7 @@ export interface ModernDatePickerProps {
   id?: string;
   style?: React.CSSProperties;
   showPresets?: boolean;
+  align?: 'left' | 'right' | 'auto';
 }
 
 const MONTH_NAMES = [
@@ -78,9 +79,25 @@ export const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
   id,
   style,
   showPresets = true,
+  align = 'auto',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [effectiveAlign, setEffectiveAlign] = useState<'left' | 'right'>(align === 'right' ? 'right' : 'left');
+
+  useEffect(() => {
+    if (align === 'right' || align === 'left') {
+      setEffectiveAlign(align);
+    } else if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      // If less than 330px from right edge of viewport or near container right edge, align right
+      if (window.innerWidth - rect.left < 330 || rect.right > window.innerWidth - 100) {
+        setEffectiveAlign('right');
+      } else {
+        setEffectiveAlign('left');
+      }
+    }
+  }, [isOpen, align]);
 
   // Determine current viewed month/year
   const today = useMemo(() => new Date(), []);
@@ -290,7 +307,8 @@ export const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
           style={{
             position: 'absolute',
             top: 'calc(100% + 6px)',
-            left: 0,
+            left: effectiveAlign === 'right' ? 'auto' : 0,
+            right: effectiveAlign === 'right' ? 0 : 'auto',
             zIndex: 1500,
             backgroundColor: 'var(--bg-surface)',
             border: '1px solid var(--border-default)',

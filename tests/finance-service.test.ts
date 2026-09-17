@@ -277,8 +277,9 @@ describe('Finance Domain Business Logic Tests', () => {
 
     // Net Worth should include:
     // Assets: HDFC Savings + SBI Savings + Cash + Zerodha + FD
-    // Liabilities: Credit Card Debt (if any)
-    expect(metrics.netWorth).toBeGreaterThan(50000000); // > ₹5,00,000
+    // Liabilities: Credit Card Debt + Outstanding Loans (Car Loan: ₹5,20,000)
+    expect(metrics.totalLiabilities).toBeGreaterThan(50000000); // > ₹5,00,000 liabilities including Car Loan
+    expect(metrics.netWorth).toBeGreaterThan(10000000); // > ₹1,00,000 net worth after liabilities
 
     // Budgets
     const budgets = service.getBudgets(userId, thisMonth);
@@ -395,5 +396,55 @@ describe('Finance Domain Business Logic Tests', () => {
     expect(updated?.opening_balance).toBe(5000000);
     // current_balance should be 50,000 - 500 = 49,500 (4950000 paise)
     expect(updated?.current_balance).toBe(4950000);
+  });
+
+  it('records loan & EMI payment, decreasing liquid cash and loan liabilities synchronously', () => {
+    // 1. Create a bank account with ₹1,00,000
+    const bank = service.createAccount({
+      userId,
+      name: 'Axis Bank Checking',
+      type: 'bank',
+      openingBalance: 10000000, // ₹1,00,000
+    })!;
+
+    // 2. Create a purchase EMI for MacBook (0% No-Cost EMI: ₹60,000 over 6 months -> ₹10,000/mo)
+    const emiId = service.createLoan({
+      userId,
+      accountId: bank.id,
+      name: 'MacBook Air M3',
+      principal: 6000000, // ₹60,000
+      outstandingPrincipal: 6000000,
+      interestRate: 0,
+      tenureMonths: 6,
+      startDate: '2026-03-01',
+      type: 'emi',
+    });
+
+    const metricsBefore = service.getDashboardMetrics(userId);
+    expect(metricsBefore.cashBalance).toBe(10000000); // ₹1,00,000
+    expect(metricsBefore.totalLiabilities).toBe(6000000); // ₹60,000
+    expect(metricsBefore.netWorth).toBe(10000000 - 6000000); // ₹40,000
+
+    // 3. Record EMI installment payment of ₹10,000
+    const paymentResult = service.recordLoanPayment({
+      userId,
+      loanId: emiId,
+      accountId: bank.id,
+      amount: 1000000, // ₹10,000
+      date: '2026-03-05',
+    });
+
+    expect(paymentResult.success).toBe(true);
+    expect(paymentResult.newOutstandingPrincipal).toBe(5000000); // ₹50,000 remaining
+
+    // 4. Verify that bank balance (liquid cash) decreased by ₹10,000
+    const bankAfter = service.getAccountById(bank.id, userId);
+    expect(bankAfter?.current_balance).toBe(9000000); // ₹90,000
+
+    // 5. Verify that dashboard metrics reflect updated liquid cash and reduced liabilities
+    const metricsAfter = service.getDashboardMetrics(userId);
+    expect(metricsAfter.cashBalance).toBe(9000000); // ₹90,000 liquid cash
+    expect(metricsAfter.totalLiabilities).toBe(5000000); // ₹50,000 remaining liabilities
+    expect(metricsAfter.netWorth).toBe(9000000 - 5000000); // ₹40,000 (net worth preserved!)
   });
 });

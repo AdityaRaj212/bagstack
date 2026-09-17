@@ -752,6 +752,14 @@ export class FinanceService {
       }
     }
 
+    // Include outstanding loans & purchase EMIs in liabilities
+    const loanRow = this.db.prepare(`
+      SELECT COALESCE(SUM(outstanding_principal), 0) as total
+      FROM loans
+      WHERE user_id = ?
+    `).get(userId) as any;
+    totalLiabilities += (loanRow?.total || 0);
+
     const netWorth = totalAssets - totalLiabilities;
 
     // Monthly Income and Expenses (EXCLUDING TRANSFERS!)
@@ -1398,6 +1406,7 @@ export class FinanceService {
       FROM loans l
       LEFT JOIN accounts a ON a.id = l.account_id
       WHERE l.user_id = ?
+      ORDER BY l.created_at DESC
     `).all(userId) as any[];
 
     return loans.map(loan => {
@@ -1414,6 +1423,8 @@ export class FinanceService {
 
       return {
         ...loan,
+        type: loan.type || 'loan',
+        notes: loan.notes || '',
         paidPrincipal,
         progressPercent,
         amortization,
@@ -1431,6 +1442,8 @@ export class FinanceService {
     tenureMonths: number;
     startDate: string;
     emiDay?: number;
+    type?: 'loan' | 'emi';
+    notes?: string;
   }) {
     const id = `loan_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const amort = this.calculateLoanAmortization(data.principal, data.interestRate, data.tenureMonths, data.startDate);
@@ -1438,8 +1451,8 @@ export class FinanceService {
     this.db.prepare(`
       INSERT INTO loans (
         id, user_id, account_id, name, principal, outstanding_principal,
-        interest_rate, emi_amount, tenure_months, start_date, emi_day
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        interest_rate, emi_amount, tenure_months, start_date, emi_day, type, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       data.userId,
@@ -1451,10 +1464,71 @@ export class FinanceService {
       amort.monthlyEmi,
       data.tenureMonths,
       data.startDate,
-      data.emiDay || 5
+      data.emiDay || 5,
+      data.type || 'loan',
+      data.notes || ''
     );
 
     return id;
+  }
+
+  recordLoanPayment(params: {
+    userId: string;
+    loanId: string;
+    accountId: string;
+    amount?: number;
+    date?: string;
+  }) {
+    const loan = this.db.prepare('SELECT * FROM loans WHERE id = ? AND user_id = ?').get(params.loanId, params.userId) as any;
+    if (!loan) throw new Error('Loan or EMI not found');
+    if (loan.outstanding_principal <= 0) throw new Error('This loan or EMI is already fully repaid');
+
+    const paymentAmount = params.amount || loan.emi_amount;
+    const monthlyRate = (loan.interest_rate / 100) / 12;
+    const interestComponent = monthlyRate > 0 ? Math.round(loan.outstanding_principal * monthlyRate) : 0;
+    let principalComponent = Math.max(0, paymentAmount - interestComponent);
+    if (principalComponent > loan.outstanding_principal) {
+      principalComponent = loan.outstanding_principal;
+    }
+
+    // Find a relevant category for EMI payments
+    let emiCat = this.db.prepare("SELECT id FROM categories WHERE user_id = ? AND (name LIKE '%loan%' OR name LIKE '%emi%' OR name LIKE '%debt%') LIMIT 1").get(params.userId) as any;
+    if (!emiCat) {
+      emiCat = this.db.prepare("SELECT id FROM categories WHERE user_id = ? AND type = 'expense' LIMIT 1").get(params.userId) as any;
+    }
+
+    const isEmi = loan.type === 'emi';
+    const txName = isEmi ? `EMI: ${loan.name}` : `Loan EMI: ${loan.name}`;
+    const paymentDate = params.date || new Date().toISOString().substring(0, 10);
+
+    // 1. Record expense in account transactions (reduces account balance and liquid cash)
+    const txId = this.createTransaction({
+      userId: params.userId,
+      accountId: params.accountId,
+      type: 'expense',
+      amount: paymentAmount,
+      date: paymentDate,
+      merchantName: txName,
+      categoryId: emiCat?.id,
+      notes: `Installment payment for ${isEmi ? 'Purchase EMI' : 'Loan'} "${loan.name}" (Principal: ₹${Math.round(principalComponent / 100)}, Interest: ₹${Math.round(interestComponent / 100)})`,
+    });
+
+    // 2. Reduce outstanding principal on loan (reduces liabilities)
+    const newOutstanding = Math.max(0, loan.outstanding_principal - principalComponent);
+    this.db.prepare(`
+      UPDATE loans
+      SET outstanding_principal = ?
+      WHERE id = ? AND user_id = ?
+    `).run(newOutstanding, params.loanId, params.userId);
+
+    return {
+      success: true,
+      transactionId: txId,
+      principalPaid: principalComponent,
+      interestPaid: interestComponent,
+      newOutstandingPrincipal: newOutstanding,
+      isFullyRepaid: newOutstanding === 0,
+    };
   }
 
   // --- RECONCILIATION ---

@@ -361,6 +361,8 @@ export function initSchema(db: DatabaseSync) {
       tenure_months INTEGER NOT NULL,
       start_date TEXT NOT NULL,
       emi_day INTEGER DEFAULT 5,
+      type TEXT DEFAULT 'loan',
+      notes TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
@@ -443,6 +445,8 @@ export function initSchema(db: DatabaseSync) {
     `ALTER TABLE loans ADD COLUMN outstanding_principal INTEGER DEFAULT 0`,
     `ALTER TABLE loans ADD COLUMN tenure_months INTEGER DEFAULT 12`,
     `ALTER TABLE loans ADD COLUMN emi_day INTEGER DEFAULT 5`,
+    `ALTER TABLE loans ADD COLUMN type TEXT DEFAULT 'loan'`,
+    `ALTER TABLE loans ADD COLUMN notes TEXT`,
   ];
 
   for (const sql of safeAlterations) {
