@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
 import { toMinorUnits } from '@/lib/money';
-import { X, Plus, Trash2, AlertCircle, Calendar, Tag as TagIcon, Settings2, Check } from 'lucide-react';
+import { X, Plus, Trash2, AlertCircle, Calendar, Tag as TagIcon, Settings2, Check, Search, ChevronDown } from 'lucide-react';
 import { PayeeTagManagerModal } from './PayeeTagManagerModal';
 import { ModernDatePicker } from './ModernDatePicker';
 
@@ -76,11 +76,17 @@ export const TransactionModal = () => {
   // Accounts & Categories
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categoryTree, setCategoryTree] = useState<Category[]>([]);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [pendingKeepOpen, setPendingKeepOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState<any>(null);
 
   const merchantRef = useRef<HTMLDivElement>(null);
   const tagRef = useRef<HTMLDivElement>(null);
+  const categoryRef = useRef<HTMLDivElement>(null);
+  const categoryInputRef = useRef<HTMLInputElement>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   const loadMerchantsAndTags = async () => {
     try {
@@ -101,6 +107,9 @@ export const TransactionModal = () => {
       setAmountStr('');
       setMerchantName('');
       setCategoryId('');
+      setCategorySearch('');
+      setCategoryDropdownOpen(false);
+      setPendingKeepOpen(false);
       setNotes('');
       setSelectedTags([]);
       setTagInput('');
@@ -147,12 +156,67 @@ export const TransactionModal = () => {
       if (tagRef.current && !tagRef.current.contains(e.target as Node)) {
         setTagDropdownOpen(false);
       }
+      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+        setCategoryDropdownOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   if (!isTransactionModalOpen) return null;
+
+  // Helper to find selected category object across tree
+  const selectedCategory = React.useMemo(() => {
+    if (!categoryId) return null;
+    for (const parent of categoryTree) {
+      if (parent.id === categoryId) {
+        return { ...parent, fullName: parent.name, isParent: true };
+      }
+      if (parent.subcategories) {
+        for (const sub of parent.subcategories) {
+          if (sub.id === categoryId) {
+            return { ...sub, parentName: parent.name, fullName: `${parent.name} › ${sub.name}`, isParent: false };
+          }
+        }
+      }
+    }
+    return null;
+  }, [categoryId, categoryTree]);
+
+  // Filter category tree for searchable dropdown
+  const filteredCategories = React.useMemo(() => {
+    const query = categorySearch.trim().toLowerCase();
+    
+    // Filter by type if applicable (expense or income)
+    const typeMatchingParents = categoryTree.filter(cat => {
+      if (type === 'transfer') return true;
+      return !cat.type || cat.type === type;
+    });
+
+    if (!query) {
+      return typeMatchingParents;
+    }
+
+    // When searching, filter both parents and subcategories
+    const result: Array<Category & { subcategories?: Category[] }> = [];
+
+    for (const parent of typeMatchingParents) {
+      const parentMatches = parent.name.toLowerCase().includes(query);
+      const matchingSubs = (parent.subcategories || []).filter(sub =>
+        sub.name.toLowerCase().includes(query) || parentMatches
+      );
+
+      if (parentMatches || matchingSubs.length > 0) {
+        result.push({
+          ...parent,
+          subcategories: matchingSubs,
+        });
+      }
+    }
+
+    return result;
+  }, [categoryTree, categorySearch, type]);
 
   // Auto suggest category on merchant selection
   const selectMerchant = async (name: string, defaultCatId?: string) => {
@@ -161,6 +225,7 @@ export const TransactionModal = () => {
 
     if (defaultCatId && !categoryId) {
       setCategoryId(defaultCatId);
+      setCategorySearch('');
       return;
     }
 
@@ -170,7 +235,10 @@ export const TransactionModal = () => {
         const data = await res.json();
         if (data.results?.transactions?.length > 0) {
           const lastTx = data.results.transactions[0];
-          if (lastTx.category_id) setCategoryId(lastTx.category_id);
+          if (lastTx.category_id) {
+            setCategoryId(lastTx.category_id);
+            setCategorySearch('');
+          }
         }
       } catch {
         // Ignore background suggestion error
@@ -248,7 +316,7 @@ export const TransactionModal = () => {
     });
   };
 
-  const handleSubmit = async (confirmDup = false) => {
+  const handleSubmit = async (confirmDup = false, keepOpen = false) => {
     const minorAmount = toMinorUnits(amountStr);
     if (minorAmount <= 0) {
       showToast('Please enter a valid amount greater than zero', 'error');
@@ -286,6 +354,8 @@ export const TransactionModal = () => {
     }
 
     setLoading(true);
+    setPendingKeepOpen(keepOpen);
+
     try {
       if (type === 'transfer') {
         const res = await fetch('/api/transfers', {
@@ -302,9 +372,19 @@ export const TransactionModal = () => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
 
-        showToast('Transfer completed successfully!');
         triggerRefresh();
-        closeTransactionModal();
+
+        if (keepOpen) {
+          showToast(`Transfer of ₹${amountStr} recorded! Ready for next on ${date}.`);
+          setAmountStr('');
+          setNotes('');
+          setTimeout(() => {
+            amountInputRef.current?.focus();
+          }, 50);
+        } else {
+          showToast('Transfer completed successfully!');
+          closeTransactionModal();
+        }
       } else {
         const res = await fetch('/api/transactions', {
           method: 'POST',
@@ -333,9 +413,33 @@ export const TransactionModal = () => {
 
         if (!res.ok) throw new Error(data.error);
 
-        showToast(`${type === 'expense' ? 'Expense' : 'Income'} recorded successfully!`);
         triggerRefresh();
-        closeTransactionModal();
+
+        if (keepOpen) {
+          showToast(`${type === 'expense' ? 'Expense' : 'Income'} of ₹${amountStr} saved! Ready for next on ${date}.`);
+          // Clear inputs for next transaction
+          setAmountStr('');
+          setMerchantName('');
+          setCategoryId('');
+          setCategorySearch('');
+          setNotes('');
+          setSelectedTags([]);
+          setTagInput('');
+          setShowSplits(false);
+          setSplits([
+            { categoryId: '', amountStr: '', notes: '' },
+            { categoryId: '', amountStr: '', notes: '' },
+          ]);
+          setDuplicateWarning(null);
+
+          // Retain date and account so user can batch log transactions for that day
+          setTimeout(() => {
+            amountInputRef.current?.focus();
+          }, 50);
+        } else {
+          showToast(`${type === 'expense' ? 'Expense' : 'Income'} recorded successfully!`);
+          closeTransactionModal();
+        }
       }
     } catch (err: any) {
       showToast(err.message || 'Failed to save transaction', 'error');
@@ -438,6 +542,7 @@ export const TransactionModal = () => {
                 ₹
               </span>
               <input
+                ref={amountInputRef}
                 type="text"
                 autoFocus
                 value={amountStr}
@@ -483,7 +588,7 @@ export const TransactionModal = () => {
                 <button
                   className="btn-primary"
                   style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
-                  onClick={() => handleSubmit(true)}
+                  onClick={() => handleSubmit(true, pendingKeepOpen)}
                 >
                   Keep Both
                 </button>
@@ -666,9 +771,9 @@ export const TransactionModal = () => {
                 </div>
               </div>
 
-              {/* Category */}
+              {/* Searchable Category Combobox */}
               {!showSplits && (
-                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <div className="form-group" style={{ marginBottom: '1rem', position: 'relative' }} ref={categoryRef}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.375rem' }}>
                     <label className="form-label" style={{ marginBottom: 0 }}>CATEGORY</label>
                     <button
@@ -679,23 +784,239 @@ export const TransactionModal = () => {
                       + Split Transaction
                     </button>
                   </div>
-                  <select
-                    className="form-select"
-                    value={categoryId}
-                    onChange={e => setCategoryId(e.target.value)}
-                  >
-                    <option value="">Select a Category</option>
-                    {categoryTree.map(cat => (
-                      <optgroup key={cat.id} label={cat.name}>
-                        <option value={cat.id}>{cat.name} (General)</option>
-                        {cat.subcategories?.map(sub => (
-                          <option key={sub.id} value={sub.id}>
-                            {sub.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
+
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <Search
+                        size={15}
+                        style={{
+                          position: 'absolute',
+                          left: '0.75rem',
+                          color: 'var(--text-muted)',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                      <input
+                        ref={categoryInputRef}
+                        type="text"
+                        className="form-input"
+                        style={{
+                          paddingLeft: '2.25rem',
+                          paddingRight: selectedCategory ? '4.5rem' : '2.25rem',
+                        }}
+                        placeholder={selectedCategory ? selectedCategory.fullName : 'Search or select category...'}
+                        value={categoryDropdownOpen ? categorySearch : (selectedCategory ? selectedCategory.fullName : '')}
+                        onChange={e => {
+                          setCategorySearch(e.target.value);
+                          setCategoryDropdownOpen(true);
+                        }}
+                        onFocus={() => {
+                          setCategoryDropdownOpen(true);
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Escape') {
+                            setCategoryDropdownOpen(false);
+                          } else if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (filteredCategories.length > 0) {
+                              const firstParent = filteredCategories[0];
+                              if (firstParent.subcategories && firstParent.subcategories.length > 0) {
+                                setCategoryId(firstParent.subcategories[0].id);
+                              } else {
+                                setCategoryId(firstParent.id);
+                              }
+                              setCategorySearch('');
+                              setCategoryDropdownOpen(false);
+                            }
+                          }
+                        }}
+                      />
+
+                      {/* Right icons: Clear & Toggle */}
+                      <div style={{ position: 'absolute', right: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        {categoryId && (
+                          <button
+                            type="button"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setCategoryId('');
+                              setCategorySearch('');
+                              categoryInputRef.current?.focus();
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              color: 'var(--text-muted)',
+                              padding: '2px',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                            title="Clear category"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setCategoryDropdownOpen(prev => !prev)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: 'var(--text-muted)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '2px',
+                          }}
+                        >
+                          <ChevronDown
+                            size={16}
+                            style={{
+                              transform: categoryDropdownOpen ? 'rotate(180deg)' : 'none',
+                              transition: 'transform 0.15s ease',
+                            }}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Filtered Dropdown */}
+                    {categoryDropdownOpen && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          backgroundColor: 'var(--bg-surface)',
+                          border: '1px solid var(--border-default)',
+                          borderRadius: 'var(--radius-md)',
+                          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
+                          zIndex: 60,
+                          maxHeight: '260px',
+                          overflowY: 'auto',
+                          marginTop: '4px',
+                          padding: '0.35rem',
+                        }}
+                      >
+                        {filteredCategories.length === 0 ? (
+                          <div style={{ padding: '0.75rem', fontSize: '0.8125rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                            No categories found matching &ldquo;<strong>{categorySearch}</strong>&rdquo;
+                          </div>
+                        ) : (
+                          filteredCategories.map(parent => (
+                            <div key={parent.id} style={{ marginBottom: '0.35rem' }}>
+                              {/* Parent Category Option */}
+                              <div
+                                style={{
+                                  padding: '0.45rem 0.6rem',
+                                  fontSize: '0.8125rem',
+                                  fontWeight: 600,
+                                  borderRadius: 'var(--radius-sm)',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  color: parent.color || 'var(--text-primary)',
+                                  backgroundColor: categoryId === parent.id ? 'rgba(79, 70, 229, 0.15)' : 'transparent',
+                                  transition: 'background-color 0.12s ease',
+                                }}
+                                onMouseEnter={e => {
+                                  if (categoryId !== parent.id) e.currentTarget.style.backgroundColor = 'var(--bg-subtle)';
+                                }}
+                                onMouseLeave={e => {
+                                  if (categoryId !== parent.id) e.currentTarget.style.backgroundColor = 'transparent';
+                                }}
+                                onMouseDown={e => {
+                                  e.preventDefault();
+                                  setCategoryId(parent.id);
+                                  setCategorySearch('');
+                                  setCategoryDropdownOpen(false);
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <span
+                                    style={{
+                                      width: '10px',
+                                      height: '10px',
+                                      borderRadius: '50%',
+                                      backgroundColor: parent.color || '#6B7280',
+                                      flexShrink: 0,
+                                    }}
+                                  />
+                                  <span>{parent.name}</span>
+                                </div>
+                                {categoryId === parent.id && <Check size={14} style={{ color: 'var(--brand-primary)' }} />}
+                              </div>
+
+                              {/* Subcategories */}
+                              {parent.subcategories?.map(sub => {
+                                const isSelected = categoryId === sub.id;
+                                return (
+                                  <div
+                                    key={sub.id}
+                                    style={{
+                                      padding: '0.4rem 0.6rem 0.4rem 1.6rem',
+                                      fontSize: '0.8125rem',
+                                      borderRadius: 'var(--radius-sm)',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      color: 'var(--text-secondary)',
+                                      backgroundColor: isSelected ? 'rgba(79, 70, 229, 0.15)' : 'transparent',
+                                      transition: 'background-color 0.12s ease, color 0.12s ease',
+                                    }}
+                                    onMouseEnter={e => {
+                                      if (!isSelected) {
+                                        e.currentTarget.style.backgroundColor = 'var(--bg-subtle)';
+                                        e.currentTarget.style.color = 'var(--text-primary)';
+                                      }
+                                    }}
+                                    onMouseLeave={e => {
+                                      if (!isSelected) {
+                                        e.currentTarget.style.backgroundColor = 'transparent';
+                                        e.currentTarget.style.color = 'var(--text-secondary)';
+                                      }
+                                    }}
+                                    onMouseDown={e => {
+                                      e.preventDefault();
+                                      setCategoryId(sub.id);
+                                      setCategorySearch('');
+                                      setCategoryDropdownOpen(false);
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                      <span
+                                        style={{
+                                          width: '6px',
+                                          height: '6px',
+                                          borderRadius: '50%',
+                                          backgroundColor: sub.color || parent.color || '#6B7280',
+                                          opacity: 0.8,
+                                          flexShrink: 0,
+                                        }}
+                                      />
+                                      <span>{sub.name}</span>
+                                      {categorySearch && (
+                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '0.25rem' }}>
+                                          ({parent.name})
+                                        </span>
+                                      )}
+                                    </div>
+                                    {isSelected && <Check size={14} style={{ color: 'var(--brand-primary)' }} />}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </>
@@ -995,11 +1316,28 @@ export const TransactionModal = () => {
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
             <button className="btn-secondary" onClick={closeTransactionModal} disabled={loading}>
               Cancel
             </button>
-            <button className="btn-primary" onClick={() => handleSubmit(false)} disabled={loading}>
+            <button
+              className="btn-secondary"
+              type="button"
+              onClick={() => handleSubmit(false, true)}
+              disabled={loading}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                borderColor: 'rgba(79, 70, 229, 0.4)',
+                color: 'var(--brand-primary)',
+                fontWeight: 600,
+              }}
+              title="Save this transaction and keep the modal open with the same date for entering another"
+            >
+              <Plus size={15} /> Save & Add Another
+            </button>
+            <button className="btn-primary" onClick={() => handleSubmit(false, false)} disabled={loading}>
               {loading ? 'Saving...' : 'Save Transaction'}
             </button>
           </div>
