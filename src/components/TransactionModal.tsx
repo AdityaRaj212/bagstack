@@ -164,8 +164,6 @@ export const TransactionModal = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (!isTransactionModalOpen) return null;
-
   // Helper to find selected category object across tree
   const selectedCategory = React.useMemo(() => {
     if (!categoryId) return null;
@@ -464,6 +462,8 @@ export const TransactionModal = () => {
   const exactTagMatch = allTags.some(
     t => t.name.toLowerCase() === tagInput.trim().toLowerCase().replace(/^#/, '')
   );
+
+  if (!isTransactionModalOpen) return null;
 
   return (
     <>
