@@ -183,6 +183,7 @@ export class FinanceService {
         name = COALESCE(?, name),
         institution = COALESCE(?, institution),
         type = COALESCE(?, type),
+        opening_balance = COALESCE(?, opening_balance),
         credit_limit = COALESCE(?, credit_limit),
         icon = COALESCE(?, icon),
         color = COALESCE(?, color),
@@ -196,6 +197,7 @@ export class FinanceService {
       data.name ?? null,
       data.institution ?? null,
       data.type ?? null,
+      data.openingBalance !== undefined ? data.openingBalance : null,
       data.creditLimit ?? null,
       data.icon ?? null,
       data.color ?? null,
@@ -204,6 +206,11 @@ export class FinanceService {
       id,
       userId
     );
+
+    // If opening_balance was updated, recalculate current_balance!
+    if (data.openingBalance !== undefined) {
+      this.recalculateAccountBalance(id);
+    }
 
     return this.getAccountById(id, userId);
   }

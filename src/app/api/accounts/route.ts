@@ -64,7 +64,8 @@ export async function PUT(req: Request) {
       type: body.type,
       color: body.color,
       icon: body.icon,
-      creditLimit: body.creditLimit ? Math.round(Number(body.creditLimit)) : undefined,
+      openingBalance: body.openingBalance !== undefined ? Math.round(Number(body.openingBalance)) : undefined,
+      creditLimit: body.creditLimit !== undefined ? Math.round(Number(body.creditLimit)) : undefined,
       notes: body.notes,
       includeInNetWorth: body.includeInNetWorth !== undefined ? Boolean(body.includeInNetWorth) : undefined,
     });

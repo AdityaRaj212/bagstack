@@ -362,4 +362,38 @@ describe('Finance Domain Business Logic Tests', () => {
     expect(paidSub?.last_paid_date).toBe('2026-10-25');
     expect(paidSub?.next_billing_date).toBe('2026-11-25');
   });
+
+  it('updates opening balance and recalculates current balance accurately', () => {
+    const acc = service.createAccount({
+      userId,
+      name: 'Salary Account',
+      type: 'savings',
+      openingBalance: 0,
+    });
+    expect(acc?.opening_balance).toBe(0);
+    expect(acc?.current_balance).toBe(0);
+
+    // Record an expense: ₹500
+    service.createTransaction({
+      userId,
+      accountId: acc!.id,
+      type: 'expense',
+      amount: 50000,
+      date: '2026-03-01',
+      merchantName: 'Store',
+    });
+
+    const afterExpense = service.getAccountById(acc!.id, userId);
+    expect(afterExpense?.current_balance).toBe(-50000);
+
+    // Now update opening balance to ₹50,000 (5000000 paise)
+    const updated = service.updateAccount(acc!.id, userId, {
+      openingBalance: 5000000,
+      name: 'Salary Account Updated',
+    });
+
+    expect(updated?.opening_balance).toBe(5000000);
+    // current_balance should be 50,000 - 500 = 49,500 (4950000 paise)
+    expect(updated?.current_balance).toBe(4950000);
+  });
 });

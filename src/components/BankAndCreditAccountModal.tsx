@@ -39,9 +39,11 @@ export const BankAndCreditAccountModal: React.FC<BankAndCreditAccountModalProps>
       setInstitution(accountToEdit.institution || '');
       setCurrency(accountToEdit.currency || 'INR');
       setColor(accountToEdit.color || '#4f46e5');
-      setCreditLimitStr(accountToEdit.creditLimit ? (accountToEdit.creditLimit / 100).toString() : '0');
-      setIsDefault(Boolean(accountToEdit.isDefault));
-      setOpeningBalanceStr(accountToEdit.openingBalance ? (accountToEdit.openingBalance / 100).toString() : '0');
+      const lim = accountToEdit.creditLimit ?? accountToEdit.credit_limit;
+      setCreditLimitStr(lim !== undefined && lim !== null ? (lim / 100).toString() : '0');
+      setIsDefault(Boolean(accountToEdit.isDefault ?? accountToEdit.is_default));
+      const opBal = accountToEdit.openingBalance ?? accountToEdit.opening_balance;
+      setOpeningBalanceStr(opBal !== undefined && opBal !== null ? (opBal / 100).toString() : '0');
     } else {
       setName('');
       setInstitution('');
@@ -90,6 +92,7 @@ export const BankAndCreditAccountModal: React.FC<BankAndCreditAccountModalProps>
             institution: institution.trim(),
             type: accountType,
             color,
+            openingBalance: openingPaise,
             creditLimit: limitPaise,
           }),
         });
@@ -98,7 +101,7 @@ export const BankAndCreditAccountModal: React.FC<BankAndCreditAccountModalProps>
         if (!res.ok) throw new Error(data.error);
 
         // If toggled default
-        if (isDefault && !accountToEdit.isDefault) {
+        if (isDefault && !accountToEdit.isDefault && !accountToEdit.is_default) {
           await fetch('/api/accounts', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -106,7 +109,7 @@ export const BankAndCreditAccountModal: React.FC<BankAndCreditAccountModalProps>
           });
         }
 
-        showToast(`Account renamed to "${name.trim()}"!`);
+        showToast(`Account "${name.trim()}" updated successfully!`);
       } else {
         // Create brand new account
         const res = await fetch('/api/accounts', {
