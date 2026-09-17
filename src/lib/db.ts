@@ -364,16 +364,41 @@ export function initSchema(db: DatabaseSync) {
   `);
 
   // Safe migration for existing databases
-  try {
-    db.exec(`ALTER TABLE accounts ADD COLUMN is_default INTEGER DEFAULT 0`);
-  } catch {
-    // Column already exists
-  }
+  const safeAlterations = [
+    `ALTER TABLE accounts ADD COLUMN is_default INTEGER DEFAULT 0`,
+    `ALTER TABLE users ADD COLUMN owner_email TEXT`,
+    `ALTER TABLE subscriptions ADD COLUMN billing_frequency TEXT DEFAULT 'monthly'`,
+    `ALTER TABLE subscriptions ADD COLUMN auto_deduct INTEGER DEFAULT 1`,
+    `ALTER TABLE subscriptions ADD COLUMN last_paid_date TEXT`,
+    `ALTER TABLE subscriptions ADD COLUMN payment_status TEXT DEFAULT 'pending'`,
+    `ALTER TABLE subscriptions ADD COLUMN notes TEXT`,
+    `ALTER TABLE goals ADD COLUMN notes TEXT`,
+    `ALTER TABLE goals ADD COLUMN monthly_target INTEGER DEFAULT 0`,
+    `ALTER TABLE goals ADD COLUMN status TEXT DEFAULT 'in_progress'`,
+    `ALTER TABLE transactions ADD COLUMN merchant_name TEXT`,
+    `ALTER TABLE transactions ADD COLUMN cleared INTEGER DEFAULT 1`,
+    `ALTER TABLE transactions ADD COLUMN reconciled INTEGER DEFAULT 0`,
+    `ALTER TABLE transactions ADD COLUMN recurring_id TEXT`,
+    `ALTER TABLE transactions ADD COLUMN transfer_peer_account_id TEXT`,
+    `ALTER TABLE transactions ADD COLUMN destination_account_id TEXT`,
+    `ALTER TABLE budgets ADD COLUMN period_type TEXT DEFAULT 'monthly'`,
+    `ALTER TABLE budgets ADD COLUMN period_start TEXT`,
+    `ALTER TABLE budgets ADD COLUMN period_end TEXT`,
+    `ALTER TABLE budgets ADD COLUMN rollover INTEGER DEFAULT 0`,
+    `ALTER TABLE investments ADD COLUMN asset_type TEXT DEFAULT 'stock'`,
+    `ALTER TABLE investments ADD COLUMN cost_basis INTEGER DEFAULT 0`,
+    `ALTER TABLE loans ADD COLUMN principal INTEGER DEFAULT 0`,
+    `ALTER TABLE loans ADD COLUMN outstanding_principal INTEGER DEFAULT 0`,
+    `ALTER TABLE loans ADD COLUMN tenure_months INTEGER DEFAULT 12`,
+    `ALTER TABLE loans ADD COLUMN emi_day INTEGER DEFAULT 5`,
+  ];
 
-  try {
-    db.exec(`ALTER TABLE users ADD COLUMN owner_email TEXT`);
-  } catch {
-    // Column already exists
+  for (const sql of safeAlterations) {
+    try {
+      db.exec(sql);
+    } catch {
+      // Column already exists or table does not need migration
+    }
   }
 
   try {
@@ -381,24 +406,6 @@ export function initSchema(db: DatabaseSync) {
     db.exec(`CREATE INDEX IF NOT EXISTS idx_users_owner_email ON users(owner_email)`);
   } catch {
     // Ignore
-  }
-
-  try {
-    db.exec(`ALTER TABLE subscriptions ADD COLUMN auto_deduct INTEGER DEFAULT 1`);
-  } catch {
-    // Column already exists
-  }
-
-  try {
-    db.exec(`ALTER TABLE subscriptions ADD COLUMN last_paid_date TEXT`);
-  } catch {
-    // Column already exists
-  }
-
-  try {
-    db.exec(`ALTER TABLE subscriptions ADD COLUMN payment_status TEXT DEFAULT 'pending'`);
-  } catch {
-    // Column already exists
   }
 }
 
