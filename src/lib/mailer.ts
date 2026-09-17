@@ -146,12 +146,12 @@ export async function sendVerificationEmail(
       console.log(`[RESEND HTTPS] Verification email delivered to ${toEmail}. Message ID: ${data.id}`);
       return { success: true, messageId: data.id };
     } catch (err: any) {
-      console.error(`[RESEND ERROR] Failed to deliver via HTTPS:`, err.message);
-      return { success: false, error: err.message };
+      console.warn(`[RESEND WARNING] Could not send via Resend (${err.message}). Falling back to Google SMTP...`);
+      // Do not return error here; fall through to Google SMTP to ensure email reaches recipient!
     }
   }
 
-  // 2. Fallback to SMTP with strict 5-second timeout (Prevents hanging on cloud hosts)
+  // 2. Fallback to Google SMTP with strict 5-second timeout
   if (!transporter) {
     console.warn(`[DEV AUTH] No email credentials configured. Dev OTP for ${toEmail} is: ${otpCode}`);
     return {
