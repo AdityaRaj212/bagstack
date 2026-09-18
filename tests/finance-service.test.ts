@@ -494,4 +494,58 @@ describe('Finance Domain Business Logic Tests', () => {
     // ICICI should now be 10,000 - 3,500 = 6,500
     expect(service.getAccountById(acc2.id, userId)?.current_balance).toBe(650000);
   });
+
+  it('calculates credit card purchase EMI as card liability, blocking limit and updating dashboard metrics', () => {
+    // 1. Create a credit card with ₹1,00,000 limit and zero initial balance
+    const card = service.createAccount({
+      userId,
+      name: 'Slice Super CC',
+      type: 'credit_card',
+      openingBalance: 0,
+      creditLimit: 10000000, // ₹1,00,000
+    })!;
+
+    // 2. Add an unbilled direct card expense of ₹15,000
+    service.createTransaction({
+      userId,
+      accountId: card.id,
+      type: 'expense',
+      amount: 1500000, // ₹15,000
+      date: '2026-03-05',
+      merchantName: 'Apple Store',
+    });
+
+    // 3. Add a purchase EMI of ₹35,000 on this credit card
+    service.createLoan({
+      userId,
+      accountId: card.id,
+      name: 'iPhone 17 Pro EMI',
+      principal: 3500000, // ₹35,000
+      outstandingPrincipal: 3500000,
+      interestRate: 0,
+      tenureMonths: 6,
+      startDate: '2026-03-10',
+      type: 'emi',
+    });
+
+    // 4. Verify that getAccounts reflects the attached EMI
+    const accounts = service.getAccounts(userId);
+    const cardAccount = accounts.find(a => a.id === card.id);
+    expect(cardAccount).toBeDefined();
+    expect(cardAccount?.current_balance).toBe(1500000); // ₹15,000 direct spend
+    expect(cardAccount?.emiOutstanding).toBe(3500000); // ₹35,000 attached EMI
+    expect(cardAccount?.totalDebt).toBe(5000000); // ₹15,000 + ₹35,000 = ₹50,000 total card debt
+    expect(cardAccount?.availableCredit).toBe(5000000); // ₹1,00,000 - ₹50,000 = ₹50,000 available limit
+    expect(cardAccount?.utilizationRate).toBe(50); // 50% utilization
+
+    // 5. Verify single account lookup matches
+    const singleLookup = service.getAccountById(card.id, userId);
+    expect(singleLookup?.totalDebt).toBe(5000000);
+    expect(singleLookup?.availableCredit).toBe(5000000);
+
+    // 6. Verify dashboard metrics reflect the card EMI in creditCardOutstanding and totalLiabilities
+    const metrics = service.getDashboardMetrics(userId);
+    expect(metrics.creditCardOutstanding).toBe(5000000); // ₹50,000 (direct + EMI)
+    expect(metrics.totalLiabilities).toBe(5000000); // ₹50,000 total liabilities
+  });
 });

@@ -25,6 +25,7 @@ export default function AccountsPage() {
   const { openTransactionModal, showToast, refreshKey, triggerRefresh } = useApp();
 
   const [accounts, setAccounts] = useState<any[]>([]);
+  const [loans, setLoans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isNewAccountModalOpen, setIsNewAccountModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<any | null>(null);
@@ -41,10 +42,16 @@ export default function AccountsPage() {
 
   const fetchAccounts = () => {
     setLoading(true);
-    fetch('/api/accounts')
-      .then(r => r.json())
-      .then(d => {
-        setAccounts(d.accounts || []);
+    Promise.all([
+      fetch('/api/accounts').then(r => r.json()),
+      fetch('/api/loans').then(r => r.json()).catch(() => ({ loans: [] })),
+    ])
+      .then(([dAccounts, dLoans]) => {
+        setAccounts(dAccounts.accounts || []);
+        setLoans(dLoans.loans || []);
+        setLoading(false);
+      })
+      .catch(() => {
         setLoading(false);
       });
   };
@@ -114,6 +121,14 @@ export default function AccountsPage() {
 
   const assets = accounts.filter(a => !a.isLiability);
   const liabilities = accounts.filter(a => a.isLiability);
+  const totalAccountDebt = liabilities.reduce(
+    (sum, a) => sum + (a.totalDebt ?? a.current_balance ?? 0),
+    0
+  );
+  const unattachedLoanDebt = loans
+    .filter(l => !liabilities.some(a => a.id === l.account_id))
+    .reduce((sum, l) => sum + (l.outstanding_principal || 0), 0);
+  const totalDebtOverall = totalAccountDebt + unattachedLoanDebt;
 
   return (
     <>
@@ -321,9 +336,7 @@ export default function AccountsPage() {
             <h2 style={{ fontSize: '1.125rem', fontWeight: 600 }}>Liabilities & Credit Cards</h2>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               ({liabilities.length} accounts • Total Debt: ₹
-              {Math.round(
-                liabilities.reduce((sum, a) => sum + (a.current_balance || 0), 0) / 100
-              ).toLocaleString('en-IN')}
+              {Math.round(totalDebtOverall / 100).toLocaleString('en-IN')}
               )
             </span>
           </div>
@@ -432,7 +445,12 @@ export default function AccountsPage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                     <div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Outstanding Due</div>
-                      <MoneyDisplay amount={card.current_balance} size="xl" weight="bold" colored />
+                      <MoneyDisplay amount={card.totalDebt ?? card.current_balance} size="xl" weight="bold" colored />
+                      {card.emiOutstanding > 0 && (
+                        <div style={{ fontSize: '0.725rem', color: '#a855f7', marginTop: '0.25rem', fontWeight: 500 }}>
+                          Includes ₹{Math.round(card.emiOutstanding / 100).toLocaleString('en-IN')} active EMI
+                        </div>
+                      )}
                     </div>
                     {isCard && card.credit_limit > 0 && (
                       <div style={{ textAlign: 'right' }}>
@@ -479,9 +497,10 @@ export default function AccountsPage() {
                           style={{
                             fontSize: '0.725rem',
                             color: 'var(--text-muted)',
-                            background: 'none',
+                            backgroundColor: 'transparent',
                             border: 'none',
                             cursor: 'pointer',
+                            padding: '2px 4px',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '4px',
@@ -505,6 +524,43 @@ export default function AccountsPage() {
               );
             })}
           </div>
+
+          {loans.length > 0 && (
+            <div
+              className="card"
+              style={{
+                marginTop: '1rem',
+                padding: '0.875rem 1.25rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+                backgroundColor: 'rgba(168, 85, 247, 0.05)',
+                border: '1px solid rgba(168, 85, 247, 0.2)',
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                  Active Purchase EMIs & Bank Loans ({loans.length})
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Total outstanding principal of ₹
+                  {Math.round(
+                    loans.reduce((s, l) => s + (l.outstanding_principal || 0), 0) / 100
+                  ).toLocaleString('en-IN')}{' '}
+                  tracked across repayment schedules.
+                </div>
+              </div>
+              <a
+                href="/loans"
+                className="btn-secondary"
+                style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}
+              >
+                Manage in Loans & EMIs →
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Reconciliation Modal */}

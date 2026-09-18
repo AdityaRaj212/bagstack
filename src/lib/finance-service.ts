@@ -60,17 +60,41 @@ export class FinanceService {
       firstAsset.is_default = 1;
     }
 
+    const emiMap = new Map<string, number>();
+    try {
+      const emiRows = this.db.prepare(`
+        SELECT account_id, COALESCE(SUM(outstanding_principal), 0) as total_emi
+        FROM loans
+        WHERE user_id = ?
+        GROUP BY account_id
+      `).all(userId) as any[];
+      for (const r of emiRows) {
+        emiMap.set(r.account_id, r.total_emi);
+      }
+    } catch {
+      // Table might not exist yet during migration
+    }
+
     return rows.map(acc => {
       const isCreditCard = acc.type === 'credit_card';
       const isLiability = isCreditCard || acc.type === 'loan' || acc.type === 'liability';
-      const availableCredit = isCreditCard ? Math.max(0, acc.credit_limit - acc.current_balance) : 0;
+      const emiOutstanding = emiMap.get(acc.id) || 0;
+      const directDebt = Math.max(0, acc.current_balance);
+      const totalDebt = isCreditCard
+        ? (directDebt + emiOutstanding)
+        : (isLiability ? (directDebt + emiOutstanding) : acc.current_balance);
+      const availableCredit = isCreditCard
+        ? Math.max(0, acc.credit_limit - (directDebt + emiOutstanding))
+        : 0;
       const utilizationRate = (isCreditCard && acc.credit_limit > 0)
-        ? Math.min(100, Math.round((acc.current_balance / acc.credit_limit) * 100))
+        ? Math.min(100, Math.round(((directDebt + emiOutstanding) / acc.credit_limit) * 100))
         : 0;
 
       return {
         ...acc,
         isLiability,
+        emiOutstanding,
+        totalDebt,
         availableCredit,
         utilizationRate,
         is_default: Boolean(acc.is_default),
@@ -85,16 +109,34 @@ export class FinanceService {
     const acc = stmt.get(id, userId) as any;
     if (!acc) return null;
 
+    let emiOutstanding = 0;
+    try {
+      const emiRow = this.db.prepare(`
+        SELECT COALESCE(SUM(outstanding_principal), 0) as total_emi
+        FROM loans
+        WHERE user_id = ? AND account_id = ?
+      `).get(userId, id) as any;
+      emiOutstanding = emiRow?.total_emi || 0;
+    } catch {}
+
     const isCreditCard = acc.type === 'credit_card';
     const isLiability = isCreditCard || acc.type === 'loan' || acc.type === 'liability';
-    const availableCredit = isCreditCard ? Math.max(0, acc.credit_limit - acc.current_balance) : 0;
+    const directDebt = Math.max(0, acc.current_balance);
+    const totalDebt = isCreditCard
+      ? (directDebt + emiOutstanding)
+      : (isLiability ? (directDebt + emiOutstanding) : acc.current_balance);
+    const availableCredit = isCreditCard
+      ? Math.max(0, acc.credit_limit - (directDebt + emiOutstanding))
+      : 0;
     const utilizationRate = (isCreditCard && acc.credit_limit > 0)
-      ? Math.min(100, Math.round((acc.current_balance / acc.credit_limit) * 100))
+      ? Math.min(100, Math.round(((directDebt + emiOutstanding) / acc.credit_limit) * 100))
       : 0;
 
     return {
       ...acc,
       isLiability,
+      emiOutstanding,
+      totalDebt,
       availableCredit,
       utilizationRate,
       is_default: Boolean(acc.is_default),
@@ -870,7 +912,8 @@ export class FinanceService {
 
       if (acc.type === 'credit_card') {
         const outstanding = Math.max(0, acc.current_balance);
-        creditCardOutstanding += outstanding;
+        const cardEmi = acc.emiOutstanding || 0;
+        creditCardOutstanding += (outstanding + cardEmi);
         totalLiabilities += outstanding;
         if (acc.current_balance < 0) {
           totalAssets += Math.abs(acc.current_balance);
