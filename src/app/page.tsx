@@ -656,7 +656,7 @@ export default function DashboardPage() {
 
                     <div style={{ textAlign: 'right' }}>
                       <MoneyDisplay
-                        amount={tx.amount}
+                        amount={isTransfer ? tx.amount : (isIncome ? tx.amount : -tx.amount)}
                         size="sm"
                         weight="bold"
                         colored={!isTransfer}

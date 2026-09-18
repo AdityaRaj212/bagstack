@@ -363,147 +363,226 @@ export default function TransactionsPage() {
             No transactions found for {selectedMonth ? formatMonthDisplay(selectedMonth) : 'this selection'}.
           </div>
         ) : (
-          <div>
-            {groupedByDate.map(group => {
-              const dayNet = group.dayIncome - group.dayExpense;
+          <div style={{ overflowX: 'auto', width: '100%' }}>
+            <table
+              style={{
+                width: '100%',
+                minWidth: '680px',
+                borderCollapse: 'collapse',
+                textAlign: 'left',
+                fontSize: '0.875rem',
+                tableLayout: 'fixed',
+              }}
+            >
+              <colgroup>
+                <col style={{ width: '38%' }} />
+                <col style={{ width: '18%' }} />
+                <col style={{ width: '18%' }} />
+                <col style={{ width: '16%' }} />
+                <col style={{ width: '10%', minWidth: '70px' }} />
+              </colgroup>
+              <tbody>
+                {groupedByDate.map(group => (
+                  <React.Fragment key={group.date}>
+                    {/* Date Header Row */}
+                    <tr
+                      style={{
+                        backgroundColor: 'var(--bg-subtle, rgba(255, 255, 255, 0.02))',
+                        borderTop: '1px solid var(--border-default)',
+                        borderBottom: '1px solid var(--border-subtle)',
+                      }}
+                    >
+                      <td colSpan={5} style={{ padding: '0.55rem 1rem' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: 'var(--text-muted)',
+                            letterSpacing: '0.02em',
+                          }}
+                        >
+                          <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>
+                            {group.displayDate}
+                          </span>
+                          <span style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
+                            {group.dayExpense > 0 && (
+                              <span>
+                                Spent: <strong style={{ color: 'var(--text-primary)' }}>₹{(group.dayExpense / 100).toLocaleString('en-IN')}</strong>
+                              </span>
+                            )}
+                            {group.dayIncome > 0 && (
+                              <span style={{ color: 'var(--color-income)' }}>
+                                Income: <strong>+₹{(group.dayIncome / 100).toLocaleString('en-IN')}</strong>
+                              </span>
+                            )}
+                            <span>
+                              ({group.items.length} {group.items.length === 1 ? 'txn' : 'txns'})
+                            </span>
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
 
-              return (
-                <div key={group.date} className="txn-date-group">
-                  {/* Date Header with Day Subtotal */}
-                  <div className="txn-date-header">
-                    <span className="txn-date-title">{group.displayDate}</span>
-                    <span className="txn-day-subtotal">
-                      {group.dayExpense > 0 && (
-                        <span>
-                          Spent: <strong>₹{(group.dayExpense / 100).toLocaleString('en-IN')}</strong>
-                        </span>
-                      )}
-                      {group.dayIncome > 0 && (
-                        <span style={{ color: 'var(--color-income)' }}>
-                          Income: <strong>+₹{(group.dayIncome / 100).toLocaleString('en-IN')}</strong>
-                        </span>
-                      )}
-                      <span>({group.items.length} {group.items.length === 1 ? 'txn' : 'txns'})</span>
-                    </span>
-                  </div>
+                    {/* Transactions under this Date */}
+                    {group.items.map(tx => {
+                      const isIncome = tx.type === 'income';
+                      const isTransfer = tx.type === 'transfer';
 
-                  {/* Transactions under this Date */}
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
-                    <tbody>
-                      {group.items.map(tx => {
-                        const isIncome = tx.type === 'income';
-                        const isTransfer = tx.type === 'transfer';
-
-                        return (
-                          <tr
-                            key={tx.id}
-                            style={{ borderBottom: '1px solid var(--border-subtle)' }}
-                            className="card-interactive"
-                          >
-                            <td style={{ padding: '0.75rem 1rem', width: '40%' }}>
-                              <div
-                                style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}
-                                onClick={() => openTransactionModal(tx.type, tx.account_id, tx)}
-                                title="Click to edit transaction"
-                              >
-                                {isTransfer ? (
-                                  <span>
-                                    {tx.destination_account_name
-                                      ? `Transfer to ${tx.destination_account_name}`
-                                      : `Transfer from ${tx.peer_account_name}`}
-                                  </span>
-                                ) : (
-                                  <span>{tx.merchant_name || 'Direct Entry'}</span>
-                                )}
-                              </div>
-                              {tx.notes && (
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{tx.notes}</div>
-                              )}
-                              {tx.splits?.length > 0 && (
-                                <div style={{ fontSize: '0.7rem', color: 'var(--brand-primary)', display: 'flex', gap: '0.25rem', marginTop: '0.2rem' }}>
-                                  <Layers size={12} /> {tx.splits.length} splits
-                                </div>
-                              )}
-                              {tx.tags?.length > 0 && (
-                                <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
-                                  {tx.tags.map((t: string) => (
-                                    <span
-                                      key={t}
-                                      style={{
-                                        fontSize: '0.6875rem',
-                                        padding: '1px 6px',
-                                        borderRadius: '4px',
-                                        backgroundColor: 'var(--bg-subtle)',
-                                        color: 'var(--text-secondary)',
-                                        border: '1px solid var(--border-subtle)',
-                                      }}
-                                    >
-                                      #{t}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </td>
-
-                            <td style={{ padding: '0.75rem 1rem' }}>
+                      return (
+                        <tr
+                          key={tx.id}
+                          style={{ borderBottom: '1px solid var(--border-subtle)' }}
+                          className="card-interactive"
+                        >
+                          {/* Col 1: Title & Notes & Splits & Tags */}
+                          <td style={{ padding: '0.75rem 1rem', verticalAlign: 'middle' }}>
+                            <div
+                              style={{
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                                cursor: 'pointer',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                              onClick={() => openTransactionModal(tx.type, tx.account_id, tx)}
+                              title="Click to edit transaction"
+                            >
                               {isTransfer ? (
-                                <span className="badge badge-transfer">Transfer</span>
-                              ) : tx.category_name ? (
-                                <span
-                                  className="badge"
-                                  style={{
-                                    backgroundColor: `${tx.category_color || '#4f46e5'}20`,
-                                    color: tx.category_color || 'var(--brand-primary)',
-                                  }}
-                                >
-                                  {tx.category_name}
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {tx.destination_account_name
+                                    ? `Transfer to ${tx.destination_account_name}`
+                                    : `Transfer from ${tx.peer_account_name}`}
                                 </span>
                               ) : (
-                                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Uncategorized</span>
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {tx.merchant_name || 'Direct Entry'}
+                                </span>
                               )}
-                            </td>
-
-                            <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap', color: 'var(--text-secondary)' }}>
-                              {tx.account_name}
-                            </td>
-
-                            <td style={{ padding: '0.75rem 1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                              <MoneyDisplay
-                                amount={tx.amount}
-                                weight="bold"
-                                colored={!isTransfer}
-                                showSign={!isTransfer}
-                              />
-                            </td>
-
-                            <td style={{ padding: '0.75rem 1rem', textAlign: 'center', width: '72px', whiteSpace: 'nowrap' }}>
-                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <button
-                                  className="btn-icon"
-                                  onClick={() => openTransactionModal(tx.type, tx.account_id, tx)}
-                                  title="Edit transaction"
-                                  style={{ color: 'var(--text-muted)', width: '28px', height: '28px' }}
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                                <button
-                                  className="btn-icon"
-                                  onClick={() => handleDelete(tx.id, tx.merchant_name)}
-                                  title="Delete transaction (with undo)"
-                                  style={{ color: 'var(--text-muted)', width: '28px', height: '28px' }}
-                                >
-                                  <Trash2 size={14} />
-                                </button>
+                            </div>
+                            {tx.notes && (
+                              <div
+                                style={{
+                                  fontSize: '0.75rem',
+                                  color: 'var(--text-muted)',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                                title={tx.notes}
+                              >
+                                {tx.notes}
                               </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              );
-            })}
+                            )}
+                            {tx.splits?.length > 0 && (
+                              <div style={{ fontSize: '0.7rem', color: 'var(--brand-primary)', display: 'flex', gap: '0.25rem', marginTop: '0.2rem' }}>
+                                <Layers size={12} /> {tx.splits.length} splits
+                              </div>
+                            )}
+                            {tx.tags?.length > 0 && (
+                              <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                                {tx.tags.map((t: string) => (
+                                  <span
+                                    key={t}
+                                    style={{
+                                      fontSize: '0.6875rem',
+                                      padding: '1px 6px',
+                                      borderRadius: '4px',
+                                      backgroundColor: 'var(--bg-subtle)',
+                                      color: 'var(--text-secondary)',
+                                      border: '1px solid var(--border-subtle)',
+                                    }}
+                                  >
+                                    #{t}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Col 2: Category Badge */}
+                          <td style={{ padding: '0.75rem 1rem', verticalAlign: 'middle' }}>
+                            {isTransfer ? (
+                              <span className="badge badge-transfer">Transfer</span>
+                            ) : tx.category_name ? (
+                              <span
+                                className="badge"
+                                style={{
+                                  backgroundColor: `${tx.category_color || '#4f46e5'}20`,
+                                  color: tx.category_color || 'var(--brand-primary)',
+                                  maxWidth: '100%',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  display: 'inline-block',
+                                }}
+                              >
+                                {tx.category_name}
+                              </span>
+                            ) : (
+                              <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Uncategorized</span>
+                            )}
+                          </td>
+
+                          {/* Col 3: Account Name */}
+                          <td style={{ padding: '0.75rem 1rem', verticalAlign: 'middle' }}>
+                            <span
+                              style={{
+                                color: 'var(--text-secondary)',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                display: 'block',
+                              }}
+                              title={tx.account_name}
+                            >
+                              {tx.account_name}
+                            </span>
+                          </td>
+
+                          {/* Col 4: Amount */}
+                          <td style={{ padding: '0.75rem 1rem', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                            <MoneyDisplay
+                              amount={isTransfer ? tx.amount : (isIncome ? tx.amount : -tx.amount)}
+                              weight="bold"
+                              colored={!isTransfer}
+                              showSign={!isTransfer}
+                            />
+                          </td>
+
+                          {/* Col 5: Actions */}
+                          <td style={{ padding: '0.75rem 1rem', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', width: '100%' }}>
+                              <button
+                                className="btn-icon"
+                                onClick={() => openTransactionModal(tx.type, tx.account_id, tx)}
+                                title="Edit transaction"
+                                style={{ color: 'var(--text-muted)', width: '28px', height: '28px' }}
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                              <button
+                                className="btn-icon"
+                                onClick={() => handleDelete(tx.id, tx.merchant_name)}
+                                title="Delete transaction (with undo)"
+                                style={{ color: 'var(--text-muted)', width: '28px', height: '28px' }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
-import { getDb } from './db';
+import { getDb, syncTurso } from './db';
 import { toMinorUnits, addMoney, subtractMoney, sumMoney } from './money';
 
 export interface CreateAccountDTO {
@@ -1583,26 +1583,45 @@ export class FinanceService {
     const id = `loan_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const amort = this.calculateLoanAmortization(data.principal, data.interestRate, data.tenureMonths, data.startDate);
 
-    this.db.prepare(`
-      INSERT INTO loans (
-        id, user_id, account_id, name, principal, outstanding_principal,
-        interest_rate, emi_amount, tenure_months, start_date, emi_day, type, notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      id,
-      data.userId,
-      data.accountId,
-      data.name,
-      data.principal,
-      data.outstandingPrincipal,
-      data.interestRate,
-      amort.monthlyEmi,
-      data.tenureMonths,
-      data.startDate,
-      data.emiDay || 5,
-      data.type || 'loan',
-      data.notes || ''
-    );
+    const runInsert = () => {
+      this.db.prepare(`
+        INSERT INTO loans (
+          id, user_id, account_id, name, principal, outstanding_principal,
+          interest_rate, emi_amount, tenure_months, start_date, emi_day, type, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        id,
+        data.userId,
+        data.accountId,
+        data.name,
+        data.principal,
+        data.outstandingPrincipal,
+        data.interestRate,
+        amort.monthlyEmi,
+        data.tenureMonths,
+        data.startDate,
+        data.emiDay || 5,
+        data.type || 'loan',
+        data.notes || ''
+      );
+    };
+
+    try {
+      runInsert();
+    } catch (err: any) {
+      if (err?.message?.includes('no column named') || err?.message?.includes('table loans')) {
+        try { this.db.exec(`ALTER TABLE loans ADD COLUMN principal INTEGER DEFAULT 0`); } catch {}
+        try { this.db.exec(`ALTER TABLE loans ADD COLUMN outstanding_principal INTEGER DEFAULT 0`); } catch {}
+        try { this.db.exec(`ALTER TABLE loans ADD COLUMN tenure_months INTEGER DEFAULT 12`); } catch {}
+        try { this.db.exec(`ALTER TABLE loans ADD COLUMN emi_day INTEGER DEFAULT 5`); } catch {}
+        try { this.db.exec(`ALTER TABLE loans ADD COLUMN type TEXT DEFAULT 'loan'`); } catch {}
+        try { this.db.exec(`ALTER TABLE loans ADD COLUMN notes TEXT`); } catch {}
+        syncTurso(true);
+        runInsert();
+      } else {
+        throw err;
+      }
+    }
 
     return id;
   }

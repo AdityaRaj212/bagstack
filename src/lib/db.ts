@@ -22,21 +22,35 @@ export function syncTurso(force = false) {
 }
 
 function attachAutoSync(db: any) {
-  if (!db || typeof db.prepare !== 'function' || typeof db.sync !== 'function') return;
-  const originalPrepare = db.prepare.bind(db);
-  db.prepare = function (sql: string) {
-    const stmt = originalPrepare(sql);
-    const isWrite = /^\s*(INSERT|UPDATE|DELETE|REPLACE|ALTER|CREATE|DROP)\b/i.test(sql);
-    if (isWrite && typeof stmt.run === 'function') {
-      const originalRun = stmt.run.bind(stmt);
-      stmt.run = function (...args: any[]) {
-        const result = originalRun(...args);
-        syncTurso(true); // Push changes to Turso cloud immediately on write!
-        return result;
-      };
-    }
-    return stmt;
-  };
+  if (!db || typeof db.sync !== 'function') return;
+  if (typeof db.prepare === 'function') {
+    const originalPrepare = db.prepare.bind(db);
+    db.prepare = function (sql: string) {
+      const stmt = originalPrepare(sql);
+      const isWrite = /^\s*(INSERT|UPDATE|DELETE|REPLACE|ALTER|CREATE|DROP)\b/i.test(sql);
+      if (isWrite && typeof stmt.run === 'function') {
+        const originalRun = stmt.run.bind(stmt);
+        stmt.run = function (...args: any[]) {
+          const result = originalRun(...args);
+          syncTurso(true); // Push changes to Turso cloud immediately on write!
+          return result;
+        };
+      }
+      return stmt;
+    };
+  }
+
+  if (typeof db.exec === 'function') {
+    const originalExec = db.exec.bind(db);
+    db.exec = function (sql: string) {
+      const result = originalExec(sql);
+      const isWrite = /^\s*(INSERT|UPDATE|DELETE|REPLACE|ALTER|CREATE|DROP)\b/i.test(sql);
+      if (isWrite) {
+        syncTurso(true);
+      }
+      return result;
+    };
+  }
 }
 
 export function getDb(dbPath?: string): any {
@@ -127,14 +141,21 @@ export function getDb(dbPath?: string): any {
 }
 
 export function initSchema(db: DatabaseSync) {
-  // Fast path: Check if tables are already created & migrated (0ms vs 4000ms cold start)
+  // Fast path: Check if tables are already created & fully migrated (0ms vs cold start)
+  let isFullyMigrated = false;
   try {
-    const isReady = (db as any).prepare("SELECT 1 FROM pragma_table_info('goals') WHERE name = 'notes'").get();
-    if (isReady) {
-      return;
+    const hasGoalNotes = (db as any).prepare("SELECT 1 FROM pragma_table_info('goals') WHERE name = 'notes'").get();
+    const hasLoanType = (db as any).prepare("SELECT 1 FROM pragma_table_info('loans') WHERE name = 'type'").get();
+    const hasLoanNotes = (db as any).prepare("SELECT 1 FROM pragma_table_info('loans') WHERE name = 'notes'").get();
+    if (hasGoalNotes && hasLoanType && hasLoanNotes) {
+      isFullyMigrated = true;
     }
   } catch {
-    // Needs full initialization
+    isFullyMigrated = false;
+  }
+
+  if (isFullyMigrated) {
+    return;
   }
 
   db.exec(`
@@ -463,6 +484,8 @@ export function initSchema(db: DatabaseSync) {
   } catch {
     // Ignore
   }
+
+  syncTurso(true);
 }
 
 /**
