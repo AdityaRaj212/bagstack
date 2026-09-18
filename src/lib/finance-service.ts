@@ -604,6 +604,141 @@ export class FinanceService {
     };
   }
 
+  updateTransaction(id: string, userId: string, data: {
+    accountId?: string;
+    destinationAccountId?: string;
+    type?: 'expense' | 'income' | 'transfer';
+    amount?: number;
+    date?: string;
+    merchantName?: string;
+    categoryId?: string;
+    notes?: string;
+    status?: string;
+    tags?: string[];
+    splits?: Array<{ categoryId: string; amount: number; notes?: string }>;
+  }) {
+    const existing = this.getTransactionById(id, userId);
+    if (!existing) throw new Error('Transaction not found');
+
+    const newType = data.type || existing.type;
+    const newAmount = data.amount !== undefined ? data.amount : existing.amount;
+    const newDate = data.date || existing.date;
+    const newNotes = data.notes !== undefined ? data.notes : existing.notes;
+    const newStatus = data.status || existing.status || 'cleared';
+    const newCategoryId = data.categoryId !== undefined ? data.categoryId : existing.category_id;
+    const newMerchantName = data.merchantName !== undefined ? data.merchantName : existing.merchant_name;
+    const newAccountId = data.accountId || existing.account_id;
+
+    if (existing.transfer_group_id || newType === 'transfer') {
+      const transferGroupId = existing.transfer_group_id;
+      if (!transferGroupId) {
+        throw new Error('Converting regular transaction to transfer is not supported directly');
+      }
+
+      const newDestAccountId = data.destinationAccountId || existing.destination_account_id || existing.transfer_peer_account_id;
+      if (!newDestAccountId) throw new Error('Destination account is required for transfers');
+      if (newAccountId === newDestAccountId) throw new Error('Source and destination accounts must be different');
+
+      // Fetch both transfer legs
+      const legs = this.db.prepare('SELECT * FROM transactions WHERE transfer_group_id = ?').all(transferGroupId) as any[];
+      const outLeg = legs.find(l => Boolean(l.destination_account_id)) || legs[0];
+      const inLeg = legs.find(l => Boolean(l.transfer_peer_account_id)) || legs[1];
+
+      const oldAccountsToRecalc = new Set<string>();
+      if (outLeg) oldAccountsToRecalc.add(outLeg.account_id);
+      if (inLeg) oldAccountsToRecalc.add(inLeg.account_id);
+
+      // Update outgoing leg
+      if (outLeg) {
+        this.db.prepare(`
+          UPDATE transactions
+          SET account_id = ?, amount = ?, date = ?, notes = ?, destination_account_id = ?, status = ?
+          WHERE id = ?
+        `).run(newAccountId, newAmount, newDate, newNotes, newDestAccountId, newStatus, outLeg.id);
+      }
+
+      // Update incoming leg
+      if (inLeg) {
+        this.db.prepare(`
+          UPDATE transactions
+          SET account_id = ?, amount = ?, date = ?, notes = ?, transfer_peer_account_id = ?, status = ?
+          WHERE id = ?
+        `).run(newDestAccountId, newAmount, newDate, newNotes, newAccountId, newStatus, inLeg.id);
+      }
+
+      oldAccountsToRecalc.add(newAccountId);
+      oldAccountsToRecalc.add(newDestAccountId);
+
+      for (const accId of oldAccountsToRecalc) {
+        this.recalculateAccountBalance(accId);
+      }
+
+      return this.getTransactionById(id, userId);
+    }
+
+    // Expense or Income update
+    const oldAccountId = existing.account_id;
+    const merchantId = newMerchantName ? this.findOrCreateMerchant(userId, newMerchantName, newCategoryId) : null;
+
+    this.db.prepare(`
+      UPDATE transactions
+      SET account_id = ?, type = ?, amount = ?, date = ?, merchant_id = ?,
+          merchant_name = ?, category_id = ?, notes = ?, status = ?
+      WHERE id = ? AND user_id = ?
+    `).run(
+      newAccountId,
+      newType,
+      newAmount,
+      newDate,
+      merchantId,
+      newMerchantName || null,
+      newCategoryId || null,
+      newNotes || null,
+      newStatus,
+      id,
+      userId
+    );
+
+    // Update splits if provided
+    if (data.splits !== undefined) {
+      this.db.prepare('DELETE FROM transaction_splits WHERE transaction_id = ?').run(id);
+      if (data.splits.length > 0) {
+        const splitStmt = this.db.prepare(`
+          INSERT INTO transaction_splits (id, transaction_id, category_id, amount, notes)
+          VALUES (?, ?, ?, ?, ?)
+        `);
+        for (const split of data.splits) {
+          const splitId = `sp_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
+          splitStmt.run(splitId, id, split.categoryId, split.amount, split.notes || null);
+        }
+      }
+    }
+
+    // Update tags if provided
+    if (data.tags !== undefined) {
+      this.db.prepare('DELETE FROM transaction_tags WHERE transaction_id = ?').run(id);
+      if (data.tags.length > 0) {
+        const linkInsert = this.db.prepare(`
+          INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)
+        `);
+        for (const tag of data.tags) {
+          const cleanTag = tag.trim().replace(/^#/, '');
+          if (!cleanTag) continue;
+          const tagObj = this.createTag(userId, cleanTag);
+          linkInsert.run(id, tagObj.id);
+        }
+      }
+    }
+
+    // Recalculate balances
+    this.recalculateAccountBalance(oldAccountId);
+    if (newAccountId !== oldAccountId) {
+      this.recalculateAccountBalance(newAccountId);
+    }
+
+    return this.getTransactionById(id, userId);
+  }
+
   getTransactions(userId: string, filters: {
     accountId?: string;
     categoryId?: string;

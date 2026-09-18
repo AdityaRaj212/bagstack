@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
+  Edit2,
 } from 'lucide-react';
 
 export default function TransactionsPage() {
@@ -400,7 +401,11 @@ export default function TransactionsPage() {
                             className="card-interactive"
                           >
                             <td style={{ padding: '0.75rem 1rem', width: '40%' }}>
-                              <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <div
+                                style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}
+                                onClick={() => openTransactionModal(tx.type, tx.account_id, tx)}
+                                title="Click to edit transaction"
+                              >
                                 {isTransfer ? (
                                   <span>
                                     {tx.destination_account_name
@@ -471,15 +476,25 @@ export default function TransactionsPage() {
                               />
                             </td>
 
-                            <td style={{ padding: '0.75rem 1rem', textAlign: 'center', width: '44px' }}>
-                              <button
-                                className="btn-icon"
-                                onClick={() => handleDelete(tx.id, tx.merchant_name)}
-                                title="Delete transaction (with undo)"
-                                style={{ color: 'var(--text-muted)', width: '28px', height: '28px' }}
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                            <td style={{ padding: '0.75rem 1rem', textAlign: 'center', width: '72px', whiteSpace: 'nowrap' }}>
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <button
+                                  className="btn-icon"
+                                  onClick={() => openTransactionModal(tx.type, tx.account_id, tx)}
+                                  title="Edit transaction"
+                                  style={{ color: 'var(--text-muted)', width: '28px', height: '28px' }}
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button
+                                  className="btn-icon"
+                                  onClick={() => handleDelete(tx.id, tx.merchant_name)}
+                                  title="Delete transaction (with undo)"
+                                  style={{ color: 'var(--text-muted)', width: '28px', height: '28px' }}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );

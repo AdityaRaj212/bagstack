@@ -50,6 +50,7 @@ export const TransactionModal = () => {
     preselectedAccountId,
     showToast,
     triggerRefresh,
+    editingTransaction,
   } = useApp();
 
   const [type, setType] = useState<'expense' | 'income' | 'transfer'>(transactionModalType);
@@ -151,19 +152,54 @@ export const TransactionModal = () => {
 
   useEffect(() => {
     if (isTransactionModalOpen) {
-      setType(transactionModalType);
-      setAmountStr('');
-      setMerchantName('');
-      setCategoryId('');
-      setCategorySearch('');
-      setCategoryDropdownOpen(false);
-      setPendingKeepOpen(false);
-      setNotes('');
-      setSelectedTags([]);
-      setTagInput('');
-      setShowSplits(false);
-      setDuplicateWarning(null);
-      setDate(new Date().toISOString().substring(0, 10));
+      if (editingTransaction) {
+        setType(editingTransaction.type || 'expense');
+        setAmountStr((editingTransaction.amount / 100).toString());
+        setAccountId(editingTransaction.account_id || '');
+        setDestinationAccountId(editingTransaction.destination_account_id || editingTransaction.transfer_peer_account_id || '');
+        setMerchantName(editingTransaction.merchant_name || '');
+        setCategoryId(editingTransaction.category_id || '');
+        setCategorySearch('');
+        setCategoryDropdownOpen(false);
+        setPendingKeepOpen(false);
+        setNotes(editingTransaction.notes || '');
+        setSelectedTags(editingTransaction.tags?.map((t: string) => ({ id: t, name: t, color: '#3B82F6' })) || []);
+        setTagInput('');
+        setDuplicateWarning(null);
+        setDate(editingTransaction.date || new Date().toISOString().substring(0, 10));
+        if (editingTransaction.splits && editingTransaction.splits.length > 0) {
+          setSplits(editingTransaction.splits.map((s: any) => ({
+            categoryId: s.category_id,
+            amountStr: (s.amount / 100).toString(),
+            notes: s.notes || '',
+          })));
+          setShowSplits(true);
+        } else {
+          setShowSplits(false);
+          setSplits([
+            { categoryId: '', amountStr: '', notes: '' },
+            { categoryId: '', amountStr: '', notes: '' },
+          ]);
+        }
+      } else {
+        setType(transactionModalType);
+        setAmountStr('');
+        setMerchantName('');
+        setCategoryId('');
+        setCategorySearch('');
+        setCategoryDropdownOpen(false);
+        setPendingKeepOpen(false);
+        setNotes('');
+        setSelectedTags([]);
+        setTagInput('');
+        setShowSplits(false);
+        setDuplicateWarning(null);
+        setDate(new Date().toISOString().substring(0, 10));
+        setSplits([
+          { categoryId: '', amountStr: '', notes: '' },
+          { categoryId: '', amountStr: '', notes: '' },
+        ]);
+      }
 
       // Fetch accounts and categories
       fetch('/api/accounts')
@@ -171,15 +207,16 @@ export const TransactionModal = () => {
         .then(d => {
           if (d.accounts) {
             setAccounts(d.accounts);
-            if (preselectedAccountId) {
-              setAccountId(preselectedAccountId);
-            } else {
-              // Preselect default account if available, else first account
-              const defaultAcc = d.accounts.find((a: any) => Boolean(a.is_default)) || d.accounts[0];
-              if (defaultAcc) {
-                setAccountId(defaultAcc.id);
-                const otherAcc = d.accounts.find((a: any) => a.id !== defaultAcc.id);
-                if (otherAcc) setDestinationAccountId(otherAcc.id);
+            if (!editingTransaction) {
+              if (preselectedAccountId) {
+                setAccountId(preselectedAccountId);
+              } else {
+                const defaultAcc = d.accounts.find((a: any) => Boolean(a.is_default)) || d.accounts[0];
+                if (defaultAcc) {
+                  setAccountId(defaultAcc.id);
+                  const otherAcc = d.accounts.find((a: any) => a.id !== defaultAcc.id);
+                  if (otherAcc) setDestinationAccountId(otherAcc.id);
+                }
               }
             }
           }
@@ -193,7 +230,7 @@ export const TransactionModal = () => {
 
       loadMerchantsAndTags();
     }
-  }, [isTransactionModalOpen, transactionModalType, preselectedAccountId]);
+  }, [isTransactionModalOpen, transactionModalType, preselectedAccountId, editingTransaction]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -409,6 +446,43 @@ export const TransactionModal = () => {
     setPendingKeepOpen(keepOpen);
 
     try {
+      if (editingTransaction) {
+        const res = await fetch('/api/transactions', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: editingTransaction.id,
+            accountId,
+            destinationAccountId: type === 'transfer' ? destinationAccountId : undefined,
+            type,
+            amount: minorAmount,
+            date,
+            merchantName: merchantName.trim() || undefined,
+            categoryId: categoryId || undefined,
+            notes: notes.trim() || undefined,
+            splits: showSplits ? formattedSplits : undefined,
+            tags: selectedTags.map(t => t.name),
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        triggerRefresh();
+        showToast('Transaction updated successfully!');
+        closeTransactionModal();
+        return;
+      }
+
+      // Immediately cache any newly typed payee locally so subsequent transactions recognize it right away
+      const trimmedMerchant = merchantName.trim();
+      if (trimmedMerchant) {
+        setMerchantsList(prev => {
+          if (prev.some(m => m.name.toLowerCase() === trimmedMerchant.toLowerCase())) return prev;
+          return [{ id: `mer_${Date.now()}`, name: trimmedMerchant, default_category_id: categoryId || undefined }, ...prev];
+        });
+      }
+
       if (type === 'transfer') {
         const res = await fetch('/api/transfers', {
           method: 'POST',
@@ -430,6 +504,7 @@ export const TransactionModal = () => {
           showToast(`Transfer of ₹${resolvedAmountStr} recorded! Ready for next on ${formatDateDMY(date)}.`);
           setAmountStr('');
           setNotes('');
+          loadMerchantsAndTags();
           setTimeout(() => {
             amountInputRef.current?.focus();
           }, 50);
@@ -481,6 +556,8 @@ export const TransactionModal = () => {
             { categoryId: '', amountStr: '', notes: '' },
             { categoryId: '', amountStr: '', notes: '' },
           ]);
+          // Reload merchants so autocomplete has fresh database records
+          loadMerchantsAndTags();
           setTimeout(() => {
             amountInputRef.current?.focus();
           }, 50);
@@ -599,7 +676,9 @@ export const TransactionModal = () => {
         >
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 600 }}>Record Transaction</h2>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+              {editingTransaction ? 'Edit Transaction' : 'Record Transaction'}
+            </h2>
             <button className="btn-icon" onClick={closeTransactionModal}>
               <X size={18} />
             </button>
@@ -1685,25 +1764,29 @@ export const TransactionModal = () => {
             <button className="btn-secondary" onClick={closeTransactionModal} disabled={loading}>
               Cancel
             </button>
-            <button
-              className="btn-secondary"
-              type="button"
-              onClick={() => handleSubmit(false, true)}
-              disabled={loading}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                borderColor: 'rgba(79, 70, 229, 0.4)',
-                color: 'var(--brand-primary)',
-                fontWeight: 600,
-              }}
-              title="Save this transaction and keep the modal open with the same date for entering another"
-            >
-              <Plus size={15} /> Save & Add Another
-            </button>
+            {!editingTransaction && (
+              <button
+                className="btn-secondary"
+                type="button"
+                onClick={() => handleSubmit(false, true)}
+                disabled={loading}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  borderColor: 'rgba(79, 70, 229, 0.4)',
+                  color: 'var(--brand-primary)',
+                  fontWeight: 600,
+                }}
+                title="Save this transaction and keep the modal open with the same date for entering another"
+              >
+                <Plus size={15} /> Save & Add Another
+              </button>
+            )}
             <button className="btn-primary" onClick={() => handleSubmit(false, false)} disabled={loading}>
-              {loading ? 'Saving...' : 'Save Transaction'}
+              {loading
+                ? (editingTransaction ? 'Updating...' : 'Saving...')
+                : (editingTransaction ? 'Update Transaction' : 'Save Transaction')}
             </button>
           </div>
         </div>

@@ -447,4 +447,51 @@ describe('Finance Domain Business Logic Tests', () => {
     expect(metricsAfter.totalLiabilities).toBe(5000000); // ₹50,000 remaining liabilities
     expect(metricsAfter.netWorth).toBe(9000000 - 5000000); // ₹40,000 (net worth preserved!)
   });
+
+  it('updates an existing expense transaction and recalculates account balances accurately', () => {
+    const acc1 = service.createAccount({
+      userId,
+      name: 'Kotak Savings',
+      type: 'savings',
+      openingBalance: 1000000, // ₹10,000
+    });
+    const acc2 = service.createAccount({
+      userId,
+      name: 'ICICI Savings',
+      type: 'savings',
+      openingBalance: 1000000, // ₹10,000
+    });
+
+    // Create an initial expense of ₹2,000 in Kotak
+    const tx = service.createTransaction({
+      userId,
+      accountId: acc1.id,
+      type: 'expense',
+      amount: 200000, // ₹2,000
+      date: '2026-03-01',
+      merchantName: 'Initial Payee',
+      notes: 'Initial note',
+    });
+
+    expect(service.getAccountById(acc1.id, userId)?.current_balance).toBe(800000); // 10,000 - 2,000 = 8,000
+
+    // Edit transaction: change amount to ₹3,500, switch account to ICICI, and update payee
+    const updated = service.updateTransaction(tx.id, userId, {
+      accountId: acc2.id,
+      amount: 350000, // ₹3,500
+      merchantName: 'Updated Payee',
+      notes: 'Updated note',
+      date: '2026-03-02',
+    });
+
+    expect(updated.amount).toBe(350000);
+    expect(updated.merchant_name).toBe('Updated Payee');
+    expect(updated.notes).toBe('Updated note');
+    expect(updated.account_id).toBe(acc2.id);
+
+    // Kotak should revert back to ₹10,000
+    expect(service.getAccountById(acc1.id, userId)?.current_balance).toBe(1000000);
+    // ICICI should now be 10,000 - 3,500 = 6,500
+    expect(service.getAccountById(acc2.id, userId)?.current_balance).toBe(650000);
+  });
 });

@@ -86,6 +86,36 @@ export async function POST(req: Request) {
   }
 }
 
+export async function PUT(req: Request) {
+  try {
+    const user = getCurrentUser(req);
+    const body = await req.json();
+
+    if (!body.id) {
+      return NextResponse.json({ error: 'Transaction id is required' }, { status: 400 });
+    }
+
+    const service = new FinanceService();
+    const transaction = service.updateTransaction(body.id, user.id, {
+      accountId: body.accountId,
+      destinationAccountId: body.destinationAccountId,
+      type: body.type,
+      amount: body.amount,
+      date: body.date,
+      merchantName: body.merchantName,
+      categoryId: body.categoryId,
+      notes: body.notes,
+      status: body.status,
+      tags: body.tags,
+      splits: body.splits,
+    });
+
+    return NextResponse.json({ transaction });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Failed to update transaction' }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: Request) {
   try {
     const user = getCurrentUser(req);

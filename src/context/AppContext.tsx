@@ -31,8 +31,9 @@ interface AppContextType {
   deleteUser: (userId: string) => Promise<boolean>;
   updateUserName: (userId: string, name: string) => Promise<boolean>;
   isTransactionModalOpen: boolean;
-  openTransactionModal: (initialType?: 'expense' | 'income' | 'transfer', accountId?: string) => void;
+  openTransactionModal: (initialType?: 'expense' | 'income' | 'transfer', accountId?: string, editingTransaction?: any) => void;
   closeTransactionModal: () => void;
+  editingTransaction: any;
   isCommandPaletteOpen: boolean;
   openCommandPalette: () => void;
   closeCommandPalette: () => void;
@@ -77,6 +78,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [transactionModalType, setTransactionModalType] = useState<'expense' | 'income' | 'transfer'>('expense');
   const [preselectedAccountId, setPreselectedAccountId] = useState<string | undefined>();
+  const [editingTransaction, setEditingTransaction] = useState<any>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -206,14 +208,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     applyThemeToDOM(newTheme);
   }, []);
 
-  const openTransactionModal = useCallback((type: 'expense' | 'income' | 'transfer' = 'expense', accountId?: string) => {
+  const openTransactionModal = useCallback((type: 'expense' | 'income' | 'transfer' = 'expense', accountId?: string, editTx?: any) => {
     setTransactionModalType(type);
     setPreselectedAccountId(accountId);
+    setEditingTransaction(editTx || null);
     setIsTransactionModalOpen(true);
   }, []);
 
   const closeTransactionModal = useCallback(() => {
     setIsTransactionModalOpen(false);
+    setEditingTransaction(null);
   }, []);
 
   const openCommandPalette = useCallback(() => setIsCommandPaletteOpen(true), []);
@@ -226,17 +230,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+      const isInput = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
 
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      // Cmd+K / Ctrl+K - open or toggle command palette everywhere
+      if ((e.metaKey || e.ctrlKey) && (e.key.toLowerCase() === 'k' || e.code === 'KeyK')) {
         e.preventDefault();
+        e.stopPropagation();
         setIsCommandPaletteOpen(prev => !prev);
         return;
       }
 
       if (e.key === 'Escape') {
         if (isCommandPaletteOpen) setIsCommandPaletteOpen(false);
-        if (isTransactionModalOpen) setIsTransactionModalOpen(false);
+        if (isTransactionModalOpen) {
+          setIsTransactionModalOpen(false);
+          setEditingTransaction(null);
+        }
         if (isImportModalOpen) setIsImportModalOpen(false);
         return;
       }
@@ -256,8 +265,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isCommandPaletteOpen, isTransactionModalOpen, isImportModalOpen, openCommandPalette, openTransactionModal]);
 
   const openAccountModal = useCallback(() => setIsAccountModalOpen(true), []);
@@ -387,6 +396,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         isTransactionModalOpen,
         openTransactionModal,
         closeTransactionModal,
+        editingTransaction,
         isCommandPaletteOpen,
         openCommandPalette,
         closeCommandPalette,

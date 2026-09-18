@@ -322,6 +322,11 @@ export const CommandPalette = () => {
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={e => {
+              if ((e.metaKey || e.ctrlKey) && (e.key.toLowerCase() === 'k' || e.code === 'KeyK')) {
+                e.preventDefault();
+                closeCommandPalette();
+                return;
+              }
               if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 setSelectedIndex(i => Math.min(i + 1, allNavItems.length - 1));

@@ -603,13 +603,19 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={tx.id}
+                    onClick={() => openTransactionModal(tx.type, tx.account_id, tx)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '0.5rem 0',
+                      padding: '0.6rem 0.5rem',
+                      borderRadius: 'var(--radius-sm)',
                       borderBottom: '1px solid var(--border-default)',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.15s ease',
                     }}
+                    className="card-interactive"
+                    title="Click to edit transaction"
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <div
