@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { MoneyDisplay } from '@/components/MoneyDisplay';
+import { formatDateDMY, formatDateWithWeekday } from '@/lib/date';
 import {
   Plus,
   Search,
@@ -149,20 +150,14 @@ export default function TransactionsPage() {
     const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
     return sortedKeys.map(k => {
       const g = groups[k];
-      let displayDate = g.date;
+      let displayDate = formatDateDMY(g.date);
       try {
-        const dObj = new Date(g.date + 'T00:00:00');
         if (g.date === todayStr) {
-          displayDate = `Today, ${dObj.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}`;
+          displayDate = `Today, ${formatDateDMY(g.date)}`;
         } else if (g.date === yesterdayStr) {
-          displayDate = `Yesterday, ${dObj.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}`;
+          displayDate = `Yesterday, ${formatDateDMY(g.date)}`;
         } else {
-          displayDate = dObj.toLocaleDateString('en-IN', {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
-            year: dObj.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
-          });
+          displayDate = formatDateWithWeekday(g.date);
         }
       } catch {
         // Fallback

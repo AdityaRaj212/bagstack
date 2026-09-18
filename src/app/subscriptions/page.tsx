@@ -18,6 +18,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { ModernDatePicker } from '@/components/ModernDatePicker';
+import { formatDateDMY } from '@/lib/date';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export default function SubscriptionsPage() {
@@ -321,7 +322,7 @@ export default function SubscriptionsPage() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
-                  <span>Due: <strong style={{ color: 'var(--text-primary)' }}>{s.next_billing_date}</strong></span>
+                  <span>Due: <strong style={{ color: 'var(--text-primary)' }}>{formatDateDMY(s.next_billing_date)}</strong></span>
                 </div>
 
                 {isPaid && s.last_paid_date ? (
@@ -338,7 +339,7 @@ export default function SubscriptionsPage() {
                       gap: '0.25rem',
                     }}
                   >
-                    <CheckCircle2 size={12} /> Paid ({s.last_paid_date})
+                    <CheckCircle2 size={12} /> Paid ({formatDateDMY(s.last_paid_date)})
                   </span>
                 ) : isDue ? (
                   <span

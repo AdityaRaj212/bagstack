@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import { MoneyDisplay } from '@/components/MoneyDisplay';
+import { formatDateDMY } from '@/lib/date';
 import {
   TrendingUp,
   TrendingDown,
@@ -642,7 +643,7 @@ export default function DashboardPage() {
                             : tx.merchant_name || tx.category_name || 'Transaction'}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          {tx.date} • {tx.account_name}
+                          {formatDateDMY(tx.date)} • {tx.account_name}
                         </div>
                       </div>
                     </div>
@@ -801,7 +802,7 @@ export default function DashboardPage() {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                     <span>Target: ₹{Math.round(g.target_amount / 100).toLocaleString('en-IN')}</span>
-                    <span>Target Date: {g.target_date}</span>
+                    <span>Target Date: {formatDateDMY(g.target_date)}</span>
                   </div>
                 </div>
               ))}

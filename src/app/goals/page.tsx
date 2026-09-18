@@ -5,6 +5,7 @@ import { useApp } from '@/context/AppContext';
 import { MoneyDisplay } from '@/components/MoneyDisplay';
 import { Plus, Target, Calendar, CheckCircle2, TrendingUp, X, Edit2, Trash2, ArrowDownLeft, AlertCircle } from 'lucide-react';
 import { ModernDatePicker } from '@/components/ModernDatePicker';
+import { formatDateDMY } from '@/lib/date';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export default function GoalsPage() {
@@ -317,7 +318,7 @@ export default function GoalsPage() {
             >
               <div>
                 <div style={{ color: 'var(--text-muted)' }}>TARGET DATE</div>
-                <div style={{ fontWeight: 600 }}>{g.target_date}</div>
+                <div style={{ fontWeight: 600 }}>{formatDateDMY(g.target_date)}</div>
               </div>
               <div>
                 <div style={{ color: 'var(--text-muted)' }}>MONTHLY TARGET</div>

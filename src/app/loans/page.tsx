@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { MoneyDisplay } from '@/components/MoneyDisplay';
+import { formatDateDMY } from '@/lib/date';
 import {
   Plus,
   CreditCard,
@@ -387,7 +388,7 @@ export default function LoansPage() {
                         )}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        Charged to <strong>{loan.account_name || 'Linked Account'}</strong> • Started {loan.start_date}
+                        Charged to <strong>{loan.account_name || 'Linked Account'}</strong> • Started {formatDateDMY(loan.start_date)}
                       </div>
                     </div>
                   </div>

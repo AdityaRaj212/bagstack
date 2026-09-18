@@ -22,6 +22,7 @@ import {
   User,
   UserPlus,
 } from 'lucide-react';
+import { formatDateDMY } from '@/lib/date';
 
 export const CommandPalette = () => {
   const router = useRouter();
@@ -252,6 +253,46 @@ export const CommandPalette = () => {
     a.label.toLowerCase().includes(query.toLowerCase())
   );
 
+  // Unified list of actionable items for keyboard arrow navigation
+  const allNavItems = React.useMemo(() => {
+    const items: Array<{ id: string; action: () => void }> = [];
+    if (searchResults?.accounts) {
+      for (const acc of searchResults.accounts) {
+        items.push({
+          id: `acc-${acc.id}`,
+          action: () => {
+            closeCommandPalette();
+            router.push(`/accounts?id=${acc.id}`);
+          },
+        });
+      }
+    }
+    if (searchResults?.transactions) {
+      for (const tx of searchResults.transactions) {
+        items.push({
+          id: `tx-${tx.id}`,
+          action: () => {
+            closeCommandPalette();
+            router.push(`/transactions?search=${encodeURIComponent(tx.merchant_name || '')}`);
+          },
+        });
+      }
+    }
+    for (const act of filteredActions) {
+      items.push({
+        id: act.id,
+        action: act.action,
+      });
+    }
+    return items;
+  }, [searchResults, filteredActions, closeCommandPalette, router]);
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query, searchResults]);
+
+  let runningIdx = -1;
+
   return (
     <div className="modal-overlay" onClick={closeCommandPalette}>
       <div
@@ -280,6 +321,22 @@ export const CommandPalette = () => {
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setSelectedIndex(i => Math.min(i + 1, allNavItems.length - 1));
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSelectedIndex(i => Math.max(i - 1, 0));
+              } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (allNavItems.length > 0 && selectedIndex >= 0 && selectedIndex < allNavItems.length) {
+                  allNavItems[selectedIndex].action();
+                }
+              } else if (e.key === 'Escape') {
+                closeCommandPalette();
+              }
+            }}
             placeholder="Type a command, account, merchant, or transaction..."
             style={{
               flex: 1,
@@ -322,31 +379,39 @@ export const CommandPalette = () => {
                   >
                     Accounts
                   </div>
-                  {searchResults.accounts.map((acc: any) => (
-                    <div
-                      key={acc.id}
-                      onClick={() => {
-                        closeCommandPalette();
-                        router.push(`/accounts?id=${acc.id}`);
-                      }}
-                      style={{
-                        padding: '0.6rem 0.75rem',
-                        borderRadius: 'var(--radius-md)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        cursor: 'pointer',
-                      }}
-                      className="card-interactive"
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Wallet size={16} color="var(--brand-primary)" />
-                        <span style={{ fontWeight: 500 }}>{acc.name}</span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({acc.type})</span>
+                  {searchResults.accounts.map((acc: any) => {
+                    runningIdx += 1;
+                    const itemIdx = runningIdx;
+                    const isSelected = selectedIndex === itemIdx;
+                    return (
+                      <div
+                        key={acc.id}
+                        onClick={() => {
+                          closeCommandPalette();
+                          router.push(`/accounts?id=${acc.id}`);
+                        }}
+                        onMouseEnter={() => setSelectedIndex(itemIdx)}
+                        style={{
+                          padding: '0.6rem 0.75rem',
+                          borderRadius: 'var(--radius-md)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: 'pointer',
+                          backgroundColor: isSelected ? 'var(--bg-hover)' : 'transparent',
+                          outline: isSelected ? '1px solid var(--brand-primary)' : 'none',
+                        }}
+                        className="card-interactive"
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Wallet size={16} color="var(--brand-primary)" />
+                          <span style={{ fontWeight: 500 }}>{acc.name}</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({acc.type})</span>
+                        </div>
+                        <ArrowRight size={14} color="var(--text-muted)" />
                       </div>
-                      <ArrowRight size={14} color="var(--text-muted)" />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
@@ -363,39 +428,47 @@ export const CommandPalette = () => {
                   >
                     Transactions
                   </div>
-                  {searchResults.transactions.map((tx: any) => (
-                    <div
-                      key={tx.id}
-                      onClick={() => {
-                        closeCommandPalette();
-                        router.push(`/transactions?search=${encodeURIComponent(tx.merchant_name || '')}`);
-                      }}
-                      style={{
-                        padding: '0.6rem 0.75rem',
-                        borderRadius: 'var(--radius-md)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        cursor: 'pointer',
-                      }}
-                      className="card-interactive"
-                    >
-                      <div>
-                        <div style={{ fontWeight: 500 }}>{tx.merchant_name || 'Transaction'}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          {tx.date} • {tx.account_name}
+                  {searchResults.transactions.map((tx: any) => {
+                    runningIdx += 1;
+                    const itemIdx = runningIdx;
+                    const isSelected = selectedIndex === itemIdx;
+                    return (
+                      <div
+                        key={tx.id}
+                        onClick={() => {
+                          closeCommandPalette();
+                          router.push(`/transactions?search=${encodeURIComponent(tx.merchant_name || '')}`);
+                        }}
+                        onMouseEnter={() => setSelectedIndex(itemIdx)}
+                        style={{
+                          padding: '0.6rem 0.75rem',
+                          borderRadius: 'var(--radius-md)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: 'pointer',
+                          backgroundColor: isSelected ? 'var(--bg-hover)' : 'transparent',
+                          outline: isSelected ? '1px solid var(--brand-primary)' : 'none',
+                        }}
+                        className="card-interactive"
+                      >
+                        <div>
+                          <div style={{ fontWeight: 500 }}>{tx.merchant_name || 'Transaction'}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {formatDateDMY(tx.date)} • {tx.account_name}
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            fontWeight: 600,
+                            color: tx.type === 'income' ? 'var(--color-income)' : 'var(--color-expense)',
+                          }}
+                        >
+                          ₹{(tx.amount / 100).toLocaleString('en-IN')}
                         </div>
                       </div>
-                      <div
-                        style={{
-                          fontWeight: 600,
-                          color: tx.type === 'income' ? 'var(--color-income)' : 'var(--color-expense)',
-                        }}
-                      >
-                        ₹{(tx.amount / 100).toLocaleString('en-IN')}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -419,12 +492,16 @@ export const CommandPalette = () => {
                 No commands found
               </div>
             ) : (
-              filteredActions.map((item, idx) => {
+              filteredActions.map((item) => {
+                runningIdx += 1;
+                const itemIdx = runningIdx;
+                const isSelected = selectedIndex === itemIdx;
                 const Icon = item.icon;
                 return (
                   <div
                     key={item.id}
                     onClick={item.action}
+                    onMouseEnter={() => setSelectedIndex(itemIdx)}
                     style={{
                       padding: '0.6rem 0.75rem',
                       borderRadius: 'var(--radius-md)',
@@ -432,7 +509,8 @@ export const CommandPalette = () => {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       cursor: 'pointer',
-                      backgroundColor: idx === selectedIndex ? 'var(--bg-hover)' : 'transparent',
+                      backgroundColor: isSelected ? 'var(--bg-hover)' : 'transparent',
+                      outline: isSelected ? '1px solid var(--brand-primary)' : 'none',
                     }}
                     className="card-interactive"
                   >

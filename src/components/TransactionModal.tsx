@@ -6,6 +6,7 @@ import { toMinorUnits } from '@/lib/money';
 import { X, Plus, Minus, Calculator, Trash2, AlertCircle, Calendar, Tag as TagIcon, Settings2, Check, Search, ChevronDown } from 'lucide-react';
 import { PayeeTagManagerModal } from './PayeeTagManagerModal';
 import { ModernDatePicker } from './ModernDatePicker';
+import { formatDateDMY } from '@/lib/date';
 
 interface Account {
   id: string;
@@ -85,6 +86,11 @@ export const TransactionModal = () => {
   const [pendingKeepOpen, setPendingKeepOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState<any>(null);
+
+  // Keyboard navigation indices
+  const [merchantSelectedIndex, setMerchantSelectedIndex] = useState(0);
+  const [categorySelectedIndex, setCategorySelectedIndex] = useState(0);
+  const [tagSelectedIndex, setTagSelectedIndex] = useState(0);
 
   const merchantRef = useRef<HTMLDivElement>(null);
   const tagRef = useRef<HTMLDivElement>(null);
@@ -421,7 +427,7 @@ export const TransactionModal = () => {
         triggerRefresh();
 
         if (keepOpen) {
-          showToast(`Transfer of ₹${resolvedAmountStr} recorded! Ready for next on ${date}.`);
+          showToast(`Transfer of ₹${resolvedAmountStr} recorded! Ready for next on ${formatDateDMY(date)}.`);
           setAmountStr('');
           setNotes('');
           setTimeout(() => {
@@ -462,28 +468,24 @@ export const TransactionModal = () => {
         triggerRefresh();
 
         if (keepOpen) {
-          showToast(`${type === 'expense' ? 'Expense' : 'Income'} of ₹${resolvedAmountStr} saved! Ready for next on ${date}.`);
+          showToast(`${type === 'expense' ? 'Expense' : 'Income'} of ₹${resolvedAmountStr} saved! Ready for next on ${formatDateDMY(date)}.`);
           // Clear inputs for next transaction
           setAmountStr('');
           setMerchantName('');
           setCategoryId('');
           setCategorySearch('');
-          setNotes('');
           setSelectedTags([]);
           setTagInput('');
-          setShowSplits(false);
+          setNotes('');
           setSplits([
             { categoryId: '', amountStr: '', notes: '' },
             { categoryId: '', amountStr: '', notes: '' },
           ]);
-          setDuplicateWarning(null);
-
-          // Retain date and account so user can batch log transactions for that day
           setTimeout(() => {
             amountInputRef.current?.focus();
           }, 50);
         } else {
-          showToast(`${type === 'expense' ? 'Expense' : 'Income'} recorded successfully!`);
+          showToast(`${type === 'expense' ? 'Expense' : 'Income'} of ₹${resolvedAmountStr} saved!`);
           closeTransactionModal();
         }
       }
@@ -510,6 +512,80 @@ export const TransactionModal = () => {
   const exactTagMatch = allTags.some(
     t => t.name.toLowerCase() === tagInput.trim().toLowerCase().replace(/^#/, '')
   );
+
+  // Merchant Combobox Options
+  const merchantOptions = React.useMemo(() => {
+    const opts: Array<{ type: 'add' | 'existing'; name: string; defaultCategoryId?: string; id?: string }> = [];
+    if (merchantName.trim() && !exactMerchantMatch) {
+      opts.push({ type: 'add', name: merchantName.trim() });
+    }
+    for (const m of filteredMerchants) {
+      opts.push({ type: 'existing', name: m.name, defaultCategoryId: m.default_category_id, id: m.id });
+    }
+    return opts;
+  }, [merchantName, exactMerchantMatch, filteredMerchants]);
+
+  // Flattened categories for keyboard navigation
+  const flattenedCategories = React.useMemo(() => {
+    const list: Array<{ id: string; name: string; fullName: string; isParent: boolean; color?: string }> = [];
+    for (const parent of filteredCategories) {
+      list.push({
+        id: parent.id,
+        name: parent.name,
+        fullName: parent.name,
+        isParent: true,
+        color: parent.color,
+      });
+      if (parent.subcategories) {
+        for (const sub of parent.subcategories) {
+          list.push({
+            id: sub.id,
+            name: sub.name,
+            fullName: `${parent.name} › ${sub.name}`,
+            isParent: false,
+            color: sub.color || parent.color,
+          });
+        }
+      }
+    }
+    return list;
+  }, [filteredCategories]);
+
+  // Tag Combobox Options
+  const tagOptions = React.useMemo(() => {
+    const opts: Array<{ type: 'create' | 'existing'; name: string; tag?: TagItem; id?: string }> = [];
+    if (tagInput.trim() && !exactTagMatch) {
+      opts.push({ type: 'create', name: tagInput.trim().replace(/^#/, '') });
+    }
+    for (const t of availableTags) {
+      opts.push({ type: 'existing', name: t.name, tag: t, id: t.id });
+    }
+    return opts;
+  }, [tagInput, exactTagMatch, availableTags]);
+
+  useEffect(() => {
+    setMerchantSelectedIndex(0);
+  }, [merchantName]);
+
+  useEffect(() => {
+    setCategorySelectedIndex(0);
+  }, [categorySearch]);
+
+  useEffect(() => {
+    setTagSelectedIndex(0);
+  }, [tagInput]);
+
+  // Global Ctrl/Cmd + Enter to save transaction
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && isTransactionModalOpen) {
+        e.preventDefault();
+        handleSubmit(false, false);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [isTransactionModalOpen, handleSubmit]);
 
   if (!isTransactionModalOpen) return null;
 
@@ -887,6 +963,35 @@ export const TransactionModal = () => {
                       setMerchantDropdownOpen(true);
                     }}
                     onFocus={() => setMerchantDropdownOpen(true)}
+                    onKeyDown={e => {
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (!merchantDropdownOpen) {
+                          setMerchantDropdownOpen(true);
+                        } else {
+                          setMerchantSelectedIndex(i => Math.min(i + 1, merchantOptions.length - 1));
+                        }
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        if (!merchantDropdownOpen) {
+                          setMerchantDropdownOpen(true);
+                        } else {
+                          setMerchantSelectedIndex(i => Math.max(i - 1, 0));
+                        }
+                      } else if (e.key === 'Enter') {
+                        if (merchantDropdownOpen && merchantOptions.length > 0 && merchantSelectedIndex >= 0 && merchantSelectedIndex < merchantOptions.length) {
+                          e.preventDefault();
+                          const opt = merchantOptions[merchantSelectedIndex];
+                          if (opt.type === 'add') {
+                            selectMerchant(opt.name);
+                          } else {
+                            selectMerchant(opt.name, opt.defaultCategoryId);
+                          }
+                        }
+                      } else if (e.key === 'Escape') {
+                        setMerchantDropdownOpen(false);
+                      }
+                    }}
                     placeholder="Search or add payee..."
                     autoComplete="off"
                   />
@@ -909,60 +1014,68 @@ export const TransactionModal = () => {
                         marginTop: '4px',
                       }}
                     >
-                      {merchantName.trim() && !exactMerchantMatch && (
-                        <div
-                          style={{
-                            padding: '0.5rem 0.75rem',
-                            fontSize: '0.8rem',
-                            color: 'var(--brand-primary)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            borderBottom: filteredMerchants.length > 0 ? '1px solid var(--border-subtle)' : 'none',
-                            backgroundColor: 'rgba(59, 130, 246, 0.08)',
-                          }}
-                          onMouseDown={e => {
-                            e.preventDefault();
-                            selectMerchant(merchantName.trim());
-                          }}
-                        >
-                          <Plus size={14} /> Add payee &ldquo;<strong>{merchantName.trim()}</strong>&rdquo;
-                        </div>
-                      )}
-
-                      {filteredMerchants.length > 0 ? (
-                        filteredMerchants.map(m => (
-                          <div
-                            key={m.id}
-                            style={{
-                              padding: '0.5rem 0.75rem',
-                              fontSize: '0.8125rem',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              color: 'var(--text-primary)',
-                              transition: 'background-color 0.12s ease',
-                            }}
-                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--bg-subtle)')}
-                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-                            onMouseDown={e => {
-                              e.preventDefault();
-                              selectMerchant(m.name, m.default_category_id);
-                            }}
-                          >
-                            <span>{m.name}</span>
-                            {merchantName.trim().toLowerCase() === m.name.toLowerCase() && (
-                              <Check size={14} style={{ color: 'var(--color-income)' }} />
-                            )}
-                          </div>
-                        ))
-                      ) : !merchantName.trim() ? (
+                      {merchantOptions.length === 0 ? (
                         <div style={{ padding: '0.6rem 0.75rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                           Start typing to see payees...
                         </div>
-                      ) : null}
+                      ) : (
+                        merchantOptions.map((opt, idx) => {
+                          const isHighlighted = idx === merchantSelectedIndex;
+                          if (opt.type === 'add') {
+                            return (
+                              <div
+                                key="add-payee"
+                                style={{
+                                  padding: '0.5rem 0.75rem',
+                                  fontSize: '0.8rem',
+                                  color: 'var(--brand-primary)',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.5rem',
+                                  borderBottom: filteredMerchants.length > 0 ? '1px solid var(--border-subtle)' : 'none',
+                                  backgroundColor: isHighlighted ? 'rgba(59, 130, 246, 0.18)' : 'rgba(59, 130, 246, 0.08)',
+                                  outline: isHighlighted ? '1px solid var(--brand-primary)' : 'none',
+                                }}
+                                onMouseEnter={() => setMerchantSelectedIndex(idx)}
+                                onMouseDown={e => {
+                                  e.preventDefault();
+                                  selectMerchant(opt.name);
+                                }}
+                              >
+                                <Plus size={14} /> Add payee &ldquo;<strong>{opt.name}</strong>&rdquo;
+                              </div>
+                            );
+                          }
+                          return (
+                            <div
+                              key={opt.id || opt.name}
+                              style={{
+                                padding: '0.5rem 0.75rem',
+                                fontSize: '0.8125rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                color: 'var(--text-primary)',
+                                backgroundColor: isHighlighted ? 'var(--bg-subtle)' : 'transparent',
+                                outline: isHighlighted ? '1px solid var(--border-default)' : 'none',
+                                transition: 'background-color 0.12s ease',
+                              }}
+                              onMouseEnter={() => setMerchantSelectedIndex(idx)}
+                              onMouseDown={e => {
+                                e.preventDefault();
+                                selectMerchant(opt.name, opt.defaultCategoryId);
+                              }}
+                            >
+                              <span>{opt.name}</span>
+                              {merchantName.trim().toLowerCase() === opt.name.toLowerCase() && (
+                                <Check size={14} style={{ color: 'var(--color-income)' }} />
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   )}
                 </div>
@@ -1011,19 +1124,31 @@ export const TransactionModal = () => {
                           setCategoryDropdownOpen(true);
                         }}
                         onKeyDown={e => {
-                          if (e.key === 'Escape') {
+                          if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            if (!categoryDropdownOpen) {
+                              setCategoryDropdownOpen(true);
+                            } else {
+                              setCategorySelectedIndex(i => Math.min(i + 1, flattenedCategories.length - 1));
+                            }
+                          } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            if (!categoryDropdownOpen) {
+                              setCategoryDropdownOpen(true);
+                            } else {
+                              setCategorySelectedIndex(i => Math.max(i - 1, 0));
+                            }
+                          } else if (e.key === 'Escape') {
                             setCategoryDropdownOpen(false);
                           } else if (e.key === 'Enter') {
                             e.preventDefault();
-                            if (filteredCategories.length > 0) {
-                              const firstParent = filteredCategories[0];
-                              if (firstParent.subcategories && firstParent.subcategories.length > 0) {
-                                setCategoryId(firstParent.subcategories[0].id);
-                              } else {
-                                setCategoryId(firstParent.id);
-                              }
+                            if (categoryDropdownOpen && flattenedCategories.length > 0 && categorySelectedIndex >= 0 && categorySelectedIndex < flattenedCategories.length) {
+                              const selected = flattenedCategories[categorySelectedIndex];
+                              setCategoryId(selected.id);
                               setCategorySearch('');
                               setCategoryDropdownOpen(false);
+                            } else if (!categoryDropdownOpen) {
+                              setCategoryDropdownOpen(true);
                             }
                           }
                         }}
@@ -1103,114 +1228,120 @@ export const TransactionModal = () => {
                           <div style={{ padding: '0.75rem', fontSize: '0.8125rem', color: 'var(--text-muted)', textAlign: 'center' }}>
                             No categories found matching &ldquo;<strong>{categorySearch}</strong>&rdquo;
                           </div>
-                        ) : (
-                          filteredCategories.map(parent => (
-                            <div key={parent.id} style={{ marginBottom: '0.35rem' }}>
-                              {/* Parent Category Option */}
-                              <div
-                                style={{
-                                  padding: '0.45rem 0.6rem',
-                                  fontSize: '0.8125rem',
-                                  fontWeight: 600,
-                                  borderRadius: 'var(--radius-sm)',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'space-between',
-                                  color: parent.color || 'var(--text-primary)',
-                                  backgroundColor: categoryId === parent.id ? 'rgba(79, 70, 229, 0.15)' : 'transparent',
-                                  transition: 'background-color 0.12s ease',
-                                }}
-                                onMouseEnter={e => {
-                                  if (categoryId !== parent.id) e.currentTarget.style.backgroundColor = 'var(--bg-subtle)';
-                                }}
-                                onMouseLeave={e => {
-                                  if (categoryId !== parent.id) e.currentTarget.style.backgroundColor = 'transparent';
-                                }}
-                                onMouseDown={e => {
-                                  e.preventDefault();
-                                  setCategoryId(parent.id);
-                                  setCategorySearch('');
-                                  setCategoryDropdownOpen(false);
-                                }}
-                              >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                  <span
-                                    style={{
-                                      width: '10px',
-                                      height: '10px',
-                                      borderRadius: '50%',
-                                      backgroundColor: parent.color || '#6B7280',
-                                      flexShrink: 0,
-                                    }}
-                                  />
-                                  <span>{parent.name}</span>
-                                </div>
-                                {categoryId === parent.id && <Check size={14} style={{ color: 'var(--brand-primary)' }} />}
-                              </div>
+                        ) : (() => {
+                          let runningFlatIdx = -1;
+                          return filteredCategories.map(parent => {
+                            runningFlatIdx += 1;
+                            const parentFlatIdx = runningFlatIdx;
+                            const isParentActive = categorySelectedIndex === parentFlatIdx;
+                            const isParentSelected = categoryId === parent.id;
 
-                              {/* Subcategories */}
-                              {parent.subcategories?.map(sub => {
-                                const isSelected = categoryId === sub.id;
-                                return (
-                                  <div
-                                    key={sub.id}
-                                    style={{
-                                      padding: '0.4rem 0.6rem 0.4rem 1.6rem',
-                                      fontSize: '0.8125rem',
-                                      borderRadius: 'var(--radius-sm)',
-                                      cursor: 'pointer',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'space-between',
-                                      color: 'var(--text-secondary)',
-                                      backgroundColor: isSelected ? 'rgba(79, 70, 229, 0.15)' : 'transparent',
-                                      transition: 'background-color 0.12s ease, color 0.12s ease',
-                                    }}
-                                    onMouseEnter={e => {
-                                      if (!isSelected) {
-                                        e.currentTarget.style.backgroundColor = 'var(--bg-subtle)';
-                                        e.currentTarget.style.color = 'var(--text-primary)';
-                                      }
-                                    }}
-                                    onMouseLeave={e => {
-                                      if (!isSelected) {
-                                        e.currentTarget.style.backgroundColor = 'transparent';
-                                        e.currentTarget.style.color = 'var(--text-secondary)';
-                                      }
-                                    }}
-                                    onMouseDown={e => {
-                                      e.preventDefault();
-                                      setCategoryId(sub.id);
-                                      setCategorySearch('');
-                                      setCategoryDropdownOpen(false);
-                                    }}
-                                  >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                      <span
-                                        style={{
-                                          width: '6px',
-                                          height: '6px',
-                                          borderRadius: '50%',
-                                          backgroundColor: sub.color || parent.color || '#6B7280',
-                                          opacity: 0.8,
-                                          flexShrink: 0,
-                                        }}
-                                      />
-                                      <span>{sub.name}</span>
-                                      {categorySearch && (
-                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '0.25rem' }}>
-                                          ({parent.name})
-                                        </span>
-                                      )}
-                                    </div>
-                                    {isSelected && <Check size={14} style={{ color: 'var(--brand-primary)' }} />}
+                            return (
+                              <div key={parent.id} style={{ marginBottom: '0.35rem' }}>
+                                {/* Parent Category Option */}
+                                <div
+                                  style={{
+                                    padding: '0.45rem 0.6rem',
+                                    fontSize: '0.8125rem',
+                                    fontWeight: 600,
+                                    borderRadius: 'var(--radius-sm)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    color: parent.color || 'var(--text-primary)',
+                                    backgroundColor: isParentActive
+                                      ? 'rgba(79, 70, 229, 0.22)'
+                                      : isParentSelected
+                                        ? 'rgba(79, 70, 229, 0.12)'
+                                        : 'transparent',
+                                    outline: isParentActive ? '1px solid var(--brand-primary)' : 'none',
+                                    transition: 'background-color 0.12s ease',
+                                  }}
+                                  onMouseEnter={() => setCategorySelectedIndex(parentFlatIdx)}
+                                  onMouseDown={e => {
+                                    e.preventDefault();
+                                    setCategoryId(parent.id);
+                                    setCategorySearch('');
+                                    setCategoryDropdownOpen(false);
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span
+                                      style={{
+                                        width: '10px',
+                                        height: '10px',
+                                        borderRadius: '50%',
+                                        backgroundColor: parent.color || '#6B7280',
+                                        flexShrink: 0,
+                                      }}
+                                    />
+                                    <span>{parent.name}</span>
                                   </div>
-                                );
-                              })}
-                            </div>
-                          ))
-                        )}
+                                  {isParentSelected && <Check size={14} style={{ color: 'var(--brand-primary)' }} />}
+                                </div>
+
+                                {/* Subcategories */}
+                                {parent.subcategories?.map(sub => {
+                                  runningFlatIdx += 1;
+                                  const subFlatIdx = runningFlatIdx;
+                                  const isSubActive = categorySelectedIndex === subFlatIdx;
+                                  const isSubSelected = categoryId === sub.id;
+
+                                  return (
+                                    <div
+                                      key={sub.id}
+                                      style={{
+                                        padding: '0.4rem 0.6rem 0.4rem 1.6rem',
+                                        fontSize: '0.8125rem',
+                                        borderRadius: 'var(--radius-sm)',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        color: isSubActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                        backgroundColor: isSubActive
+                                          ? 'rgba(79, 70, 229, 0.22)'
+                                          : isSubSelected
+                                            ? 'rgba(79, 70, 229, 0.12)'
+                                            : 'transparent',
+                                        outline: isSubActive ? '1px solid var(--brand-primary)' : 'none',
+                                        transition: 'background-color 0.12s ease, color 0.12s ease',
+                                      }}
+                                      onMouseEnter={() => setCategorySelectedIndex(subFlatIdx)}
+                                      onMouseDown={e => {
+                                        e.preventDefault();
+                                        setCategoryId(sub.id);
+                                        setCategorySearch('');
+                                        setCategoryDropdownOpen(false);
+                                      }}
+                                    >
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span
+                                          style={{
+                                            width: '6px',
+                                            height: '6px',
+                                            borderRadius: '50%',
+                                            backgroundColor: sub.color || parent.color || '#6B7280',
+                                            opacity: 0.8,
+                                            flexShrink: 0,
+                                          }}
+                                        />
+                                        <span>{sub.name}</span>
+                                        {categorySearch && (
+                                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '0.25rem' }}>
+                                            ({parent.name})
+                                          </span>
+                                        )}
+                                      </div>
+                                      {isSubSelected && <Check size={14} style={{ color: 'var(--brand-primary)' }} />}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          });
+                        })()}
                       </div>
                     )}
                   </div>
@@ -1332,6 +1463,7 @@ export const TransactionModal = () => {
                 value={date}
                 onChange={setDate}
                 placeholder="Transaction date"
+                placement="top"
                 required
               />
             </div>
@@ -1400,9 +1532,36 @@ export const TransactionModal = () => {
                   }}
                   onFocus={() => setTagDropdownOpen(true)}
                   onKeyDown={e => {
-                    if (e.key === 'Enter' && tagInput.trim()) {
+                    if (e.key === 'ArrowDown') {
                       e.preventDefault();
-                      handleCreateAndAddTag(tagInput);
+                      if (!tagDropdownOpen) {
+                        setTagDropdownOpen(true);
+                      } else {
+                        setTagSelectedIndex(i => Math.min(i + 1, tagOptions.length - 1));
+                      }
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      if (!tagDropdownOpen) {
+                        setTagDropdownOpen(true);
+                      } else {
+                        setTagSelectedIndex(i => Math.max(i - 1, 0));
+                      }
+                    } else if (e.key === 'Escape') {
+                      setTagDropdownOpen(false);
+                    } else if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (tagDropdownOpen && tagOptions.length > 0 && tagSelectedIndex >= 0 && tagSelectedIndex < tagOptions.length) {
+                        const opt = tagOptions[tagSelectedIndex];
+                        if (opt.type === 'create') {
+                          handleCreateAndAddTag(opt.name);
+                        } else if (opt.tag) {
+                          handleAddTag(opt.tag);
+                        }
+                      } else if (tagInput.trim()) {
+                        handleCreateAndAddTag(tagInput);
+                      }
+                    } else if (e.key === 'Backspace' && !tagInput && selectedTags.length > 0) {
+                      handleRemoveTag(selectedTags[selectedTags.length - 1].name);
                     }
                   }}
                   placeholder={selectedTags.length === 0 ? 'Type tag or enter...' : '+ Add'}
@@ -1437,63 +1596,72 @@ export const TransactionModal = () => {
                     marginTop: '4px',
                   }}
                 >
-                  {tagInput.trim() && !exactTagMatch && (
-                    <div
-                      style={{
-                        padding: '0.5rem 0.75rem',
-                        fontSize: '0.8rem',
-                        color: 'var(--brand-primary)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        backgroundColor: 'rgba(59, 130, 246, 0.08)',
-                        borderBottom: availableTags.length > 0 ? '1px solid var(--border-subtle)' : 'none',
-                      }}
-                      onMouseDown={e => {
-                        e.preventDefault();
-                        handleCreateAndAddTag(tagInput);
-                      }}
-                    >
-                      <Plus size={14} /> Create tag &ldquo;<strong>#{tagInput.trim().replace(/^#/, '')}</strong>&rdquo;
-                    </div>
-                  )}
-
-                  {availableTags.map(tag => (
-                    <div
-                      key={tag.id}
-                      style={{
-                        padding: '0.5rem 0.75rem',
-                        fontSize: '0.8125rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        color: 'var(--text-primary)',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--bg-subtle)')}
-                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-                      onMouseDown={e => {
-                        e.preventDefault();
-                        handleAddTag(tag);
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: tag.color || '#3B82F6',
-                        }}
-                      />
-                      <span>#{tag.name}</span>
-                    </div>
-                  ))}
-
-                  {availableTags.length === 0 && !tagInput.trim() && (
+                  {tagOptions.length === 0 ? (
                     <div style={{ padding: '0.6rem 0.75rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                       No more tags. Type to create new.
                     </div>
+                  ) : (
+                    tagOptions.map((opt, idx) => {
+                      const isHighlighted = idx === tagSelectedIndex;
+                      if (opt.type === 'create') {
+                        return (
+                          <div
+                            key="create-tag"
+                            style={{
+                              padding: '0.5rem 0.75rem',
+                              fontSize: '0.8rem',
+                              color: 'var(--brand-primary)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              backgroundColor: isHighlighted ? 'rgba(59, 130, 246, 0.18)' : 'rgba(59, 130, 246, 0.08)',
+                              borderBottom: availableTags.length > 0 ? '1px solid var(--border-subtle)' : 'none',
+                              outline: isHighlighted ? '1px solid var(--brand-primary)' : 'none',
+                            }}
+                            onMouseEnter={() => setTagSelectedIndex(idx)}
+                            onMouseDown={e => {
+                              e.preventDefault();
+                              handleCreateAndAddTag(opt.name);
+                            }}
+                          >
+                            <Plus size={14} /> Create tag &ldquo;<strong>#{opt.name}</strong>&rdquo;
+                          </div>
+                        );
+                      }
+                      const tag = opt.tag!;
+                      return (
+                        <div
+                          key={tag.id}
+                          style={{
+                            padding: '0.5rem 0.75rem',
+                            fontSize: '0.8125rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            color: 'var(--text-primary)',
+                            backgroundColor: isHighlighted ? 'var(--bg-subtle)' : 'transparent',
+                            outline: isHighlighted ? '1px solid var(--border-default)' : 'none',
+                          }}
+                          onMouseEnter={() => setTagSelectedIndex(idx)}
+                          onMouseDown={e => {
+                            e.preventDefault();
+                            handleAddTag(tag);
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              backgroundColor: tag.color || '#3B82F6',
+                            }}
+                          />
+                          <span>#{tag.name}</span>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               )}

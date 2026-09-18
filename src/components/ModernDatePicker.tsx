@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, X, Clock } from 'lucide-react';
+import { formatDateWithWeekday } from '@/lib/date';
 
 export interface ModernDatePickerProps {
   value: string; // Format: "YYYY-MM-DD"
@@ -15,6 +16,7 @@ export interface ModernDatePickerProps {
   style?: React.CSSProperties;
   showPresets?: boolean;
   align?: 'left' | 'right' | 'auto';
+  placement?: 'bottom' | 'top' | 'auto';
 }
 
 const MONTH_NAMES = [
@@ -80,10 +82,12 @@ export const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
   style,
   showPresets = true,
   align = 'auto',
+  placement = 'auto',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [effectiveAlign, setEffectiveAlign] = useState<'left' | 'right'>(align === 'right' ? 'right' : 'left');
+  const [effectivePlacement, setEffectivePlacement] = useState<'bottom' | 'top'>(placement === 'top' ? 'top' : 'bottom');
 
   useEffect(() => {
     if (align === 'right' || align === 'left') {
@@ -99,6 +103,22 @@ export const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
     }
   }, [isOpen, align]);
 
+  useEffect(() => {
+    if (placement === 'top' || placement === 'bottom') {
+      setEffectivePlacement(placement);
+    } else if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      // Calendar height is ~340px; if space below is limited and space above is sufficient, open upwards
+      if (spaceBelow < 340 && spaceAbove > 280) {
+        setEffectivePlacement('top');
+      } else {
+        setEffectivePlacement('bottom');
+      }
+    }
+  }, [isOpen, placement]);
+
   // Determine current viewed month/year
   const today = useMemo(() => new Date(), []);
   const todayStr = useMemo(
@@ -107,6 +127,13 @@ export const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
   );
 
   const parsedValue = useMemo(() => parseDateString(value), [value]);
+  const [focusedDate, setFocusedDate] = useState<string>(value || todayStr);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFocusedDate(value || todayStr);
+    }
+  }, [isOpen, value, todayStr]);
 
   const [viewYear, setViewYear] = useState<number>(parsedValue ? parsedValue.year : today.getFullYear());
   const [viewMonth, setViewMonth] = useState<number>(parsedValue ? parsedValue.month : today.getMonth());
@@ -153,6 +180,70 @@ export const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
   const handleSelectDate = (dateStr: string) => {
     onChange(dateStr);
     setIsOpen(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled) return;
+
+    if (!isOpen) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        setIsOpen(true);
+      }
+      return;
+    }
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setIsOpen(false);
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (focusedDate) {
+        handleSelectDate(focusedDate);
+      }
+      return;
+    }
+
+    const current = parseDateString(focusedDate) || parseDateString(todayStr)!;
+    const baseDate = new Date(current.year, current.month, current.day);
+    let newDate: Date | null = null;
+
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      newDate = new Date(baseDate.getTime() - 86400000);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      newDate = new Date(baseDate.getTime() + 86400000);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      newDate = new Date(baseDate.getTime() - 7 * 86400000);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      newDate = new Date(baseDate.getTime() + 7 * 86400000);
+    } else if (e.key === 'PageUp') {
+      e.preventDefault();
+      handlePrevMonth();
+      return;
+    } else if (e.key === 'PageDown') {
+      e.preventDefault();
+      handleNextMonth();
+      return;
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      newDate = new Date();
+    }
+
+    if (newDate) {
+      const dateStr = formatDateString(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
+      setFocusedDate(dateStr);
+      if (newDate.getFullYear() !== viewYear || newDate.getMonth() !== viewMonth) {
+        setViewYear(newDate.getFullYear());
+        setViewMonth(newDate.getMonth());
+      }
+    }
   };
 
   // Build 42-day calendar grid
@@ -235,13 +326,7 @@ export const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
         onClick={() => {
           if (!disabled) setIsOpen(prev => !prev);
         }}
-        onKeyDown={(e) => {
-          if (disabled) return;
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            setIsOpen(prev => !prev);
-          }
-        }}
+        onKeyDown={handleKeyDown}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -277,7 +362,7 @@ export const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
               fontWeight: value ? 500 : 400,
             }}
           >
-            {value ? formatDisplayDate(value) : placeholder}
+            {value ? formatDateWithWeekday(value) : placeholder}
           </span>
         </div>
 
@@ -306,7 +391,8 @@ export const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
         <div
           style={{
             position: 'absolute',
-            top: 'calc(100% + 6px)',
+            top: effectivePlacement === 'top' ? 'auto' : 'calc(100% + 6px)',
+            bottom: effectivePlacement === 'top' ? 'calc(100% + 6px)' : 'auto',
             left: effectiveAlign === 'right' ? 'auto' : 0,
             right: effectiveAlign === 'right' ? 0 : 'auto',
             zIndex: 1500,
@@ -525,6 +611,10 @@ export const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
                       ? 'var(--text-primary)'
                       : 'var(--text-muted)',
                     border: day.isToday && !day.isSelected ? '1px solid var(--brand-primary)' : 'none',
+                    boxShadow: day.dateStr === focusedDate
+                      ? (day.isSelected ? '0 0 0 2px #ffffff, 0 0 0 4px var(--brand-primary)' : '0 0 0 2px var(--brand-primary)')
+                      : 'none',
+                    zIndex: day.dateStr === focusedDate ? 2 : 1,
                     cursor: day.isDisabled ? 'not-allowed' : 'pointer',
                     opacity: day.isDisabled ? 0.35 : day.isCurrentMonth ? 1 : 0.45,
                     transition: 'all var(--transition-fast)',

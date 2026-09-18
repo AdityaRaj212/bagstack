@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { MoneyDisplay } from '@/components/MoneyDisplay';
+import { formatDateDMY } from '@/lib/date';
 import {
   BarChart3,
   TrendingUp,
@@ -402,7 +403,7 @@ export default function ReportsPage() {
                   height: '100%',
                   justifyContent: 'flex-end',
                 }}
-                title={`Day ${d.day} (${d.date}): ₹${(spent / 100).toLocaleString('en-IN')} | Cumulative: ₹${(cum / 100).toLocaleString('en-IN')}`}
+                title={`Day ${d.day} (${formatDateDMY(d.date)}): ₹${(spent / 100).toLocaleString('en-IN')} | Cumulative: ₹${(cum / 100).toLocaleString('en-IN')}`}
               >
                 <div
                   style={{
