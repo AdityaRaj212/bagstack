@@ -651,5 +651,63 @@ describe('Finance Domain Business Logic Tests', () => {
     expect(tagsAfter[0].name.toLowerCase()).toBe('vacation');
     expect(tagsAfter[0].transaction_count).toBe(2);
   });
+
+  it('supports searching transactions by tag and by transaction amount', () => {
+    const bank = service.createAccount({
+      userId,
+      name: 'Salary Account',
+      type: 'savings',
+      openingBalance: 10000000,
+    })!;
+
+    // Tx 1: ₹400 (40000 paise) with tag 'cc-repayment'
+    service.createTransaction({
+      userId,
+      accountId: bank.id,
+      type: 'expense',
+      amount: 40000,
+      date: '2026-03-10',
+      merchantName: 'Credit Card Bill',
+      tags: ['cc-repayment'],
+    });
+
+    // Tx 2: ₹1,500 (150000 paise) with tag 'groceries'
+    service.createTransaction({
+      userId,
+      accountId: bank.id,
+      type: 'expense',
+      amount: 150000,
+      date: '2026-03-11',
+      merchantName: 'Supermarket',
+      tags: ['groceries'],
+    });
+
+    // 1. Search by exact amount string '400'
+    const byAmount400 = service.getTransactions(userId, { search: '400' });
+    expect(byAmount400.length).toBe(1);
+    expect(byAmount400[0].amount).toBe(40000);
+    expect(byAmount400[0].merchant_name).toBe('Credit Card Bill');
+
+    // 2. Search by formatted amount string '₹1,500'
+    const byAmountFormatted = service.getTransactions(userId, { search: '₹1,500' });
+    expect(byAmountFormatted.length).toBe(1);
+    expect(byAmountFormatted[0].amount).toBe(150000);
+    expect(byAmountFormatted[0].merchant_name).toBe('Supermarket');
+
+    // 3. Search by tag in search query with '#'
+    const byTagSearchHash = service.getTransactions(userId, { search: '#cc-repayment' });
+    expect(byTagSearchHash.length).toBe(1);
+    expect(byTagSearchHash[0].tags).toContain('cc-repayment');
+
+    // 4. Search by tag in search query without '#'
+    const byTagSearchWord = service.getTransactions(userId, { search: 'cc-repayment' });
+    expect(byTagSearchWord.length).toBe(1);
+    expect(byTagSearchWord[0].tags).toContain('cc-repayment');
+
+    // 5. Filter specifically by tag filter parameter
+    const byTagFilter = service.getTransactions(userId, { tag: 'groceries' });
+    expect(byTagFilter.length).toBe(1);
+    expect(byTagFilter[0].merchant_name).toBe('Supermarket');
+  });
 });
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
 import { MoneyDisplay } from '@/components/MoneyDisplay';
 import { formatDateDMY, formatDateWithWeekday } from '@/lib/date';
@@ -15,6 +15,10 @@ import {
   ChevronRight,
   Calendar,
   Edit2,
+  Tag,
+  ChevronDown,
+  Check,
+  X,
 } from 'lucide-react';
 
 export default function TransactionsPage() {
@@ -23,6 +27,8 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [categoryTree, setCategoryTree] = useState<any[]>([]);
+  const [tags, setTags] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Month navigation: format 'YYYY-MM'
@@ -37,6 +43,34 @@ export default function TransactionsPage() {
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [selectedType, setSelectedType] = useState('');
+  const [selectedTag, setSelectedTag] = useState('');
+
+  // Dropdown states & refs
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
+  const [searchTagSuggestionsOpen, setSearchTagSuggestionsOpen] = useState(false);
+
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const categoryContainerRef = useRef<HTMLDivElement>(null);
+  const tagContainerRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setSearchTagSuggestionsOpen(false);
+      }
+      if (categoryContainerRef.current && !categoryContainerRef.current.contains(event.target as Node)) {
+        setCategoryDropdownOpen(false);
+      }
+      if (tagContainerRef.current && !tagContainerRef.current.contains(event.target as Node)) {
+        setTagDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchTransactions = React.useCallback(() => {
     setLoading(true);
@@ -46,6 +80,7 @@ export default function TransactionsPage() {
     if (selectedAccountId) params.set('accountId', selectedAccountId);
     if (selectedCategoryId) params.set('categoryId', selectedCategoryId);
     if (selectedType) params.set('type', selectedType);
+    if (selectedTag) params.set('tag', selectedTag);
 
     fetch(`/api/transactions?${params.toString()}`)
       .then(r => r.json())
@@ -57,16 +92,23 @@ export default function TransactionsPage() {
         console.error(err);
         setLoading(false);
       });
-  }, [selectedMonth, search, selectedAccountId, selectedCategoryId, selectedType]);
+  }, [selectedMonth, search, selectedAccountId, selectedCategoryId, selectedType, selectedTag]);
 
   useEffect(() => {
     fetch('/api/accounts')
       .then(r => r.json())
       .then(d => setAccounts(d.accounts || []));
 
-    fetch('/api/categories')
+    fetch('/api/categories?tree=true')
       .then(r => r.json())
-      .then(d => setCategories(d.categories || []));
+      .then(d => {
+        if (d.categories) setCategories(d.categories);
+        if (d.tree) setCategoryTree(d.tree);
+      });
+
+    fetch('/api/tags')
+      .then(r => r.json())
+      .then(d => setTags(d.tags || []));
   }, []);
 
   useEffect(() => {
@@ -182,6 +224,70 @@ export default function TransactionsPage() {
     return { income, expense, net: income - expense };
   }, [transactions]);
 
+  // Helper to resolve selected category object
+  const selectedCategoryObj = useMemo(() => {
+    if (!selectedCategoryId) return null;
+    for (const parent of categoryTree) {
+      if (parent.id === selectedCategoryId) {
+        return { ...parent, fullName: parent.name, isParent: true };
+      }
+      if (parent.subcategories) {
+        for (const sub of parent.subcategories) {
+          if (sub.id === selectedCategoryId) {
+            return { ...sub, parentName: parent.name, fullName: `${parent.name} › ${sub.name}`, isParent: false };
+          }
+        }
+      }
+    }
+    const flat = categories.find(c => c.id === selectedCategoryId);
+    if (flat) return { ...flat, fullName: flat.name, isParent: !flat.parent_id };
+    return null;
+  }, [selectedCategoryId, categoryTree, categories]);
+
+  // Filter category tree for searchable combobox
+  const filteredCategoryTree = useMemo(() => {
+    const query = categorySearch.trim().toLowerCase();
+    const typeMatching = categoryTree.filter(cat => {
+      if (!selectedType) return true;
+      return !cat.type || cat.type === selectedType;
+    });
+
+    if (!query) return typeMatching;
+
+    const result: any[] = [];
+    for (const parent of typeMatching) {
+      const parentMatches = parent.name.toLowerCase().includes(query);
+      const matchingSubs = (parent.subcategories || []).filter((sub: any) =>
+        sub.name.toLowerCase().includes(query) || parentMatches
+      );
+      if (parentMatches || matchingSubs.length > 0) {
+        result.push({
+          ...parent,
+          subcategories: matchingSubs,
+        });
+      }
+    }
+    return result;
+  }, [categoryTree, categorySearch, selectedType]);
+
+  // Tag suggestions matching current search query
+  const matchingTagSuggestions = useMemo(() => {
+    if (!tags || tags.length === 0) return [];
+    const cleanSearch = search.trim().toLowerCase().replace(/^#/, '');
+    if (!cleanSearch) return tags.slice(0, 10);
+    return tags.filter(t => t.name.toLowerCase().includes(cleanSearch));
+  }, [tags, search]);
+
+  const hasActiveFilters = Boolean(search || selectedType || selectedAccountId || selectedCategoryId || selectedTag);
+
+  const handleClearFilters = () => {
+    setSearch('');
+    setSelectedType('');
+    setSelectedAccountId('');
+    setSelectedCategoryId('');
+    setSelectedTag('');
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header & Actions */}
@@ -290,30 +396,129 @@ export default function TransactionsPage() {
 
       {/* Filter Bar */}
       <div
-        className="card"
+        className="card txn-filter-card"
         style={{
           padding: '1rem',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
           gap: '0.75rem',
           alignItems: 'center',
+          position: 'relative',
         }}
       >
-        <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '0.5rem' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Search merchant, notes..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{ paddingLeft: '2.25rem' }}
-            />
-          </div>
-          <button type="submit" className="btn-secondary">Search</button>
-        </form>
+        {/* Search with Tag Dropdown & Amount Support */}
+        <div className="txn-search-col" ref={searchContainerRef} style={{ position: 'relative' }}>
+          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Search merchant, notes, #tag, ₹amount..."
+                value={search}
+                onChange={e => {
+                  setSearch(e.target.value);
+                  setSearchTagSuggestionsOpen(true);
+                }}
+                onFocus={() => setSearchTagSuggestionsOpen(true)}
+                style={{ paddingLeft: '2.25rem', paddingRight: search ? '2rem' : '0.75rem', width: '100%' }}
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  style={{
+                    position: 'absolute',
+                    right: '0.6rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  title="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <button type="submit" className="btn-secondary">Search</button>
+          </form>
 
+          {/* Tag Dropdown Suggestions */}
+          {searchTagSuggestionsOpen && matchingTagSuggestions.length > 0 && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 4px)',
+                left: 0,
+                right: 0,
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 'var(--radius-md)',
+                boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
+                zIndex: 70,
+                padding: '0.5rem',
+                maxHeight: '220px',
+                overflowY: 'auto',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  color: 'var(--text-muted)',
+                  marginBottom: '0.4rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                <Tag size={12} /> Tags matching &ldquo;{search}&rdquo;
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                {matchingTagSuggestions.map((t: any) => {
+                  const tagColor = t.color || '#3B82F6';
+                  return (
+                    <button
+                      key={t.id || t.name}
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setSearch(`#${t.name}`);
+                        setSearchTagSuggestionsOpen(false);
+                      }}
+                      style={{
+                        background: `${tagColor}15`,
+                        color: tagColor,
+                        border: `1px solid ${tagColor}35`,
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        fontSize: '0.75rem',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                      }}
+                    >
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: tagColor }} />
+                      #{t.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Type Select */}
         <select
           className="form-select"
           value={selectedType}
@@ -325,6 +530,7 @@ export default function TransactionsPage() {
           <option value="transfer">Transfers Only</option>
         </select>
 
+        {/* Account Select */}
         <select
           className="form-select"
           value={selectedAccountId}
@@ -338,18 +544,384 @@ export default function TransactionsPage() {
           ))}
         </select>
 
-        <select
-          className="form-select"
-          value={selectedCategoryId}
-          onChange={e => setSelectedCategoryId(e.target.value)}
-        >
-          <option value="">All Categories</option>
-          {categories.map(c => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+        {/* Searchable & Color-Segregated Category Combobox */}
+        <div ref={categoryContainerRef} style={{ position: 'relative' }}>
+          <div
+            className="form-input"
+            onClick={() => setCategoryDropdownOpen(prev => !prev)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              padding: '0.55rem 0.75rem',
+              backgroundColor: 'var(--bg-surface)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {selectedCategoryObj ? (
+                <>
+                  <span
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: selectedCategoryObj.color || 'var(--brand-primary)',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                    {selectedCategoryObj.fullName}
+                  </span>
+                </>
+              ) : (
+                <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                  All Categories
+                </span>
+              )}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              {selectedCategoryId && (
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedCategoryId('');
+                  }}
+                  title="Clear category filter"
+                  style={{ color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}
+                >
+                  <X size={14} />
+                </span>
+              )}
+              <ChevronDown
+                size={14}
+                style={{
+                  color: 'var(--text-muted)',
+                  transform: categoryDropdownOpen ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 0.15s ease',
+                }}
+              />
+            </div>
+          </div>
+
+          {categoryDropdownOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 4px)',
+                left: 0,
+                right: 0,
+                minWidth: '240px',
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 'var(--radius-md)',
+                boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
+                zIndex: 80,
+                maxHeight: '280px',
+                overflowY: 'auto',
+                padding: '0.4rem',
+              }}
+            >
+              {/* Category Search Input */}
+              <div style={{ padding: '0.25rem 0.25rem 0.5rem 0.25rem', borderBottom: '1px solid var(--border-subtle)', marginBottom: '0.35rem' }}>
+                <div style={{ position: 'relative' }}>
+                  <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)' }} />
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Search categories..."
+                    value={categorySearch}
+                    onChange={e => setCategorySearch(e.target.value)}
+                    onClick={e => e.stopPropagation()}
+                    autoFocus
+                    style={{
+                      paddingLeft: '1.8rem',
+                      paddingTop: '0.35rem',
+                      paddingBottom: '0.35rem',
+                      fontSize: '0.75rem',
+                      width: '100%',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* "All Categories" Option */}
+              <div
+                style={{
+                  padding: '0.4rem 0.6rem',
+                  fontSize: '0.8125rem',
+                  borderRadius: 'var(--radius-sm)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  color: !selectedCategoryId ? 'var(--brand-primary)' : 'var(--text-muted)',
+                  fontWeight: !selectedCategoryId ? 600 : 400,
+                  backgroundColor: !selectedCategoryId ? 'rgba(79, 70, 229, 0.12)' : 'transparent',
+                  marginBottom: '0.25rem',
+                }}
+                onClick={() => {
+                  setSelectedCategoryId('');
+                  setCategoryDropdownOpen(false);
+                  setCategorySearch('');
+                }}
+              >
+                <span>All Categories</span>
+                {!selectedCategoryId && <Check size={14} />}
+              </div>
+
+              {filteredCategoryTree.length === 0 ? (
+                <div style={{ padding: '0.75rem', fontSize: '0.8125rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                  No categories match &ldquo;{categorySearch}&rdquo;
+                </div>
+              ) : (
+                filteredCategoryTree.map(parent => {
+                  const isParentSelected = selectedCategoryId === parent.id;
+                  return (
+                    <div key={parent.id} style={{ marginBottom: '0.35rem' }}>
+                      {/* Parent category */}
+                      <div
+                        style={{
+                          padding: '0.4rem 0.6rem',
+                          fontSize: '0.8125rem',
+                          fontWeight: 600,
+                          borderRadius: 'var(--radius-sm)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          color: parent.color || 'var(--text-primary)',
+                          backgroundColor: isParentSelected ? 'rgba(79, 70, 229, 0.12)' : 'transparent',
+                        }}
+                        onClick={() => {
+                          setSelectedCategoryId(parent.id);
+                          setCategoryDropdownOpen(false);
+                          setCategorySearch('');
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span
+                            style={{
+                              width: '10px',
+                              height: '10px',
+                              borderRadius: '50%',
+                              backgroundColor: parent.color || '#6B7280',
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span>{parent.name}</span>
+                        </div>
+                        {isParentSelected && <Check size={14} style={{ color: 'var(--brand-primary)' }} />}
+                      </div>
+
+                      {/* Subcategories */}
+                      {parent.subcategories?.map((sub: any) => {
+                        const isSubSelected = selectedCategoryId === sub.id;
+                        return (
+                          <div
+                            key={sub.id}
+                            style={{
+                              padding: '0.35rem 0.6rem 0.35rem 1.6rem',
+                              fontSize: '0.8125rem',
+                              borderRadius: 'var(--radius-sm)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              color: isSubSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                              backgroundColor: isSubSelected ? 'rgba(79, 70, 229, 0.12)' : 'transparent',
+                            }}
+                            onClick={() => {
+                              setSelectedCategoryId(sub.id);
+                              setCategoryDropdownOpen(false);
+                              setCategorySearch('');
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span
+                                style={{
+                                  width: '6px',
+                                  height: '6px',
+                                  borderRadius: '50%',
+                                  backgroundColor: sub.color || parent.color || '#6B7280',
+                                  opacity: 0.8,
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <span>{sub.name}</span>
+                            </div>
+                            {isSubSelected && <Check size={14} style={{ color: 'var(--brand-primary)' }} />}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Dedicated Tag Filter Dropdown */}
+        <div ref={tagContainerRef} style={{ position: 'relative' }}>
+          <div
+            className="form-input"
+            onClick={() => setTagDropdownOpen(prev => !prev)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              padding: '0.55rem 0.75rem',
+              backgroundColor: 'var(--bg-surface)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <Tag size={14} style={{ color: selectedTag ? 'var(--brand-primary)' : 'var(--text-muted)', flexShrink: 0 }} />
+              {selectedTag ? (
+                <span style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                  #{selectedTag}
+                </span>
+              ) : (
+                <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                  All Tags
+                </span>
+              )}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              {selectedTag && (
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedTag('');
+                  }}
+                  title="Clear tag filter"
+                  style={{ color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}
+                >
+                  <X size={14} />
+                </span>
+              )}
+              <ChevronDown
+                size={14}
+                style={{
+                  color: 'var(--text-muted)',
+                  transform: tagDropdownOpen ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 0.15s ease',
+                }}
+              />
+            </div>
+          </div>
+
+          {tagDropdownOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 4px)',
+                left: 0,
+                right: 0,
+                minWidth: '200px',
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 'var(--radius-md)',
+                boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
+                zIndex: 80,
+                maxHeight: '260px',
+                overflowY: 'auto',
+                padding: '0.4rem',
+              }}
+            >
+              {/* All Tags Option */}
+              <div
+                style={{
+                  padding: '0.4rem 0.6rem',
+                  fontSize: '0.8125rem',
+                  borderRadius: 'var(--radius-sm)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  color: !selectedTag ? 'var(--brand-primary)' : 'var(--text-muted)',
+                  fontWeight: !selectedTag ? 600 : 400,
+                  backgroundColor: !selectedTag ? 'rgba(79, 70, 229, 0.12)' : 'transparent',
+                  marginBottom: '0.25rem',
+                }}
+                onClick={() => {
+                  setSelectedTag('');
+                  setTagDropdownOpen(false);
+                }}
+              >
+                <span>All Tags</span>
+                {!selectedTag && <Check size={14} />}
+              </div>
+
+              {tags.length === 0 ? (
+                <div style={{ padding: '0.75rem', fontSize: '0.8125rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                  No tags created yet
+                </div>
+              ) : (
+                tags.map(t => {
+                  const isTagSelected = selectedTag === t.name || selectedTag === t.id;
+                  const color = t.color || '#3B82F6';
+                  return (
+                    <div
+                      key={t.id || t.name}
+                      style={{
+                        padding: '0.4rem 0.6rem',
+                        fontSize: '0.8125rem',
+                        borderRadius: 'var(--radius-sm)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        color: isTagSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        backgroundColor: isTagSelected ? 'rgba(79, 70, 229, 0.12)' : 'transparent',
+                      }}
+                      onClick={() => {
+                        setSelectedTag(t.name);
+                        setTagDropdownOpen(false);
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: color,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span>#{t.name}</span>
+                      </div>
+                      {isTagSelected && <Check size={14} style={{ color: 'var(--brand-primary)' }} />}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Clear Filters Button if any active */}
+        {hasActiveFilters && (
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={handleClearFilters}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              fontSize: '0.75rem',
+              padding: '0.45rem 0.65rem',
+              color: 'var(--text-muted)',
+              whiteSpace: 'nowrap',
+              justifyContent: 'center',
+            }}
+          >
+            <X size={14} /> Clear Filters
+          </button>
+        )}
       </div>
 
       {/* Date-Grouped Transactions Ledger */}
@@ -494,6 +1066,11 @@ export default function TransactionsPage() {
                                   return (
                                     <span
                                       key={tagObj.id || tagObj.name}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedTag(tagObj.name);
+                                      }}
+                                      title={`Filter by #${tagObj.name}`}
                                       style={{
                                         fontSize: '0.6875rem',
                                         fontWeight: 500,
@@ -505,6 +1082,7 @@ export default function TransactionsPage() {
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         gap: '4px',
+                                        cursor: 'pointer',
                                       }}
                                     >
                                       <span

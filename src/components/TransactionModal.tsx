@@ -673,13 +673,13 @@ export const TransactionModal = () => {
     <>
       <div className="modal-overlay" onClick={closeTransactionModal}>
         <div
-          className="modal-content"
+          className="modal-content transaction-modal-compact"
           onClick={e => e.stopPropagation()}
           style={{ maxWidth: '540px', padding: '1.5rem', maxHeight: '90vh', overflowY: 'auto' }}
         >
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+          <div className="modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+            <h2 className="modal-title" style={{ fontSize: '1.2rem', fontWeight: 600 }}>
               {editingTransaction ? 'Edit Transaction' : 'Record Transaction'}
             </h2>
             <button className="btn-icon" onClick={closeTransactionModal}>
@@ -689,6 +689,7 @@ export const TransactionModal = () => {
 
           {/* Type Selector (Pills) */}
           <div
+            className="type-selector"
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr 1fr',
@@ -731,8 +732,8 @@ export const TransactionModal = () => {
           </div>
 
           {/* Amount Input */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem', flexWrap: 'wrap', gap: '0.25rem' }}>
+          <div className="amount-section" style={{ marginBottom: '1.25rem' }}>
+            <div className="amount-label-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem', flexWrap: 'wrap', gap: '0.25rem' }}>
               <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
                 AMOUNT (₹)
               </label>
@@ -826,6 +827,7 @@ export const TransactionModal = () => {
               </span>
               <input
                 ref={amountInputRef}
+                className="amount-input"
                 type="text"
                 autoFocus
                 value={amountStr}
@@ -1763,7 +1765,7 @@ export const TransactionModal = () => {
           </div>
 
           {/* Notes */}
-          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+          <div className="form-group notes-group" style={{ marginBottom: '1.5rem' }}>
             <label className="form-label">NOTES (OPTIONAL)</label>
             <input
               type="text"
@@ -1775,7 +1777,7 @@ export const TransactionModal = () => {
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+          <div className="actions-row" style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
             <button className="btn-secondary" onClick={closeTransactionModal} disabled={loading}>
               Cancel
             </button>

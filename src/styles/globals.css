@@ -391,8 +391,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     display: flex !important;
   }
   .main-content {
-    padding: 1rem;
-    padding-bottom: 80px;
+    padding: 0.875rem;
+    padding-bottom: 85px;
   }
 }
 
@@ -404,3 +404,131 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     display: none !important;
   }
 }
+
+/* Mobile-Only Polish (< 640px) */
+@media (max-width: 640px) {
+  /* Non-scrollable Transaction Modal */
+  .modal-overlay {
+    padding: 0.5rem !important;
+    align-items: center !important;
+  }
+
+  .modal-content.transaction-modal-compact {
+    padding: 0.85rem 1rem !important;
+    max-height: 94vh !important;
+    border-radius: var(--radius-lg) !important;
+  }
+
+  .transaction-modal-compact .modal-header {
+    margin-bottom: 0.45rem !important;
+  }
+
+  .transaction-modal-compact .modal-header h2 {
+    font-size: 1.05rem !important;
+  }
+
+  .transaction-modal-compact .type-selector {
+    margin-bottom: 0.45rem !important;
+    padding: 0.18rem !important;
+    gap: 0.25rem !important;
+  }
+
+  .transaction-modal-compact .type-selector button {
+    padding: 0.32rem 0.25rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  .transaction-modal-compact .amount-section {
+    margin-bottom: 0.45rem !important;
+  }
+
+  .transaction-modal-compact .amount-label-row {
+    margin-bottom: 0.2rem !important;
+  }
+
+  .transaction-modal-compact .amount-input {
+    font-size: 1.3rem !important;
+    padding: 0.4rem 0.75rem 0.4rem 2rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .transaction-modal-compact .form-row {
+    margin-bottom: 0.4rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .transaction-modal-compact .form-group {
+    margin-bottom: 0.4rem !important;
+  }
+
+  .transaction-modal-compact .form-label {
+    margin-bottom: 0.15rem !important;
+    font-size: 0.6875rem !important;
+  }
+
+  .transaction-modal-compact .form-input,
+  .transaction-modal-compact .form-select {
+    padding: 0.38rem 0.6rem !important;
+    font-size: 0.8125rem !important;
+    min-height: 36px !important;
+  }
+
+  .transaction-modal-compact .tag-chips-container {
+    min-height: 34px !important;
+    padding: 2px 6px !important;
+  }
+
+  .transaction-modal-compact .notes-group {
+    margin-bottom: 0.5rem !important;
+  }
+
+  .transaction-modal-compact .actions-row {
+    margin-top: 0.45rem !important;
+    gap: 0.45rem !important;
+  }
+
+  .transaction-modal-compact .actions-row button {
+    padding: 0.42rem 0.75rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Home Insights Banner Mobile Optimization */
+  .insight-banner-collapsed {
+    flex-wrap: wrap !important;
+    gap: 0.6rem !important;
+    align-items: flex-start !important;
+  }
+
+  .insight-banner-collapsed .insight-icon {
+    padding: 0.4rem !important;
+  }
+
+  .insight-banner-collapsed .insight-title-row {
+    gap: 0.35rem !important;
+  }
+
+  .insight-banner-collapsed .insight-badge {
+    font-size: 0.6rem !important;
+    padding: 0.05rem 0.35rem !important;
+    white-space: nowrap !important;
+  }
+
+  .insight-banner-collapsed .insight-expand-btn {
+    align-self: flex-start !important;
+    font-size: 0.7rem !important;
+    padding: 0.3rem 0.6rem !important;
+    margin-top: 0.2rem !important;
+  }
+
+  /* Transactions Filter Bar Mobile */
+  .txn-filter-card {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem !important;
+    padding: 0.75rem !important;
+  }
+
+  .txn-filter-card .txn-search-col {
+    grid-column: 1 / -1 !important;
+  }
+}
+

@@ -123,8 +123,9 @@ export default function DashboardPage() {
           }}
         >
           {!insightsExpanded ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="insight-banner-collapsed" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <div
+                className="insight-icon"
                 style={{
                   padding: '0.5rem',
                   borderRadius: 'var(--radius-md)',
@@ -141,21 +142,23 @@ export default function DashboardPage() {
                   <Sparkles size={20} />
                 )}
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="insight-title-row" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>{insights[0].title}</span>
                   <span
+                    className="insight-badge"
                     style={{
                       fontSize: '0.65rem',
                       fontWeight: 600,
-                      padding: '0.1rem 0.4rem',
+                      padding: '0.1rem 0.45rem',
                       borderRadius: 'var(--radius-full)',
                       backgroundColor: 'var(--bg-surface)',
                       color: 'var(--text-muted)',
                       border: '1px solid var(--border-default)',
+                      whiteSpace: 'nowrap',
                     }}
                   >
-                    REAL-TIME LEDGER INSIGHT
+                    Live Insight
                   </span>
                 </div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
@@ -181,10 +184,10 @@ export default function DashboardPage() {
                     whiteSpace: 'nowrap',
                     transition: 'all var(--transition-fast)',
                   }}
-                  className="card-interactive"
+                  className="card-interactive insight-expand-btn"
                   aria-label="Expand all insights"
                 >
-                  +{insights.length - 1} more insights <ChevronDown size={14} />
+                  +{insights.length - 1} more <ChevronDown size={14} />
                 </button>
               )}
             </div>
@@ -209,10 +212,11 @@ export default function DashboardPage() {
                         style={{
                           fontSize: '0.65rem',
                           fontWeight: 600,
-                          padding: '0.1rem 0.4rem',
+                          padding: '0.1rem 0.45rem',
                           borderRadius: 'var(--radius-full)',
                           backgroundColor: 'rgba(16, 185, 129, 0.12)',
                           color: 'var(--color-income)',
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         100% Calculated from Live Data

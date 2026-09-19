@@ -903,17 +903,41 @@ export class FinanceService {
       params.push(filters.endDate);
     }
     if (filters.search) {
-      sql += ` AND (t.merchant_name LIKE ? OR t.notes LIKE ? OR c.name LIKE ?)`;
-      const term = `%${filters.search}%`;
-      params.push(term, term, term);
+      const rawSearch = filters.search.trim();
+      const term = `%${rawSearch}%`;
+      const cleanTag = rawSearch.replace(/^#/, '');
+      const tagTerm = `%${cleanTag}%`;
+
+      // Check if search might be an amount in rupees (e.g. "400", "400.50", "₹400", "1,200")
+      const numericStr = rawSearch.replace(/[₹,\s]/g, '');
+      const isNumeric = /^-?\d+(\.\d+)?$/.test(numericStr);
+
+      if (isNumeric) {
+        const numVal = parseFloat(numericStr);
+        const paiseVal = Math.round(numVal * 100);
+        sql += ` AND (t.merchant_name LIKE ? OR t.notes LIKE ? OR c.name LIKE ? OR t.amount = ? OR CAST(t.amount / 100 AS TEXT) LIKE ? OR t.id IN (
+          SELECT tt.transaction_id FROM transaction_tags tt
+          JOIN tags tg ON tg.id = tt.tag_id
+          WHERE tg.name LIKE ?
+        ))`;
+        params.push(term, term, term, paiseVal, `%${numericStr}%`, tagTerm);
+      } else {
+        sql += ` AND (t.merchant_name LIKE ? OR t.notes LIKE ? OR c.name LIKE ? OR t.id IN (
+          SELECT tt.transaction_id FROM transaction_tags tt
+          JOIN tags tg ON tg.id = tt.tag_id
+          WHERE tg.name LIKE ?
+        ))`;
+        params.push(term, term, term, tagTerm);
+      }
     }
     if (filters.tag) {
+      const cleanTag = filters.tag.trim().replace(/^#/, '');
       sql += ` AND t.id IN (
         SELECT tt.transaction_id FROM transaction_tags tt
         JOIN tags tg ON tg.id = tt.tag_id
-        WHERE tg.name = ?
+        WHERE tg.name = ? OR tg.id = ?
       )`;
-      params.push(filters.tag);
+      params.push(cleanTag, cleanTag);
     }
 
     sql += ` ORDER BY t.date DESC, t.created_at DESC`;
