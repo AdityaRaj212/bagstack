@@ -484,23 +484,41 @@ export default function TransactionsPage() {
                                 <Layers size={12} /> {tx.splits.length} splits
                               </div>
                             )}
-                            {tx.tags?.length > 0 && (
+                            {((tx.tag_objects && tx.tag_objects.length > 0) || (tx.tags && tx.tags.length > 0)) && (
                               <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
-                                {tx.tags.map((t: string) => (
-                                  <span
-                                    key={t}
-                                    style={{
-                                      fontSize: '0.6875rem',
-                                      padding: '1px 6px',
-                                      borderRadius: '4px',
-                                      backgroundColor: 'var(--bg-subtle)',
-                                      color: 'var(--text-secondary)',
-                                      border: '1px solid var(--border-subtle)',
-                                    }}
-                                  >
-                                    #{t}
-                                  </span>
-                                ))}
+                                {(tx.tag_objects && tx.tag_objects.length > 0
+                                  ? tx.tag_objects
+                                  : (tx.tags || []).map((t: string) => ({ id: t, name: t, color: '#3B82F6' }))
+                                ).map((tagObj: any) => {
+                                  const tagColor = tagObj.color || '#3B82F6';
+                                  return (
+                                    <span
+                                      key={tagObj.id || tagObj.name}
+                                      style={{
+                                        fontSize: '0.6875rem',
+                                        fontWeight: 500,
+                                        padding: '1px 6px',
+                                        borderRadius: '4px',
+                                        backgroundColor: `${tagColor}18`,
+                                        color: tagColor,
+                                        border: `1px solid ${tagColor}35`,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                      }}
+                                    >
+                                      <span
+                                        style={{
+                                          width: '5px',
+                                          height: '5px',
+                                          borderRadius: '50%',
+                                          backgroundColor: tagColor,
+                                        }}
+                                      />
+                                      #{tagObj.name}
+                                    </span>
+                                  );
+                                })}
                               </div>
                             )}
                           </td>

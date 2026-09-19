@@ -362,9 +362,11 @@ export class FinanceService {
 
   getTags(userId: string) {
     return this.db.prepare(`
-      SELECT t.*, COUNT(tt.transaction_id) as transaction_count
+      SELECT t.*, 
+             COUNT(DISTINCT CASE WHEN tx.transfer_group_id IS NOT NULL THEN tx.transfer_group_id ELSE tt.transaction_id END) as transaction_count
       FROM tags t
       LEFT JOIN transaction_tags tt ON tt.tag_id = t.id
+      LEFT JOIN transactions tx ON tx.id = tt.transaction_id AND tx.is_deleted = 0
       WHERE t.user_id = ?
       GROUP BY t.id
       ORDER BY transaction_count DESC, t.name ASC
@@ -381,6 +383,45 @@ export class FinanceService {
     const id = `tag_${userId}_${clean.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
     this.db.prepare('INSERT INTO tags (id, user_id, name, color) VALUES (?, ?, ?, ?)').run(id, userId, clean, color);
     return { id, user_id: userId, name: clean, color };
+  }
+
+  updateTag(userId: string, id: string, data: { name?: string; color?: string }) {
+    const existing = this.db.prepare('SELECT * FROM tags WHERE id = ? AND user_id = ?').get(id, userId) as any;
+    if (!existing) throw new Error('Tag not found');
+
+    let newName = existing.name;
+    if (data.name !== undefined) {
+      const clean = data.name.trim().replace(/^#/, '');
+      if (!clean) throw new Error('Tag name cannot be empty');
+      newName = clean;
+    }
+    const newColor = data.color || existing.color || '#3B82F6';
+
+    // If renaming to a name that matches an existing tag, merge them smoothly
+    if (newName.toLowerCase() !== existing.name.toLowerCase()) {
+      const duplicate = this.db.prepare(
+        'SELECT * FROM tags WHERE user_id = ? AND LOWER(name) = ? AND id != ?'
+      ).get(userId, newName.toLowerCase(), id) as any;
+
+      if (duplicate) {
+        this.db.prepare(`
+          INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id)
+          SELECT transaction_id, ? FROM transaction_tags WHERE tag_id = ?
+        `).run(duplicate.id, id);
+        this.db.prepare('DELETE FROM transaction_tags WHERE tag_id = ?').run(id);
+        this.db.prepare('DELETE FROM tags WHERE id = ? AND user_id = ?').run(id, userId);
+        if (data.color) {
+          this.db.prepare('UPDATE tags SET color = ? WHERE id = ?').run(newColor, duplicate.id);
+        }
+        return { ...duplicate, color: newColor };
+      }
+    }
+
+    this.db.prepare(`
+      UPDATE tags SET name = ?, color = ? WHERE id = ? AND user_id = ?
+    `).run(newName, newColor, id, userId);
+
+    return { id, user_id: userId, name: newName, color: newColor };
   }
 
   deleteTag(userId: string, id: string) {
@@ -541,6 +582,21 @@ export class FinanceService {
         accountId
       );
 
+      // Save tags for transfer legs
+      if (tags.length > 0) {
+        const linkInsert = this.db.prepare(`
+          INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)
+        `);
+
+        for (const tag of tags) {
+          const cleanTag = tag.trim().replace(/^#/, '');
+          if (!cleanTag) continue;
+          const tagObj = this.createTag(userId, cleanTag);
+          linkInsert.run(outTxId, tagObj.id);
+          linkInsert.run(inTxId, tagObj.id);
+        }
+      }
+
       // Recalculate balances for both accounts
       this.recalculateAccountBalance(accountId);
       this.recalculateAccountBalance(destinationAccountId);
@@ -634,15 +690,16 @@ export class FinanceService {
     `).all(id) as any[];
 
     const tags = this.db.prepare(`
-      SELECT tg.name FROM transaction_tags tt
+      SELECT tg.id, tg.name, tg.color FROM transaction_tags tt
       JOIN tags tg ON tg.id = tt.tag_id
       WHERE tt.transaction_id = ?
-    `).all(id) as any[];
+    `).all(id) as Array<{ id: string; name: string; color: string }>;
 
     return {
       ...tx,
       splits,
       tags: tags.map(t => t.name),
+      tag_objects: tags,
     };
   }
 
@@ -706,6 +763,25 @@ export class FinanceService {
           SET account_id = ?, amount = ?, date = ?, notes = ?, transfer_peer_account_id = ?, status = ?
           WHERE id = ?
         `).run(newDestAccountId, newAmount, newDate, newNotes, newAccountId, newStatus, inLeg.id);
+      }
+
+      // Update tags if provided for transfer legs
+      if (data.tags !== undefined) {
+        const txIds = [outLeg?.id, inLeg?.id].filter(Boolean);
+        for (const tid of txIds) {
+          this.db.prepare('DELETE FROM transaction_tags WHERE transaction_id = ?').run(tid);
+          if (data.tags.length > 0) {
+            const linkInsert = this.db.prepare(`
+              INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)
+            `);
+            for (const tag of data.tags) {
+              const cleanTag = tag.trim().replace(/^#/, '');
+              if (!cleanTag) continue;
+              const tagObj = this.createTag(userId, cleanTag);
+              linkInsert.run(tid, tagObj.id);
+            }
+          }
+        }
       }
 
       oldAccountsToRecalc.add(newAccountId);
@@ -847,7 +923,53 @@ export class FinanceService {
     sql += ` LIMIT ? OFFSET ?`;
     params.push(limit, offset);
 
-    return this.db.prepare(sql).all(...params);
+    const rows = this.db.prepare(sql).all(...params) as any[];
+    if (!rows || rows.length === 0) return rows || [];
+
+    const txIds = rows.map(r => r.id);
+    const placeholders = txIds.map(() => '?').join(',');
+
+    // Batch load tags
+    const tagRows = this.db.prepare(`
+      SELECT tt.transaction_id, tg.id, tg.name, tg.color
+      FROM transaction_tags tt
+      JOIN tags tg ON tg.id = tt.tag_id
+      WHERE tt.transaction_id IN (${placeholders})
+    `).all(...txIds) as Array<{ transaction_id: string; id: string; name: string; color: string }>;
+
+    const tagsByTxId = new Map<string, string[]>();
+    const tagObjectsByTxId = new Map<string, Array<{ id: string; name: string; color: string }>>();
+    for (const tr of tagRows) {
+      if (!tagsByTxId.has(tr.transaction_id)) {
+        tagsByTxId.set(tr.transaction_id, []);
+        tagObjectsByTxId.set(tr.transaction_id, []);
+      }
+      tagsByTxId.get(tr.transaction_id)!.push(tr.name);
+      tagObjectsByTxId.get(tr.transaction_id)!.push({ id: tr.id, name: tr.name, color: tr.color });
+    }
+
+    // Batch load splits
+    const splitRows = this.db.prepare(`
+      SELECT s.*, c.name as category_name
+      FROM transaction_splits s
+      LEFT JOIN categories c ON c.id = s.category_id
+      WHERE s.transaction_id IN (${placeholders})
+    `).all(...txIds) as any[];
+
+    const splitsByTxId = new Map<string, any[]>();
+    for (const sr of splitRows) {
+      if (!splitsByTxId.has(sr.transaction_id)) {
+        splitsByTxId.set(sr.transaction_id, []);
+      }
+      splitsByTxId.get(sr.transaction_id)!.push(sr);
+    }
+
+    return rows.map(r => ({
+      ...r,
+      tags: tagsByTxId.get(r.id) || [],
+      tag_objects: tagObjectsByTxId.get(r.id) || [],
+      splits: splitsByTxId.get(r.id) || [],
+    }));
   }
 
   deleteTransaction(id: string, userId: string, permanent = false) {

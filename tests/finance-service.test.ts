@@ -548,4 +548,108 @@ describe('Finance Domain Business Logic Tests', () => {
     expect(metrics.creditCardOutstanding).toBe(5000000); // ₹50,000 (direct + EMI)
     expect(metrics.totalLiabilities).toBe(5000000); // ₹50,000 total liabilities
   });
+
+  it('handles transfer tags, tag counts, and tag_objects in getTransactions', () => {
+    const sbi = service.createAccount({
+      userId,
+      name: 'SBI Savings',
+      type: 'savings',
+      openingBalance: 5000000,
+    })!;
+
+    const cc = service.createAccount({
+      userId,
+      name: 'HDFC CC',
+      type: 'credit_card',
+      openingBalance: 2000000,
+      creditLimit: 10000000,
+    })!;
+
+    // Create transfer with tag 'cc-repayment'
+    const transfer = service.createTransaction({
+      userId,
+      accountId: sbi.id,
+      destinationAccountId: cc.id,
+      type: 'transfer',
+      amount: 2000000,
+      date: '2026-03-15',
+      notes: 'Credit Card Bill Payment',
+      tags: ['cc-repayment'],
+    });
+
+    expect(transfer.type).toBe('transfer');
+
+    // 1. Check getTags transaction_count (should be 1 transfer transaction, not 0 and not 2)
+    const tags = service.getTags(userId);
+    const repaymentTag = tags.find(t => t.name === 'cc-repayment');
+    expect(repaymentTag).toBeDefined();
+    expect(repaymentTag?.transaction_count).toBe(1);
+
+    // 2. Check getTransactions returns tags and tag_objects
+    const txList = service.getTransactions(userId);
+    expect(txList.length).toBe(2); // out leg and in leg
+    for (const tx of txList) {
+      expect(tx.tags).toContain('cc-repayment');
+      expect(tx.tag_objects).toBeDefined();
+      expect(tx.tag_objects.length).toBe(1);
+      expect(tx.tag_objects[0].name).toBe('cc-repayment');
+    }
+  });
+
+  it('supports updating tag color, renaming, and merging duplicates safely', () => {
+    const bank = service.createAccount({
+      userId,
+      name: 'Bank',
+      type: 'savings',
+      openingBalance: 1000000,
+    })!;
+
+    // Create 2 transactions with different tags
+    service.createTransaction({
+      userId,
+      accountId: bank.id,
+      type: 'expense',
+      amount: 50000,
+      date: '2026-03-01',
+      tags: ['trip'],
+    });
+
+    service.createTransaction({
+      userId,
+      accountId: bank.id,
+      type: 'expense',
+      amount: 80000,
+      date: '2026-03-02',
+      tags: ['vacation'],
+    });
+
+    const tagsBefore = service.getTags(userId);
+    const tripTag = tagsBefore.find(t => t.name === 'trip')!;
+    const vacationTag = tagsBefore.find(t => t.name === 'vacation')!;
+
+    // 1. Update tripTag color and rename to 'holiday'
+    const updated = service.updateTag(userId, tripTag.id, {
+      name: 'holiday',
+      color: '#10B981',
+    });
+    expect(updated.name).toBe('holiday');
+    expect(updated.color).toBe('#10B981');
+
+    // Check transaction reflects renamed tag
+    const txs = service.getTransactions(userId);
+    const holidayTx = txs.find(t => t.tags.includes('holiday'));
+    expect(holidayTx).toBeDefined();
+
+    // 2. Rename 'holiday' to 'vacation' (merging with existing vacation tag)
+    const merged = service.updateTag(userId, updated.id, {
+      name: 'vacation',
+    });
+    expect(merged.name.toLowerCase()).toBe('vacation');
+
+    const tagsAfter = service.getTags(userId);
+    expect(tagsAfter.length).toBe(1);
+    expect(tagsAfter[0].name.toLowerCase()).toBe('vacation');
+    expect(tagsAfter[0].transaction_count).toBe(2);
+  });
 });
+

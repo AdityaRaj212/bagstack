@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/context/AppContext';
-import { X, Tag, Store, Trash2, Plus, Search } from 'lucide-react';
+import { X, Tag, Store, Trash2, Plus, Search, Edit2, AlertTriangle, Check } from 'lucide-react';
 
 interface PayeeTagManagerModalProps {
   isOpen: boolean;
@@ -24,6 +24,9 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#3B82F6');
+  const [editingTagId, setEditingTagId] = useState<string | null>(null);
+  const [editTagName, setEditTagName] = useState('');
+  const [editTagColor, setEditTagColor] = useState('#3B82F6');
   const [loading, setLoading] = useState(false);
 
   const tagColors = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
@@ -45,6 +48,7 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
     if (isOpen) {
       setActiveTab(initialTab);
       setSearchQuery('');
+      setEditingTagId(null);
       loadData();
     }
   }, [isOpen, initialTab, loadData]);
@@ -70,10 +74,51 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
       if (res.ok) {
         showToast(`Tag "#${name}" removed`);
         setTags(prev => prev.filter(t => t.id !== id));
+        if (editingTagId === id) setEditingTagId(null);
         onUpdate?.();
       }
     } catch {
       showToast('Failed to delete tag', 'error');
+    }
+  };
+
+  const handleStartEditTag = (tag: any) => {
+    setEditingTagId(tag.id);
+    setEditTagName(tag.name);
+    setEditTagColor(tag.color || '#3B82F6');
+  };
+
+  const handleUpdateTag = async (id: string, originalName: string) => {
+    const cleanName = editTagName.trim().replace(/^#/, '');
+    if (!cleanName) {
+      showToast('Tag name cannot be empty', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/tags', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, name: cleanName, color: editTagColor }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(
+          cleanName !== originalName
+            ? `Tag renamed to "#${cleanName}" and previous transactions updated`
+            : `Tag "#${cleanName}" updated`
+        );
+        setEditingTagId(null);
+        loadData();
+        onUpdate?.();
+      } else {
+        showToast(data.error || 'Failed to update tag', 'error');
+      }
+    } catch {
+      showToast('Failed to update tag', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -259,18 +304,21 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
                 value={newTagName}
                 onChange={e => setNewTagName(e.target.value)}
               />
-              <div style={{ display: 'flex', gap: '0.25rem' }}>
-                {tagColors.slice(0, 4).map(c => (
+              <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                {tagColors.map(c => (
                   <button
                     key={c}
                     type="button"
                     onClick={() => setNewTagColor(c)}
                     style={{
-                      width: '20px',
-                      height: '20px',
+                      width: '18px',
+                      height: '18px',
                       borderRadius: '50%',
                       backgroundColor: c,
                       border: newTagColor === c ? '2px solid #ffffff' : 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      outline: newTagColor === c ? `2px solid ${c}` : 'none',
                     }}
                   />
                 ))}
@@ -280,47 +328,183 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
               </button>
             </form>
 
-            <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {filteredTags.length === 0 ? (
                 <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                   {searchQuery ? 'No tags matching search' : 'No tags created yet'}
                 </div>
               ) : (
-                filteredTags.map(t => (
-                  <div
-                    key={t.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0.5rem 0.75rem',
-                      backgroundColor: 'var(--bg-subtle)',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1px solid var(--border-default)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span
+                filteredTags.map(t => {
+                  const isEditing = editingTagId === t.id;
+
+                  if (isEditing) {
+                    const cleanOld = t.name;
+                    const cleanNew = editTagName.trim().replace(/^#/, '');
+                    const isRenaming = cleanNew && cleanNew.toLowerCase() !== cleanOld.toLowerCase();
+
+                    return (
+                      <div
+                        key={t.id}
                         style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: t.color || '#3B82F6',
+                          padding: '0.75rem',
+                          backgroundColor: 'var(--bg-surface)',
+                          borderRadius: 'var(--radius-md)',
+                          border: '1px solid var(--brand-primary)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.6rem',
+                          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
                         }}
-                      />
-                      <span style={{ fontWeight: 500, fontSize: '0.85rem' }}>#{t.name}</span>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>({t.transaction_count || 0})</span>
-                    </div>
-                    <button
-                      className="btn-icon"
-                      style={{ width: '28px', height: '28px', color: 'var(--color-expense)' }}
-                      onClick={() => handleDeleteTag(t.id, t.name)}
-                      title="Delete tag"
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: editTagColor }}>#</span>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={editTagName}
+                            onChange={e => setEditTagName(e.target.value)}
+                            placeholder="Tag name"
+                            style={{ flex: 1, fontSize: '0.825rem', padding: '0.35rem 0.6rem' }}
+                            autoFocus
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleUpdateTag(t.id, t.name);
+                              } else if (e.key === 'Escape') {
+                                setEditingTagId(null);
+                              }
+                            }}
+                          />
+                        </div>
+
+                        {/* Color Selector */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Tag Color:</span>
+                          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                            {tagColors.map(c => (
+                              <button
+                                key={c}
+                                type="button"
+                                onClick={() => setEditTagColor(c)}
+                                style={{
+                                  width: '20px',
+                                  height: '20px',
+                                  borderRadius: '50%',
+                                  backgroundColor: c,
+                                  border: editTagColor === c ? '2px solid #ffffff' : 'none',
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                  outline: editTagColor === c ? `2px solid ${c}` : 'none',
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Warning Box on Rename */}
+                        {isRenaming && (
+                          <div
+                            style={{
+                              padding: '0.55rem 0.75rem',
+                              backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                              border: '1px solid rgba(245, 158, 11, 0.35)',
+                              borderRadius: 'var(--radius-sm)',
+                              fontSize: '0.75rem',
+                              color: '#F59E0B',
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: '0.5rem',
+                              lineHeight: '1.4',
+                            }}
+                          >
+                            <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <div>
+                              <strong>Warning:</strong> Renaming this tag will update all{' '}
+                              <strong>{t.transaction_count || 0}</strong> previous transaction(s) tagged with{' '}
+                              <strong>#{t.name}</strong> to <strong>#{cleanNew}</strong>.
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Save / Cancel buttons */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.2rem' }}>
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => setEditingTagId(null)}
+                            style={{ fontSize: '0.75rem', padding: '0.35rem 0.7rem' }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-primary"
+                            onClick={() => handleUpdateTag(t.id, t.name)}
+                            disabled={loading || !editTagName.trim()}
+                            style={{
+                              fontSize: '0.75rem',
+                              padding: '0.35rem 0.75rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                            }}
+                          >
+                            <Check size={13} /> Save Changes
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={t.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.5rem 0.75rem',
+                        backgroundColor: 'var(--bg-subtle)',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--border-default)',
+                        transition: 'border-color 0.15s ease',
+                      }}
                     >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span
+                          style={{
+                            width: '10px',
+                            height: '10px',
+                            borderRadius: '50%',
+                            backgroundColor: t.color || '#3B82F6',
+                          }}
+                        />
+                        <span style={{ fontWeight: 500, fontSize: '0.85rem' }}>#{t.name}</span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          ({t.transaction_count || 0})
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <button
+                          className="btn-icon"
+                          style={{ width: '28px', height: '28px', color: 'var(--text-secondary)' }}
+                          onClick={() => handleStartEditTag(t)}
+                          title="Edit tag (color & rename)"
+                        >
+                          <Edit2 size={13} />
+                        </button>
+                        <button
+                          className="btn-icon"
+                          style={{ width: '28px', height: '28px', color: 'var(--color-expense)' }}
+                          onClick={() => handleDeleteTag(t.id, t.name)}
+                          title="Delete tag"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>

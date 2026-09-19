@@ -15,6 +15,8 @@ interface Account {
   current_balance: number;
   color: string;
   is_default?: boolean | number;
+  isLiability?: boolean;
+  totalDebt?: number;
 }
 
 interface Category {
@@ -36,6 +38,7 @@ interface TagItem {
   id: string;
   name: string;
   color: string;
+  transaction_count?: number;
 }
 
 import { evaluateAmountInput, AmountEvaluation } from '@/lib/amount-evaluator';
@@ -965,11 +968,14 @@ export const TransactionModal = () => {
                   value={accountId}
                   onChange={e => setAccountId(e.target.value)}
                 >
-                  {accounts.map(acc => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name} {acc.is_default ? '★ (Default)' : ''} (₹{(acc.current_balance / 100).toLocaleString('en-IN')})
-                    </option>
-                  ))}
+                  {accounts.map(acc => {
+                    const bal = acc.isLiability ? (acc.totalDebt ?? acc.current_balance) : acc.current_balance;
+                    return (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.name} {acc.is_default ? '★ (Default)' : ''} (₹{(bal / 100).toLocaleString('en-IN')})
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <div className="form-group">
@@ -979,11 +985,14 @@ export const TransactionModal = () => {
                   value={destinationAccountId}
                   onChange={e => setDestinationAccountId(e.target.value)}
                 >
-                  {accounts.map(acc => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name} {acc.is_default ? '★ (Default)' : ''} (₹{(acc.current_balance / 100).toLocaleString('en-IN')})
-                    </option>
-                  ))}
+                  {accounts.map(acc => {
+                    const bal = acc.isLiability ? (acc.totalDebt ?? acc.current_balance) : acc.current_balance;
+                    return (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.name} {acc.is_default ? '★ (Default)' : ''} (₹{(bal / 100).toLocaleString('en-IN')})
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             </div>
@@ -1000,11 +1009,14 @@ export const TransactionModal = () => {
                     value={accountId}
                     onChange={e => setAccountId(e.target.value)}
                   >
-                    {accounts.map(acc => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.name} {acc.is_default ? '★ (Default)' : ''}
-                      </option>
-                    ))}
+                    {accounts.map(acc => {
+                      const bal = acc.isLiability ? (acc.totalDebt ?? acc.current_balance) : acc.current_balance;
+                      return (
+                        <option key={acc.id} value={acc.id}>
+                          {acc.name} {acc.is_default ? '★ (Default)' : ''} (₹{(bal / 100).toLocaleString('en-IN')})
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
 
@@ -1738,6 +1750,9 @@ export const TransactionModal = () => {
                             }}
                           />
                           <span>#{tag.name}</span>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
+                            ({tag.transaction_count || 0})
+                          </span>
                         </div>
                       );
                     })

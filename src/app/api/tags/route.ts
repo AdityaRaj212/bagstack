@@ -31,6 +31,25 @@ export async function POST(req: Request) {
   }
 }
 
+export async function PUT(req: Request) {
+  try {
+    const user = getCurrentUser(req);
+    const body = await req.json();
+    if (!body.id) {
+      return NextResponse.json({ error: 'Tag ID is required' }, { status: 400 });
+    }
+
+    const service = new FinanceService();
+    const tag = service.updateTag(user.id, body.id, {
+      name: body.name,
+      color: body.color,
+    });
+    return NextResponse.json({ success: true, tag });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Failed to update tag' }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: Request) {
   try {
     const user = getCurrentUser(req);

@@ -724,12 +724,17 @@ export default function DashboardPage() {
                 </div>
 
                 <div style={{ textAlign: 'right' }}>
-                  <MoneyDisplay
-                    amount={acc.current_balance}
-                    size="sm"
-                    weight="bold"
-                    colored={acc.type === 'credit_card' && acc.current_balance > 0}
-                  />
+                  {(() => {
+                    const bal = acc.isLiability ? (acc.totalDebt ?? acc.current_balance) : acc.current_balance;
+                    return (
+                      <MoneyDisplay
+                        amount={bal}
+                        size="sm"
+                        weight="bold"
+                        colored={acc.type === 'credit_card' && bal > 0}
+                      />
+                    );
+                  })()}
                   {acc.type === 'credit_card' && (
                     <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                       Limit: ₹{Math.round(acc.credit_limit / 100).toLocaleString('en-IN')}
