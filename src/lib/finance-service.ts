@@ -904,40 +904,63 @@ export class FinanceService {
     }
     if (filters.search) {
       const rawSearch = filters.search.trim();
-      const term = `%${rawSearch}%`;
-      const cleanTag = rawSearch.replace(/^#/, '');
-      const tagTerm = `%${cleanTag}%`;
 
-      // Check if search might be an amount in rupees (e.g. "400", "400.50", "₹400", "1,200")
-      const numericStr = rawSearch.replace(/[₹,\s]/g, '');
-      const isNumeric = /^-?\d+(\.\d+)?$/.test(numericStr);
+      // Extract all explicit #tag tokens (e.g. #cc-repayment, #travel)
+      const tagMatches = Array.from(rawSearch.matchAll(/#([a-zA-Z0-9_\-]+)/g)).map(m => m[1].toLowerCase());
+      const nonTagText = rawSearch.replace(/#[a-zA-Z0-9_\-]+/g, '').trim();
 
-      if (isNumeric) {
-        const numVal = parseFloat(numericStr);
-        const paiseVal = Math.round(numVal * 100);
-        sql += ` AND (t.merchant_name LIKE ? OR t.notes LIKE ? OR c.name LIKE ? OR t.amount = ? OR CAST(t.amount / 100 AS TEXT) LIKE ? OR t.id IN (
-          SELECT tt.transaction_id FROM transaction_tags tt
-          JOIN tags tg ON tg.id = tt.tag_id
-          WHERE tg.name LIKE ?
-        ))`;
-        params.push(term, term, term, paiseVal, `%${numericStr}%`, tagTerm);
-      } else {
-        sql += ` AND (t.merchant_name LIKE ? OR t.notes LIKE ? OR c.name LIKE ? OR t.id IN (
-          SELECT tt.transaction_id FROM transaction_tags tt
-          JOIN tags tg ON tg.id = tt.tag_id
-          WHERE tg.name LIKE ?
-        ))`;
-        params.push(term, term, term, tagTerm);
+      // 1. If explicit #tags are present, enforce each tag (AND logic across multiple tags)
+      if (tagMatches.length > 0) {
+        for (const tg of tagMatches) {
+          sql += ` AND t.id IN (
+            SELECT tt.transaction_id FROM transaction_tags tt
+            JOIN tags tg ON tg.id = tt.tag_id
+            WHERE LOWER(tg.name) = ? OR LOWER(tg.name) LIKE ?
+          )`;
+          params.push(tg, `%${tg}%`);
+        }
+      }
+
+      // 2. If remaining text exists (or if no explicit #tags were entered)
+      if (nonTagText) {
+        const term = `%${nonTagText}%`;
+        const numericStr = nonTagText.replace(/[₹,\s]/g, '');
+        const isNumeric = /^-?\d+(\.\d+)?$/.test(numericStr);
+
+        if (isNumeric) {
+          const numVal = parseFloat(numericStr);
+          const paiseVal = Math.round(numVal * 100);
+          sql += ` AND (t.merchant_name LIKE ? OR t.notes LIKE ? OR c.name LIKE ? OR t.amount = ? OR CAST(t.amount / 100 AS TEXT) LIKE ? OR t.id IN (
+            SELECT tt.transaction_id FROM transaction_tags tt
+            JOIN tags tg ON tg.id = tt.tag_id
+            WHERE tg.name LIKE ?
+          ))`;
+          params.push(term, term, term, paiseVal, `%${numericStr}%`, `%${nonTagText}%`);
+        } else if (tagMatches.length === 0) {
+          // No explicit #tag: search merchant, notes, category, or tag name
+          sql += ` AND (t.merchant_name LIKE ? OR t.notes LIKE ? OR c.name LIKE ? OR t.id IN (
+            SELECT tt.transaction_id FROM transaction_tags tt
+            JOIN tags tg ON tg.id = tt.tag_id
+            WHERE tg.name LIKE ?
+          ))`;
+          params.push(term, term, term, `%${nonTagText}%`);
+        } else {
+          // Explicit tags already filtered; search remaining text on merchant/notes/category
+          sql += ` AND (t.merchant_name LIKE ? OR t.notes LIKE ? OR c.name LIKE ?)`;
+          params.push(term, term, term);
+        }
       }
     }
     if (filters.tag) {
-      const cleanTag = filters.tag.trim().replace(/^#/, '');
-      sql += ` AND t.id IN (
-        SELECT tt.transaction_id FROM transaction_tags tt
-        JOIN tags tg ON tg.id = tt.tag_id
-        WHERE tg.name = ? OR tg.id = ?
-      )`;
-      params.push(cleanTag, cleanTag);
+      const tagList = filters.tag.split(/[,\s]+/).map(t => t.trim().replace(/^#/, '')).filter(Boolean);
+      for (const t of tagList) {
+        sql += ` AND t.id IN (
+          SELECT tt.transaction_id FROM transaction_tags tt
+          JOIN tags tg ON tg.id = tt.tag_id
+          WHERE LOWER(tg.name) = LOWER(?) OR tg.id = ?
+        )`;
+        params.push(t, t);
+      }
     }
 
     sql += ` ORDER BY t.date DESC, t.created_at DESC`;

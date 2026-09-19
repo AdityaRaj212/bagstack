@@ -18,7 +18,6 @@ import {
   Search,
   Sun,
   Moon,
-  Database,
   Menu,
   X,
   Upload,
@@ -60,18 +59,6 @@ export const Sidebar = () => {
     { href: '/loans', label: 'Loans & EMIs', icon: CreditCard },
     { href: '/reports', label: 'Analytics & Reports', icon: BarChart3 },
   ];
-
-  const handleLoadDemo = async () => {
-    try {
-      const res = await fetch('/api/seed', { method: 'POST' });
-      if (res.ok) {
-        showToast('Demo dataset loaded with primary user journey!');
-        triggerRefresh();
-      }
-    } catch {
-      showToast('Failed to seed demo data', 'error');
-    }
-  };
 
   return (
     <aside
@@ -221,7 +208,12 @@ export const Sidebar = () => {
 
       {/* Command Palette Trigger */}
       <button
-        onClick={openCommandPalette}
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openCommandPalette();
+        }}
         style={{
           width: '100%',
           display: 'flex',
@@ -300,13 +292,6 @@ export const Sidebar = () => {
           <Upload size={15} /> Import Bank Statement
         </button>
 
-        <button
-          className="btn-ghost"
-          onClick={handleLoadDemo}
-          style={{ width: '100%', justifyContent: 'flex-start', fontSize: '0.8rem' }}
-        >
-          <Database size={15} /> Load Demo Dataset
-        </button>
 
         <button
           className="btn-ghost"

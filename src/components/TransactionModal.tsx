@@ -41,8 +41,8 @@ interface TagItem {
   transaction_count?: number;
 }
 
-import { evaluateAmountInput, AmountEvaluation } from '@/lib/amount-evaluator';
-export { evaluateAmountInput };
+import { evaluateAmountInput, formatIndianNumberString, AmountEvaluation } from '@/lib/amount-evaluator';
+export { evaluateAmountInput, formatIndianNumberString };
 export type { AmountEvaluation };
 
 export const TransactionModal = () => {
@@ -105,14 +105,35 @@ export const TransactionModal = () => {
   const amountEvaluation = React.useMemo(() => evaluateAmountInput(amountStr), [amountStr]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const rawVal = input.value;
+    const caretPos = input.selectionStart || 0;
+
+    // Count non-comma characters before caret
+    const nonCommasBefore = rawVal.substring(0, caretPos).replace(/,/g, '').length;
+
     // Restrict strictly to numbers, decimal point, +, -, and spaces
-    const clean = e.target.value.replace(/[^0-9.+\-\s]/g, '');
-    setAmountStr(clean);
+    const clean = rawVal.replace(/[^0-9.+\-\s]/g, '');
+    const formatted = formatIndianNumberString(clean);
+    setAmountStr(formatted);
+
+    // Maintain accurate caret position after comma insertion/removal
+    requestAnimationFrame(() => {
+      if (!amountInputRef.current) return;
+      let newPos = 0;
+      let count = 0;
+      for (let i = 0; i < formatted.length; i++) {
+        if (count >= nonCommasBefore) break;
+        if (formatted[i] !== ',') count++;
+        newPos = i + 1;
+      }
+      amountInputRef.current.setSelectionRange(newPos, newPos);
+    });
   };
 
   const handleApplyEvaluation = () => {
     if (amountEvaluation.isValid && amountEvaluation.isPositive) {
-      setAmountStr(amountEvaluation.value.toString());
+      setAmountStr(formatIndianNumberString(amountEvaluation.value.toString()));
     }
   };
 
@@ -131,11 +152,11 @@ export const TransactionModal = () => {
   const handleQuickAddAmount = (val: number) => {
     setAmountStr(prev => {
       const trimmed = prev.trim();
-      if (!trimmed || trimmed === '0') return val.toString();
+      if (!trimmed || trimmed === '0') return formatIndianNumberString(val.toString());
       if (/[+\-]$/.test(trimmed)) {
-        return `${trimmed} ${val}`;
+        return formatIndianNumberString(`${trimmed} ${val}`);
       }
-      return `${trimmed} + ${val}`;
+      return formatIndianNumberString(`${trimmed} + ${val}`);
     });
     setTimeout(() => amountInputRef.current?.focus(), 20);
   };
@@ -157,7 +178,7 @@ export const TransactionModal = () => {
     if (isTransactionModalOpen) {
       if (editingTransaction) {
         setType(editingTransaction.type || 'expense');
-        setAmountStr((editingTransaction.amount / 100).toString());
+        setAmountStr(formatIndianNumberString((editingTransaction.amount / 100).toString()));
         setAccountId(editingTransaction.account_id || '');
         setDestinationAccountId(editingTransaction.destination_account_id || editingTransaction.transfer_peer_account_id || '');
         setMerchantName(editingTransaction.merchant_name || '');
@@ -834,7 +855,7 @@ export const TransactionModal = () => {
                 onChange={handleAmountChange}
                 onBlur={() => {
                   if (amountEvaluation.hasExpression && amountEvaluation.isValid && amountEvaluation.isPositive) {
-                    setAmountStr(amountEvaluation.value.toString());
+                    setAmountStr(formatIndianNumberString(amountEvaluation.value.toString()));
                   }
                 }}
                 placeholder="0 (e.g. 1200 + 450 - 50)"

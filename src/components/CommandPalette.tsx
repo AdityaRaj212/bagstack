@@ -17,7 +17,6 @@ import {
   Upload,
   Sun,
   Moon,
-  Database,
   ArrowRight,
   User,
   UserPlus,
@@ -47,7 +46,14 @@ export const CommandPalette = () => {
     if (isCommandPaletteOpen) {
       setQuery('');
       setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
+      const timer = setTimeout(() => {
+        try {
+          inputRef.current?.focus();
+        } catch {
+          // Ignore focus errors
+        }
+      }, 50);
+      return () => clearTimeout(timer);
     }
   }, [isCommandPaletteOpen]);
 
@@ -203,24 +209,6 @@ export const CommandPalette = () => {
       },
     },
     {
-      id: 'seed-demo',
-      label: 'Load Primary User Journey Demo Dataset',
-      icon: Database,
-      action: async () => {
-        closeCommandPalette();
-        try {
-          const res = await fetch('/api/seed', { method: 'POST' });
-          if (res.ok) {
-            showToast('Demo dataset loaded successfully!');
-            triggerRefresh();
-            router.push('/');
-          }
-        } catch {
-          showToast('Failed to seed demo data', 'error');
-        }
-      },
-    },
-    {
       id: 'toggle-theme',
       label: `Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`,
       icon: theme === 'dark' ? Sun : Moon,
@@ -256,8 +244,9 @@ export const CommandPalette = () => {
   // Unified list of actionable items for keyboard arrow navigation
   const allNavItems = React.useMemo(() => {
     const items: Array<{ id: string; action: () => void }> = [];
-    if (searchResults?.accounts) {
+    if (searchResults && Array.isArray(searchResults.accounts)) {
       for (const acc of searchResults.accounts) {
+        if (!acc?.id) continue;
         items.push({
           id: `acc-${acc.id}`,
           action: () => {
@@ -267,8 +256,9 @@ export const CommandPalette = () => {
         });
       }
     }
-    if (searchResults?.transactions) {
+    if (searchResults && Array.isArray(searchResults.transactions)) {
       for (const tx of searchResults.transactions) {
+        if (!tx?.id) continue;
         items.push({
           id: `tx-${tx.id}`,
           action: () => {
@@ -279,6 +269,7 @@ export const CommandPalette = () => {
       }
     }
     for (const act of filteredActions) {
+      if (!act?.id) continue;
       items.push({
         id: act.id,
         action: act.action,
@@ -469,7 +460,7 @@ export const CommandPalette = () => {
                             color: tx.type === 'income' ? 'var(--color-income)' : 'var(--color-expense)',
                           }}
                         >
-                          ₹{(tx.amount / 100).toLocaleString('en-IN')}
+                          ₹{typeof tx.amount === 'number' ? tx.amount.toLocaleString('en-IN') : Number(tx.amount || 0).toLocaleString('en-IN')}
                         </div>
                       </div>
                     );

@@ -1,7 +1,46 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateAmountInput } from '../src/lib/amount-evaluator';
+import { evaluateAmountInput, formatIndianNumberString } from '../src/lib/amount-evaluator';
+
+describe('formatIndianNumberString', () => {
+  it('formats thousands correctly (50000 -> 50,000)', () => {
+    expect(formatIndianNumberString('50000')).toBe('50,000');
+  });
+
+  it('formats lakhs correctly (100000 -> 1,00,000)', () => {
+    expect(formatIndianNumberString('100000')).toBe('1,00,000');
+  });
+
+  it('formats crores correctly (10000000 -> 1,00,00,000)', () => {
+    expect(formatIndianNumberString('10000000')).toBe('1,00,00,000');
+  });
+
+  it('preserves decimals and operators in expressions', () => {
+    expect(formatIndianNumberString('50000.50 + 100000')).toBe('50,000.50 + 1,00,000');
+  });
+
+  it('leaves numbers under 1000 unchanged', () => {
+    expect(formatIndianNumberString('500')).toBe('500');
+    expect(formatIndianNumberString('99')).toBe('99');
+  });
+});
 
 describe('evaluateAmountInput', () => {
+  it('parses formatted Indian numbers with commas correctly', () => {
+    const res = evaluateAmountInput('50,000');
+    expect(res.hasExpression).toBe(false);
+    expect(res.isValid).toBe(true);
+    expect(res.value).toBe(50000);
+    expect(res.isPositive).toBe(true);
+  });
+
+  it('evaluates arithmetic expressions containing commas', () => {
+    const res = evaluateAmountInput('1,00,000 + 50,000 - 2,500');
+    expect(res.hasExpression).toBe(true);
+    expect(res.isValid).toBe(true);
+    expect(res.value).toBe(147500);
+    expect(res.isPositive).toBe(true);
+  });
+
   it('parses normal positive numbers correctly', () => {
     const res = evaluateAmountInput('1500');
     expect(res.hasExpression).toBe(false);

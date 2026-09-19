@@ -709,5 +709,65 @@ describe('Finance Domain Business Logic Tests', () => {
     expect(byTagFilter.length).toBe(1);
     expect(byTagFilter[0].merchant_name).toBe('Supermarket');
   });
+
+  it('supports searching multiple tags simultaneously', () => {
+    const bank = service.createAccount({
+      userId,
+      name: 'Salary Account',
+      type: 'savings',
+      openingBalance: 10000000,
+    })!;
+
+    // Tx 1: has both 'travel' and 'vacation'
+    service.createTransaction({
+      userId,
+      accountId: bank.id,
+      type: 'expense',
+      amount: 500000,
+      date: '2026-03-10',
+      merchantName: 'Goa Resort',
+      tags: ['travel', 'vacation'],
+    });
+
+    // Tx 2: has 'travel' and 'business'
+    service.createTransaction({
+      userId,
+      accountId: bank.id,
+      type: 'expense',
+      amount: 300000,
+      date: '2026-03-12',
+      merchantName: 'Delhi Flight',
+      tags: ['travel', 'business'],
+    });
+
+    // Tx 3: has 'dining'
+    service.createTransaction({
+      userId,
+      accountId: bank.id,
+      type: 'expense',
+      amount: 100000,
+      date: '2026-03-14',
+      merchantName: 'Bistro',
+      tags: ['dining'],
+    });
+
+    // Searching #travel matches Tx 1 and Tx 2
+    const travelOnly = service.getTransactions(userId, { search: '#travel' });
+    expect(travelOnly.length).toBe(2);
+
+    // Searching #travel #vacation matches ONLY Tx 1
+    const multiTag = service.getTransactions(userId, { search: '#travel #vacation' });
+    expect(multiTag.length).toBe(1);
+    expect(multiTag[0].merchant_name).toBe('Goa Resort');
+
+    // Searching #travel #business matches ONLY Tx 2
+    const multiTagBiz = service.getTransactions(userId, { search: '#travel #business' });
+    expect(multiTagBiz.length).toBe(1);
+    expect(multiTagBiz[0].merchant_name).toBe('Delhi Flight');
+
+    // Searching #travel #dining matches 0 transactions (AND logic)
+    const zeroMatch = service.getTransactions(userId, { search: '#travel #dining' });
+    expect(zeroMatch.length).toBe(0);
+  });
 });
 

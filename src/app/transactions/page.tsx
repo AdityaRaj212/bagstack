@@ -40,20 +40,26 @@ export default function TransactionsPage() {
 
   // Filters
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [selectedType, setSelectedType] = useState('');
-  const [selectedTag, setSelectedTag] = useState('');
 
   // Dropdown states & refs
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [categorySearch, setCategorySearch] = useState('');
-  const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
   const [searchTagSuggestionsOpen, setSearchTagSuggestionsOpen] = useState(false);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const categoryContainerRef = useRef<HTMLDivElement>(null);
-  const tagContainerRef = useRef<HTMLDivElement>(null);
+
+  // Debounce search input (250ms) for continuous querying
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -64,9 +70,6 @@ export default function TransactionsPage() {
       if (categoryContainerRef.current && !categoryContainerRef.current.contains(event.target as Node)) {
         setCategoryDropdownOpen(false);
       }
-      if (tagContainerRef.current && !tagContainerRef.current.contains(event.target as Node)) {
-        setTagDropdownOpen(false);
-      }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -76,11 +79,10 @@ export default function TransactionsPage() {
     setLoading(true);
     const params = new URLSearchParams();
     if (selectedMonth) params.set('month', selectedMonth);
-    if (search) params.set('search', search);
+    if (debouncedSearch) params.set('search', debouncedSearch);
     if (selectedAccountId) params.set('accountId', selectedAccountId);
     if (selectedCategoryId) params.set('categoryId', selectedCategoryId);
     if (selectedType) params.set('type', selectedType);
-    if (selectedTag) params.set('tag', selectedTag);
 
     fetch(`/api/transactions?${params.toString()}`)
       .then(r => r.json())
@@ -92,7 +94,7 @@ export default function TransactionsPage() {
         console.error(err);
         setLoading(false);
       });
-  }, [selectedMonth, search, selectedAccountId, selectedCategoryId, selectedType, selectedTag]);
+  }, [selectedMonth, debouncedSearch, selectedAccountId, selectedCategoryId, selectedType]);
 
   useEffect(() => {
     fetch('/api/accounts')
@@ -270,22 +272,42 @@ export default function TransactionsPage() {
     return result;
   }, [categoryTree, categorySearch, selectedType]);
 
-  // Tag suggestions matching current search query
+  // Active tag token currently being typed (e.g. #repayment -> repayment)
+  const currentTypingTag = useMemo(() => {
+    const match = search.match(/#([a-zA-Z0-9_\-]*)$/);
+    return match ? match[1].toLowerCase() : '';
+  }, [search]);
+
+  // Tag suggestions matching current search query or active typing tag
   const matchingTagSuggestions = useMemo(() => {
     if (!tags || tags.length === 0) return [];
+    if (currentTypingTag) {
+      return tags.filter(t => t.name.toLowerCase().includes(currentTypingTag));
+    }
     const cleanSearch = search.trim().toLowerCase().replace(/^#/, '');
     if (!cleanSearch) return tags.slice(0, 10);
     return tags.filter(t => t.name.toLowerCase().includes(cleanSearch));
-  }, [tags, search]);
+  }, [tags, search, currentTypingTag]);
 
-  const hasActiveFilters = Boolean(search || selectedType || selectedAccountId || selectedCategoryId || selectedTag);
+  const handleSelectSearchTag = (tagName: string) => {
+    setSearch(prev => {
+      const trimmed = prev.trim();
+      if (!trimmed) return `#${tagName} `;
+      if (/#([a-zA-Z0-9_\-]*)$/.test(trimmed)) {
+        return trimmed.replace(/#([a-zA-Z0-9_\-]*)$/, `#${tagName} `);
+      }
+      return `${trimmed} #${tagName} `;
+    });
+    setSearchTagSuggestionsOpen(false);
+  };
+
+  const hasActiveFilters = Boolean(search || selectedType || selectedAccountId || selectedCategoryId);
 
   const handleClearFilters = () => {
     setSearch('');
     setSelectedType('');
     setSelectedAccountId('');
     setSelectedCategoryId('');
-    setSelectedTag('');
   };
 
   return (
@@ -406,48 +428,45 @@ export default function TransactionsPage() {
           position: 'relative',
         }}
       >
-        {/* Search with Tag Dropdown & Amount Support */}
+        {/* Search with Tag Dropdown & Continuous Filtering */}
         <div className="txn-search-col" ref={searchContainerRef} style={{ position: 'relative' }}>
-          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
-            <div style={{ position: 'relative', flex: 1 }}>
-              <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Search merchant, notes, #tag, ₹amount..."
-                value={search}
-                onChange={e => {
-                  setSearch(e.target.value);
-                  setSearchTagSuggestionsOpen(true);
+          <div style={{ position: 'relative', width: '100%' }}>
+            <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Search merchant, notes, #tag1 #tag2, ₹amount..."
+              value={search}
+              onChange={e => {
+                setSearch(e.target.value);
+                setSearchTagSuggestionsOpen(true);
+              }}
+              onFocus={() => setSearchTagSuggestionsOpen(true)}
+              style={{ paddingLeft: '2.25rem', paddingRight: search ? '2rem' : '0.75rem', width: '100%' }}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                style={{
+                  position: 'absolute',
+                  right: '0.6rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
-                onFocus={() => setSearchTagSuggestionsOpen(true)}
-                style={{ paddingLeft: '2.25rem', paddingRight: search ? '2rem' : '0.75rem', width: '100%' }}
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch('')}
-                  style={{
-                    position: 'absolute',
-                    right: '0.6rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--text-muted)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                  title="Clear search"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-            <button type="submit" className="btn-secondary">Search</button>
-          </form>
+                title="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
 
           {/* Tag Dropdown Suggestions */}
           {searchTagSuggestionsOpen && matchingTagSuggestions.length > 0 && (
@@ -480,7 +499,7 @@ export default function TransactionsPage() {
                   letterSpacing: '0.04em',
                 }}
               >
-                <Tag size={12} /> Tags matching &ldquo;{search}&rdquo;
+                <Tag size={12} /> Add Tag Filter
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
                 {matchingTagSuggestions.map((t: any) => {
@@ -491,8 +510,7 @@ export default function TransactionsPage() {
                       type="button"
                       onMouseDown={(e) => {
                         e.preventDefault();
-                        setSearch(`#${t.name}`);
-                        setSearchTagSuggestionsOpen(false);
+                        handleSelectSearchTag(t.name);
                       }}
                       style={{
                         background: `${tagColor}15`,
@@ -762,145 +780,6 @@ export default function TransactionsPage() {
           )}
         </div>
 
-        {/* Dedicated Tag Filter Dropdown */}
-        <div ref={tagContainerRef} style={{ position: 'relative' }}>
-          <div
-            className="form-input"
-            onClick={() => setTagDropdownOpen(prev => !prev)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              cursor: 'pointer',
-              padding: '0.55rem 0.75rem',
-              backgroundColor: 'var(--bg-surface)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <Tag size={14} style={{ color: selectedTag ? 'var(--brand-primary)' : 'var(--text-muted)', flexShrink: 0 }} />
-              {selectedTag ? (
-                <span style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', fontWeight: 500 }}>
-                  #{selectedTag}
-                </span>
-              ) : (
-                <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                  All Tags
-                </span>
-              )}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              {selectedTag && (
-                <span
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedTag('');
-                  }}
-                  title="Clear tag filter"
-                  style={{ color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}
-                >
-                  <X size={14} />
-                </span>
-              )}
-              <ChevronDown
-                size={14}
-                style={{
-                  color: 'var(--text-muted)',
-                  transform: tagDropdownOpen ? 'rotate(180deg)' : 'none',
-                  transition: 'transform 0.15s ease',
-                }}
-              />
-            </div>
-          </div>
-
-          {tagDropdownOpen && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 'calc(100% + 4px)',
-                left: 0,
-                right: 0,
-                minWidth: '200px',
-                backgroundColor: 'var(--bg-surface)',
-                border: '1px solid var(--border-default)',
-                borderRadius: 'var(--radius-md)',
-                boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
-                zIndex: 80,
-                maxHeight: '260px',
-                overflowY: 'auto',
-                padding: '0.4rem',
-              }}
-            >
-              {/* All Tags Option */}
-              <div
-                style={{
-                  padding: '0.4rem 0.6rem',
-                  fontSize: '0.8125rem',
-                  borderRadius: 'var(--radius-sm)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  color: !selectedTag ? 'var(--brand-primary)' : 'var(--text-muted)',
-                  fontWeight: !selectedTag ? 600 : 400,
-                  backgroundColor: !selectedTag ? 'rgba(79, 70, 229, 0.12)' : 'transparent',
-                  marginBottom: '0.25rem',
-                }}
-                onClick={() => {
-                  setSelectedTag('');
-                  setTagDropdownOpen(false);
-                }}
-              >
-                <span>All Tags</span>
-                {!selectedTag && <Check size={14} />}
-              </div>
-
-              {tags.length === 0 ? (
-                <div style={{ padding: '0.75rem', fontSize: '0.8125rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                  No tags created yet
-                </div>
-              ) : (
-                tags.map(t => {
-                  const isTagSelected = selectedTag === t.name || selectedTag === t.id;
-                  const color = t.color || '#3B82F6';
-                  return (
-                    <div
-                      key={t.id || t.name}
-                      style={{
-                        padding: '0.4rem 0.6rem',
-                        fontSize: '0.8125rem',
-                        borderRadius: 'var(--radius-sm)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        color: isTagSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
-                        backgroundColor: isTagSelected ? 'rgba(79, 70, 229, 0.12)' : 'transparent',
-                      }}
-                      onClick={() => {
-                        setSelectedTag(t.name);
-                        setTagDropdownOpen(false);
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: color,
-                            flexShrink: 0,
-                          }}
-                        />
-                        <span>#{t.name}</span>
-                      </div>
-                      {isTagSelected && <Check size={14} style={{ color: 'var(--brand-primary)' }} />}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          )}
-        </div>
 
         {/* Clear Filters Button if any active */}
         {hasActiveFilters && (
@@ -1068,7 +947,7 @@ export default function TransactionsPage() {
                                       key={tagObj.id || tagObj.name}
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setSelectedTag(tagObj.name);
+                                        handleSelectSearchTag(tagObj.name);
                                       }}
                                       title={`Filter by #${tagObj.name}`}
                                       style={{

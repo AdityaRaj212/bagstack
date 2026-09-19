@@ -216,14 +216,22 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
         }}
       >
         {/* Animated Brand Pulse Rings */}
-        <div style={{ position: 'relative', width: '64px', height: '64px', marginBottom: '1.5rem' }}>
+        <div style={{ position: 'relative', width: '68px', height: '68px', marginBottom: '1.5rem' }}>
           <div
             style={{
               position: 'absolute',
-              inset: '-4px',
+              inset: '-6px',
               borderRadius: '50%',
-              border: '2px solid rgba(99, 102, 241, 0.2)',
-              animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+              border: '2px solid rgba(99, 102, 241, 0.25)',
+              animation: 'ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              border: '3.5px solid rgba(99, 102, 241, 0.12)',
             }}
           />
           <div
@@ -234,20 +242,30 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
               border: '3.5px solid transparent',
               borderTopColor: 'var(--brand-primary)',
               borderRightColor: 'var(--brand-primary)',
-              animation: 'spin 1.1s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite',
+              animation: 'spin 1.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite',
             }}
           />
           <div
             style={{
               position: 'absolute',
-              inset: '6px',
+              inset: '4px',
+              borderRadius: '50%',
+              border: '2px dashed rgba(99, 102, 241, 0.3)',
+              animation: 'spinReverse 3s linear infinite',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              inset: '9px',
               borderRadius: '50%',
               backgroundColor: 'var(--brand-primary)',
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
+              boxShadow: '0 4px 18px rgba(99, 102, 241, 0.45)',
+              animation: 'pulseGlow 2s ease-in-out infinite',
             }}
           >
             <Sparkles size={22} />

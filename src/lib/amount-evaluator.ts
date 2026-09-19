@@ -12,6 +12,29 @@ export interface AmountEvaluation {
   errorMessage?: string;
 }
 
+export function formatIndianNumberString(val: string): string {
+  // Format each individual integer segment using the Indian numbering system (e.g. 50,000; 1,00,000)
+  // while preserving operators (+, -), spaces, and decimal fractions.
+  // First strip existing commas to normalize
+  const normalized = val.replace(/,/g, '');
+  return normalized.replace(/\b\d+(\.\d*)?\b/g, (match) => {
+    const parts = match.split('.');
+    const intPart = parts[0];
+    const decPart = parts[1];
+
+    if (!intPart || intPart.length <= 3) {
+      return match;
+    }
+
+    const lastThree = intPart.substring(intPart.length - 3);
+    const otherNumbers = intPart.substring(0, intPart.length - 3);
+    const formattedOthers = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+    const formattedInt = `${formattedOthers},${lastThree}`;
+
+    return decPart !== undefined ? `${formattedInt}.${decPart}` : formattedInt;
+  });
+}
+
 export function evaluateAmountInput(raw: string): AmountEvaluation {
   const trimmed = raw.trim();
   if (!trimmed) {
@@ -21,8 +44,8 @@ export function evaluateAmountInput(raw: string): AmountEvaluation {
   // Check if expression contains + or - (excluding a single leading sign)
   const hasExpression = /[+\-]/.test(trimmed.slice(1)) || trimmed.includes('+');
 
-  // Strip spaces for calculation
-  const expr = trimmed.replace(/\s+/g, '');
+  // Strip spaces and commas for calculation
+  const expr = trimmed.replace(/[\s,]/g, '');
 
   // If it's just a standard single number
   if (!hasExpression) {
