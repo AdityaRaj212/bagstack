@@ -205,10 +205,32 @@ export class FinanceService {
     const acc = this.getAccountById(id, userId);
     if (!acc) throw new Error('Account not found');
 
-    this.db.prepare('DELETE FROM accounts WHERE id = ? AND user_id = ?').run(id, userId);
-    this.db.prepare('DELETE FROM transactions WHERE account_id = ? AND user_id = ?').run(id, userId);
+    // 1. Clean up associated transactions (and child splits/tags) first to prevent FK RESTRICT failure
+    const relatedTx = this.db.prepare(
+      'SELECT id FROM transactions WHERE (account_id = ? OR destination_account_id = ?) AND user_id = ?'
+    ).all(id, id, userId) as any[];
 
-    // If default account was deleted, ensure another account becomes default
+    if (relatedTx && relatedTx.length > 0) {
+      for (const tx of relatedTx) {
+        this.db.prepare('DELETE FROM transaction_splits WHERE transaction_id = ?').run(tx.id);
+        this.db.prepare('DELETE FROM transaction_tags WHERE transaction_id = ?').run(tx.id);
+      }
+      this.db.prepare(
+        'DELETE FROM transactions WHERE (account_id = ? OR destination_account_id = ?) AND user_id = ?'
+      ).run(id, id, userId);
+    }
+
+    // 2. Clean up other referencing entities
+    this.db.prepare('DELETE FROM recurring_transactions WHERE account_id = ? AND user_id = ?').run(id, userId);
+    this.db.prepare('DELETE FROM subscriptions WHERE account_id = ? AND user_id = ?').run(id, userId);
+    this.db.prepare('DELETE FROM investments WHERE account_id = ? AND user_id = ?').run(id, userId);
+    this.db.prepare('DELETE FROM loans WHERE account_id = ? AND user_id = ?').run(id, userId);
+    this.db.prepare('DELETE FROM reconciliations WHERE account_id = ? AND user_id = ?').run(id, userId);
+
+    // 3. Now delete the account itself
+    this.db.prepare('DELETE FROM accounts WHERE id = ? AND user_id = ?').run(id, userId);
+
+    // 4. If default account was deleted, ensure another account becomes default
     const remaining = this.db.prepare('SELECT id FROM accounts WHERE user_id = ? LIMIT 1').get(userId) as any;
     if (remaining) {
       this.setDefaultAccount(userId, remaining.id);
@@ -642,7 +664,7 @@ export class FinanceService {
       `);
       for (const split of splits) {
         const splitId = `sp_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
-        splitStmt.run(splitId, txId, split.categoryId, split.amount, split.notes || null);
+        splitStmt.run(splitId, txId, split.categoryId ?? null, split.amount, split.notes || null);
       }
     }
 

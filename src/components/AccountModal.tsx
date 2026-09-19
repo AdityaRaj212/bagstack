@@ -507,7 +507,7 @@ export const AccountModal = () => {
               <button
                 type="submit"
                 className="btn-primary"
-                disabled={submitting || !name.trim() || !email.trim()}
+                disabled={submitting || !name.trim()}
               >
                 {submitting ? 'Creating...' : 'Create & Open Workspace'}
               </button>

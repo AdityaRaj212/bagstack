@@ -49,6 +49,7 @@ export default function TransactionsPage() {
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [categorySearch, setCategorySearch] = useState('');
   const [searchTagSuggestionsOpen, setSearchTagSuggestionsOpen] = useState(false);
+  const [deletingTxIds, setDeletingTxIds] = useState<Set<string>>(new Set());
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const categoryContainerRef = useRef<HTMLDivElement>(null);
@@ -143,10 +144,20 @@ export default function TransactionsPage() {
   };
 
   const handleDelete = async (id: string, merchantName?: string) => {
+    // 1. Immediately indicate deleting on the specific row (blinking dim animation)
+    setDeletingTxIds(prev => new Set(prev).add(id));
     try {
       const res = await fetch(`/api/transactions?id=${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+
+      // 2. Optimistically remove from visible transactions
+      setTransactions(prev => prev.filter(t => t.id !== id));
+      setDeletingTxIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
 
       // Trigger Undo toast
       showToast(
@@ -161,6 +172,11 @@ export default function TransactionsPage() {
 
       triggerRefresh();
     } catch (err: any) {
+      setDeletingTxIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
       showToast(err.message || 'Failed to delete', 'error');
     }
   };
@@ -272,33 +288,54 @@ export default function TransactionsPage() {
     return result;
   }, [categoryTree, categorySearch, selectedType]);
 
+  // Set of tag names already present in search query
+  const existingSearchTags = useMemo(() => {
+    const matches = search.match(/#([a-zA-Z0-9_\-]+)/g);
+    if (!matches) return new Set<string>();
+    return new Set(matches.map(m => m.replace(/^#/, '').toLowerCase()));
+  }, [search]);
+
   // Active tag token currently being typed (e.g. #repayment -> repayment)
   const currentTypingTag = useMemo(() => {
     const match = search.match(/#([a-zA-Z0-9_\-]*)$/);
     return match ? match[1].toLowerCase() : '';
   }, [search]);
 
-  // Tag suggestions matching current search query or active typing tag
+  // Tag suggestions:
+  // If actively typing #token, match that token.
+  // Otherwise, show all available tags so the user can easily select more tags on subsequent clicks!
   const matchingTagSuggestions = useMemo(() => {
     if (!tags || tags.length === 0) return [];
     if (currentTypingTag) {
       return tags.filter(t => t.name.toLowerCase().includes(currentTypingTag));
     }
-    const cleanSearch = search.trim().toLowerCase().replace(/^#/, '');
-    if (!cleanSearch) return tags.slice(0, 10);
-    return tags.filter(t => t.name.toLowerCase().includes(cleanSearch));
-  }, [tags, search, currentTypingTag]);
-
-  const handleSelectSearchTag = (tagName: string) => {
-    setSearch(prev => {
-      const trimmed = prev.trim();
-      if (!trimmed) return `#${tagName} `;
-      if (/#([a-zA-Z0-9_\-]*)$/.test(trimmed)) {
-        return trimmed.replace(/#([a-zA-Z0-9_\-]*)$/, `#${tagName} `);
-      }
-      return `${trimmed} #${tagName} `;
+    // Return all tags, sorting unselected tags to the front
+    return [...tags].sort((a, b) => {
+      const aSelected = existingSearchTags.has(a.name.toLowerCase()) ? 1 : 0;
+      const bSelected = existingSearchTags.has(b.name.toLowerCase()) ? 1 : 0;
+      return aSelected - bSelected;
     });
-    setSearchTagSuggestionsOpen(false);
+  }, [tags, currentTypingTag, existingSearchTags]);
+
+  const handleToggleSearchTag = (tagName: string) => {
+    const lower = tagName.toLowerCase();
+    if (existingSearchTags.has(lower)) {
+      // Remove this tag from search
+      setSearch(prev => {
+        const regex = new RegExp(`\\s*#${tagName}\\b`, 'gi');
+        return prev.replace(regex, '').trimStart();
+      });
+    } else {
+      // Append this tag to search
+      setSearch(prev => {
+        const trimmed = prev.trim();
+        if (!trimmed) return `#${tagName} `;
+        if (/#([a-zA-Z0-9_\-]*)$/.test(trimmed)) {
+          return trimmed.replace(/#([a-zA-Z0-9_\-]*)$/, `#${tagName} `);
+        }
+        return `${trimmed} #${tagName} `;
+      });
+    }
   };
 
   const hasActiveFilters = Boolean(search || selectedType || selectedAccountId || selectedCategoryId);
@@ -441,31 +478,59 @@ export default function TransactionsPage() {
                 setSearch(e.target.value);
                 setSearchTagSuggestionsOpen(true);
               }}
+              onClick={() => setSearchTagSuggestionsOpen(true)}
               onFocus={() => setSearchTagSuggestionsOpen(true)}
-              style={{ paddingLeft: '2.25rem', paddingRight: search ? '2rem' : '0.75rem', width: '100%' }}
+              style={{ paddingLeft: '2.25rem', paddingRight: search ? '4rem' : '2.5rem', width: '100%' }}
             />
-            {search && (
+            <div
+              style={{
+                position: 'absolute',
+                right: '0.5rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+              }}
+            >
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '2px',
+                  }}
+                  title="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => setSearch('')}
+                onClick={() => setSearchTagSuggestionsOpen(prev => !prev)}
                 style={{
-                  position: 'absolute',
-                  right: '0.6rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
+                  background: searchTagSuggestionsOpen ? 'var(--brand-light)' : 'none',
                   border: 'none',
+                  borderRadius: '4px',
                   cursor: 'pointer',
-                  color: 'var(--text-muted)',
+                  color: searchTagSuggestionsOpen ? 'var(--brand-primary)' : 'var(--text-muted)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  padding: '3px',
                 }}
-                title="Clear search"
+                title={searchTagSuggestionsOpen ? 'Hide tag suggestions' : 'Show tag suggestions'}
               >
-                <X size={14} />
+                <Tag size={14} />
               </button>
-            )}
+            </div>
           </div>
 
           {/* Tag Dropdown Suggestions */}
@@ -481,28 +546,60 @@ export default function TransactionsPage() {
                 borderRadius: 'var(--radius-md)',
                 boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
                 zIndex: 70,
-                padding: '0.5rem',
+                padding: '0.6rem',
                 maxHeight: '220px',
                 overflowY: 'auto',
               }}
             >
               <div
                 style={{
-                  fontSize: '0.7rem',
-                  fontWeight: 600,
-                  color: 'var(--text-muted)',
-                  marginBottom: '0.4rem',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.5rem',
                 }}
               >
-                <Tag size={12} /> Add Tag Filter
+                <div
+                  style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: 'var(--text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  <Tag size={12} /> Filter by Tags
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSearchTagSuggestionsOpen(false);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    fontSize: '0.7rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                  }}
+                  className="btn-ghost"
+                  title="Hide tag list for now"
+                >
+                  <X size={12} /> Hide
+                </button>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                 {matchingTagSuggestions.map((t: any) => {
+                  const isSelected = existingSearchTags.has(t.name.toLowerCase());
                   const tagColor = t.color || '#3B82F6';
                   return (
                     <button
@@ -510,23 +607,28 @@ export default function TransactionsPage() {
                       type="button"
                       onMouseDown={(e) => {
                         e.preventDefault();
-                        handleSelectSearchTag(t.name);
+                        handleToggleSearchTag(t.name);
                       }}
                       style={{
-                        background: `${tagColor}15`,
-                        color: tagColor,
-                        border: `1px solid ${tagColor}35`,
+                        background: isSelected ? tagColor : `${tagColor}15`,
+                        color: isSelected ? '#ffffff' : tagColor,
+                        border: `1px solid ${isSelected ? tagColor : `${tagColor}35`}`,
                         padding: '3px 8px',
                         borderRadius: '6px',
                         fontSize: '0.75rem',
-                        fontWeight: 500,
+                        fontWeight: isSelected ? 600 : 500,
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '5px',
+                        transition: 'all 0.15s ease',
                       }}
                     >
-                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: tagColor }} />
+                      {isSelected ? (
+                        <Check size={11} strokeWidth={3} />
+                      ) : (
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: tagColor }} />
+                      )}
                       #{t.name}
                     </button>
                   );
@@ -881,12 +983,20 @@ export default function TransactionsPage() {
                     {group.items.map(tx => {
                       const isIncome = tx.type === 'income';
                       const isTransfer = tx.type === 'transfer';
+                      const isDeleting = deletingTxIds.has(tx.id);
 
                       return (
                         <tr
                           key={tx.id}
-                          style={{ borderBottom: '1px solid var(--border-subtle)' }}
-                          className="card-interactive"
+                          style={{
+                            borderBottom: '1px solid var(--border-subtle)',
+                            opacity: isDeleting ? 0.35 : 1,
+                            filter: isDeleting ? 'grayscale(0.6)' : 'none',
+                            pointerEvents: isDeleting ? 'none' : 'auto',
+                            animation: isDeleting ? 'pulse 0.8s ease-in-out infinite alternate' : 'none',
+                            transition: 'opacity 0.2s ease, filter 0.2s ease',
+                          }}
+                          className={isDeleting ? '' : 'card-interactive'}
                         >
                           {/* Col 1: Title & Notes & Splits & Tags */}
                           <td style={{ padding: '0.75rem 1rem', verticalAlign: 'middle' }}>
@@ -941,22 +1051,23 @@ export default function TransactionsPage() {
                                   ? tx.tag_objects
                                   : (tx.tags || []).map((t: string) => ({ id: t, name: t, color: '#3B82F6' }))
                                 ).map((tagObj: any) => {
+                                  const isTagActive = existingSearchTags.has(tagObj.name.toLowerCase());
                                   const tagColor = tagObj.color || '#3B82F6';
                                   return (
                                     <span
                                       key={tagObj.id || tagObj.name}
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        handleSelectSearchTag(tagObj.name);
+                                        handleToggleSearchTag(tagObj.name);
                                       }}
-                                      title={`Filter by #${tagObj.name}`}
+                                      title={isTagActive ? `Remove #${tagObj.name} filter` : `Filter by #${tagObj.name}`}
                                       style={{
                                         fontSize: '0.6875rem',
                                         fontWeight: 500,
                                         padding: '1px 6px',
                                         borderRadius: '4px',
-                                        backgroundColor: `${tagColor}18`,
-                                        color: tagColor,
+                                        backgroundColor: isTagActive ? tagColor : `${tagColor}18`,
+                                        color: isTagActive ? '#ffffff' : tagColor,
                                         border: `1px solid ${tagColor}35`,
                                         display: 'inline-flex',
                                         alignItems: 'center',
@@ -964,14 +1075,18 @@ export default function TransactionsPage() {
                                         cursor: 'pointer',
                                       }}
                                     >
-                                      <span
-                                        style={{
-                                          width: '5px',
-                                          height: '5px',
-                                          borderRadius: '50%',
-                                          backgroundColor: tagColor,
-                                        }}
-                                      />
+                                      {isTagActive ? (
+                                        <Check size={9} strokeWidth={3} />
+                                      ) : (
+                                        <span
+                                          style={{
+                                            width: '5px',
+                                            height: '5px',
+                                            borderRadius: '50%',
+                                            backgroundColor: tagColor,
+                                          }}
+                                        />
+                                      )}
                                       #{tagObj.name}
                                     </span>
                                   );
@@ -1044,8 +1159,9 @@ export default function TransactionsPage() {
                               <button
                                 className="btn-icon"
                                 onClick={() => handleDelete(tx.id, tx.merchant_name)}
-                                title="Delete transaction (with undo)"
-                                style={{ color: 'var(--text-muted)', width: '28px', height: '28px' }}
+                                disabled={isDeleting}
+                                title={isDeleting ? 'Deleting...' : 'Delete transaction (with undo)'}
+                                style={{ color: isDeleting ? 'var(--color-danger)' : 'var(--text-muted)', width: '28px', height: '28px' }}
                               >
                                 <Trash2 size={14} />
                               </button>

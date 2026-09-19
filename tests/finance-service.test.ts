@@ -769,5 +769,73 @@ describe('Finance Domain Business Logic Tests', () => {
     const zeroMatch = service.getTransactions(userId, { search: '#travel #dining' });
     expect(zeroMatch.length).toBe(0);
   });
+
+  it('successfully deletes an account with existing transactions, tags, splits, and loans without foreign key errors', () => {
+    // 1. Create account
+    const acc = service.createAccount({
+      userId,
+      name: 'Old Account',
+      type: 'savings',
+      openingBalance: 5000000,
+    })!;
+
+    // 2. Create another account for transfers
+    const secondAcc = service.createAccount({
+      userId,
+      name: 'Second Account',
+      type: 'savings',
+      openingBalance: 2000000,
+    })!;
+
+    const cat = db.prepare('SELECT id FROM categories WHERE user_id = ? LIMIT 1').get(userId) as any;
+    const catId = cat?.id;
+
+    // 3. Add transaction with tags and splits
+    service.createTransaction({
+      userId,
+      accountId: acc.id,
+      type: 'expense',
+      amount: 150000,
+      date: '2026-03-01',
+      merchantName: 'Store',
+      tags: ['shopping', 'weekend'],
+      splits: [
+        { categoryId: catId, amount: 100000, notes: 'Split 1' },
+        { categoryId: catId, amount: 50000, notes: 'Split 2' },
+      ],
+    });
+
+    // 4. Add transfer transaction
+    service.createTransaction({
+      userId,
+      accountId: acc.id,
+      type: 'transfer',
+      amount: 50000,
+      date: '2026-03-02',
+      destinationAccountId: secondAcc.id,
+    });
+
+    // 5. Add loan linked to this account
+    service.createLoan({
+      userId,
+      accountId: acc.id,
+      name: 'Personal Loan',
+      principal: 1000000,
+      outstandingPrincipal: 1000000,
+      interestRate: 10.5,
+      tenureMonths: 36,
+      startDate: '2026-01-01',
+    });
+
+    // 6. Delete the account - MUST succeed cleanly without throwing SQLITE_CONSTRAINT
+    expect(() => {
+      service.deleteAccount(acc.id, userId);
+    }).not.toThrow();
+
+    // Verify account is gone
+    const deleted = service.getAccountById(acc.id, userId);
+    expect(deleted).toBeNull();
+  });
 });
+
 
