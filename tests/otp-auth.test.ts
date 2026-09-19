@@ -153,4 +153,29 @@ describe('OTP Authentication & Session Engine', () => {
     expect(profileNames).toContain('Aditya Freelance');
     expect(profileNames).toContain('Aditya Business');
   });
+
+  it('updates session record when switching between workspace profiles', async () => {
+    const { createNewUser } = await import('../src/lib/auth');
+    const ownerEmail = 'switching_tester@example.com';
+    db.prepare(`DELETE FROM users WHERE owner_email = ? OR email = ?`).run(ownerEmail, ownerEmail);
+
+    const user1 = createNewUser({ name: 'Aditya Profile', email: ownerEmail, ownerEmail });
+    const user2 = createNewUser({ name: 'Mumma Profile', email: ownerEmail, ownerEmail });
+
+    // Create session for user1
+    const token = 'test_switch_token_' + Date.now();
+    db.prepare(`INSERT INTO user_sessions (token, user_id, expires_at) VALUES (?, ?, ?)`).run(token, user1.id, Date.now() + 100000);
+
+    const sessionBefore = service.validateSession(token);
+    expect(sessionBefore.id).toBe(user1.id);
+    expect(sessionBefore.name).toBe('Aditya Profile');
+
+    // Simulate switch in /api/auth/login
+    db.prepare('UPDATE user_sessions SET user_id = ? WHERE token = ?').run(user2.id, token);
+
+    const sessionAfter = service.validateSession(token);
+    expect(sessionAfter.id).toBe(user2.id);
+    expect(sessionAfter.name).toBe('Mumma Profile');
+    expect(sessionAfter.ownerEmail).toBe(ownerEmail);
+  });
 });

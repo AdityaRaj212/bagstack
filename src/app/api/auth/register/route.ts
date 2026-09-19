@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createNewUser, getCurrentUser, DEFAULT_USER_ID } from '@/lib/auth';
 import { FinanceService } from '@/lib/finance-service';
 import { toMinorUnits } from '@/lib/money';
+import { getDb } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -38,6 +39,14 @@ export async function POST(req: Request) {
         openingBalance: openingMinor,
         institution: 'Primary Bank',
       });
+    }
+
+    const db = getDb();
+    const cookieHeader = req.headers.get('cookie') || '';
+    const sessionMatch = cookieHeader.match(/apex_session_token=([^;]+)/);
+    if (sessionMatch && sessionMatch[1]) {
+      const token = decodeURIComponent(sessionMatch[1].trim());
+      db.prepare('UPDATE user_sessions SET user_id = ? WHERE token = ?').run(newUser.id, token);
     }
 
     const response = NextResponse.json({ success: true, user: newUser }, { status: 201 });

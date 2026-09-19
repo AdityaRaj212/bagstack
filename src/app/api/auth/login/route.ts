@@ -26,7 +26,16 @@ export async function POST(req: Request) {
       email: user.email,
       name: user.name,
       baseCurrency: user.base_currency || 'INR',
+      ownerEmail: user.owner_email || user.email,
     };
+
+    // If an authenticated session cookie exists, update the session record to point to this switched profile!
+    const cookieHeader = req.headers.get('cookie') || '';
+    const sessionMatch = cookieHeader.match(/apex_session_token=([^;]+)/);
+    if (sessionMatch && sessionMatch[1]) {
+      const token = decodeURIComponent(sessionMatch[1].trim());
+      db.prepare('UPDATE user_sessions SET user_id = ? WHERE token = ?').run(user.id, token);
+    }
 
     const response = NextResponse.json({ success: true, user: sessionUser });
     response.cookies.set('finance_user_id', user.id, {

@@ -16,6 +16,7 @@ export interface UserSession {
   name: string;
   email: string;
   baseCurrency: string;
+  ownerEmail?: string;
 }
 
 interface AppContextType {
@@ -280,6 +281,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const closeAccountModal = useCallback(() => setIsAccountModalOpen(false), []);
 
   const switchUser = useCallback(async (userId: string) => {
+    startAsyncOp();
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -298,8 +300,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     } catch {
       showToast('Error switching user', 'error');
       return false;
+    } finally {
+      stopAsyncOp();
     }
-  }, [showToast, triggerRefresh]);
+  }, [showToast, triggerRefresh, startAsyncOp, stopAsyncOp]);
 
   const registerUser = useCallback(async (formData: {
     name: string;

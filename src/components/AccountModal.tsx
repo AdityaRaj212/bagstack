@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { User, Plus, Check, X, Shield, ArrowRightCircle, Mail, DollarSign, Landmark, Star, Trash2, Pencil } from 'lucide-react';
+import { User, Plus, Check, X, Shield, ArrowRightCircle, Mail, DollarSign, Landmark, Star, Trash2, Pencil, Loader2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { formatIndianNumberString, parseIndianNumber } from '@/lib/amount-evaluator';
 
@@ -26,6 +26,7 @@ export const AccountModal = () => {
   const [initialBalance, setInitialBalance] = useState('');
   const [isDefaultAccount, setIsDefaultAccount] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [switchingUserId, setSwitchingUserId] = useState<string | null>(null);
 
   // Profile renaming state
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -178,11 +179,19 @@ export const AccountModal = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '300px', overflowY: 'auto', paddingRight: '0.25rem' }}>
               {availableUsers.map(u => {
                 const isActive = currentUser?.id === u.id;
+                const displayEmail = u.ownerEmail || u.email;
+                const isSwitching = switchingUserId === u.id;
+
                 return (
                   <div
                     key={u.id}
-                    onClick={() => {
-                      if (!isActive) switchUser(u.id);
+                    onClick={async () => {
+                      if (!isActive && !isSwitching) {
+                        setSwitchingUserId(u.id);
+                        const success = await switchUser(u.id);
+                        setSwitchingUserId(null);
+                        if (success) closeAccountModal();
+                      }
                     }}
                     style={{
                       display: 'flex',
@@ -194,10 +203,11 @@ export const AccountModal = () => {
                       border: `1px solid ${isActive ? 'var(--brand-primary)' : 'var(--border-default)'}`,
                       cursor: isActive ? 'default' : 'pointer',
                       transition: 'all var(--transition-fast)',
+                      gap: '0.75rem',
                     }}
                     className={isActive ? '' : 'card-interactive'}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: 1, minWidth: 0, overflow: 'hidden' }}>
                       <div
                         style={{
                           width: '38px',
@@ -211,11 +221,12 @@ export const AccountModal = () => {
                           alignItems: 'center',
                           justifyContent: 'center',
                           border: '1px solid var(--border-strong)',
+                          flexShrink: 0,
                         }}
                       >
                         {getInitials(u.name)}
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                         {editingUserId === u.id ? (
                           <div
                             style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
@@ -280,8 +291,8 @@ export const AccountModal = () => {
                             </button>
                           </div>
                         ) : (
-                          <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)' }}>
-                            <span>{u.name}</span>
+                          <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)', overflow: 'hidden' }}>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</span>
                             <button
                               type="button"
                               className="btn-icon"
@@ -290,7 +301,7 @@ export const AccountModal = () => {
                                 setEditingUserId(u.id);
                                 setEditingName(u.name);
                               }}
-                              style={{ color: 'var(--text-muted)', padding: '3px' }}
+                              style={{ color: 'var(--text-muted)', padding: '3px', flexShrink: 0 }}
                               title={`Rename "${u.name}"`}
                             >
                               <Pencil size={13} />
@@ -305,6 +316,7 @@ export const AccountModal = () => {
                                   color: 'var(--text-muted)',
                                   border: '1px solid var(--border-default)',
                                   fontWeight: 500,
+                                  flexShrink: 0,
                                 }}
                               >
                                 Demo
@@ -312,13 +324,23 @@ export const AccountModal = () => {
                             )}
                           </div>
                         )}
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-                          {u.email} • {u.baseCurrency || 'INR'}
+                        <div
+                          style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--text-muted)',
+                            marginTop: '0.15rem',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                          title={`${displayEmail} • ${u.baseCurrency || 'INR'}`}
+                        >
+                          {displayEmail} • {u.baseCurrency || 'INR'}
                         </div>
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
                       {!isActive && u.id !== 'user_default' && (
                         <button
                           type="button"
@@ -347,6 +369,7 @@ export const AccountModal = () => {
                             padding: '0.25rem 0.7rem',
                             borderRadius: 'var(--radius-full)',
                             border: '1px solid var(--border-default)',
+                            whiteSpace: 'nowrap',
                           }}
                         >
                           <Check size={14} /> Active
@@ -354,13 +377,32 @@ export const AccountModal = () => {
                       ) : (
                         <button
                           className="btn-ghost"
-                          style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
-                          onClick={(e) => {
+                          style={{
+                            fontSize: '0.8rem',
+                            padding: '0.35rem 0.75rem',
+                            whiteSpace: 'nowrap',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                          }}
+                          disabled={isSwitching}
+                          onClick={async (e) => {
                             e.stopPropagation();
-                            switchUser(u.id);
+                            setSwitchingUserId(u.id);
+                            const success = await switchUser(u.id);
+                            setSwitchingUserId(null);
+                            if (success) closeAccountModal();
                           }}
                         >
-                          Switch <ArrowRightCircle size={15} />
+                          {isSwitching ? (
+                            <>
+                              <Loader2 size={13} className="animate-spin" /> Switching...
+                            </>
+                          ) : (
+                            <>
+                              Switch <ArrowRightCircle size={15} />
+                            </>
+                          )}
                         </button>
                       )}
                     </div>

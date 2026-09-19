@@ -184,7 +184,7 @@ export class OtpService {
     if (!token) return null;
 
     const row = this.db.prepare(`
-      SELECT s.*, u.email, u.name, u.base_currency 
+      SELECT s.*, u.email, u.name, u.base_currency, u.owner_email 
       FROM user_sessions s
       JOIN users u ON s.user_id = u.id
       WHERE s.token = ? AND s.expires_at > ?
@@ -197,6 +197,7 @@ export class OtpService {
       email: row.email,
       name: row.name,
       baseCurrency: row.base_currency || 'INR',
+      ownerEmail: row.owner_email || row.email,
     };
   }
 

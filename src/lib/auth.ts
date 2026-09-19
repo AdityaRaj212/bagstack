@@ -169,7 +169,16 @@ export function getAllUsers(currentUser?: UserSession | string): Array<UserSessi
     }];
   }
 
-  const effectiveEmail = (userObj.ownerEmail || userObj.email || '').trim().toLowerCase();
+  let effectiveEmail = (userObj.ownerEmail || '').trim().toLowerCase();
+  if (!effectiveEmail && userObj.id && userObj.id !== DEFAULT_USER_ID) {
+    const dbUser = db.prepare('SELECT owner_email, email FROM users WHERE id = ?').get(userObj.id) as any;
+    if (dbUser) {
+      effectiveEmail = (dbUser.owner_email || dbUser.email || '').trim().toLowerCase();
+    }
+  }
+  if (!effectiveEmail) {
+    effectiveEmail = (userObj.email || '').trim().toLowerCase();
+  }
   if (!effectiveEmail) return [];
 
   const rows = db.prepare(`
@@ -227,6 +236,7 @@ export function deleteUser(userId: string): boolean {
 
   const db = getDb();
   // Clean up all related user records
+  db.prepare('DELETE FROM user_sessions WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM transactions WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM accounts WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM categories WHERE user_id = ?').run(userId);
