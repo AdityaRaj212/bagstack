@@ -4,9 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { MoneyDisplay } from '@/components/MoneyDisplay';
 import { Plus, TrendingUp, TrendingDown, Layers, X, ShieldCheck } from 'lucide-react';
+import { formatIndianNumberString, parseIndianNumber } from '@/lib/amount-evaluator';
 
 export default function InvestmentsPage() {
-  const { showToast, refreshKey, triggerRefresh } = useApp();
+  const { showToast, refreshKey, triggerRefresh, startAsyncOp, stopAsyncOp } = useApp();
   const [data, setData] = useState<any>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,10 +41,11 @@ export default function InvestmentsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const costMinor = Math.round(parseFloat(costBasisStr) * 100);
-    const priceMinor = Math.round(parseFloat(currentPriceStr) * 100);
+    const costMinor = Math.round(parseIndianNumber(costBasisStr) * 100);
+    const priceMinor = Math.round(parseIndianNumber(currentPriceStr) * 100);
     const qty = parseFloat(quantity) || 1;
 
+    startAsyncOp();
     try {
       const res = await fetch('/api/investments', {
         method: 'POST',
@@ -69,6 +71,8 @@ export default function InvestmentsPage() {
       triggerRefresh();
     } catch (err: any) {
       showToast(err.message, 'error');
+    } finally {
+      stopAsyncOp();
     }
   };
 
@@ -268,12 +272,13 @@ export default function InvestmentsPage() {
                     COST BASIS (₹) *
                   </label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     required
-                    placeholder="Total invested"
+                    placeholder="e.g. 50,000"
                     className="input-field"
                     value={costBasisStr}
-                    onChange={e => setCostBasisStr(e.target.value)}
+                    onChange={e => setCostBasisStr(formatIndianNumberString(e.target.value))}
                   />
                 </div>
 
@@ -282,12 +287,13 @@ export default function InvestmentsPage() {
                     PRICE/UNIT (₹) *
                   </label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     required
-                    placeholder="Current price"
+                    placeholder="e.g. 2,450"
                     className="input-field"
                     value={currentPriceStr}
-                    onChange={e => setCurrentPriceStr(e.target.value)}
+                    onChange={e => setCurrentPriceStr(formatIndianNumberString(e.target.value))}
                   />
                 </div>
               </div>

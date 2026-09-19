@@ -35,6 +35,13 @@ export function formatIndianNumberString(val: string): string {
   });
 }
 
+export function parseIndianNumber(val: string): number {
+  if (!val) return 0;
+  const cleaned = val.replace(/,/g, '').trim();
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+}
+
 export function evaluateAmountInput(raw: string): AmountEvaluation {
   const trimmed = raw.trim();
   if (!trimmed) {

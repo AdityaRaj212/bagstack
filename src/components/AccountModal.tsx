@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { User, Plus, Check, X, Shield, ArrowRightCircle, Mail, DollarSign, Landmark, Star, Trash2, Pencil } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { formatIndianNumberString, parseIndianNumber } from '@/lib/amount-evaluator';
 
 export const AccountModal = () => {
   const {
@@ -42,7 +43,7 @@ export const AccountModal = () => {
     if (!name.trim()) return;
 
     setSubmitting(true);
-    const balanceNum = initialBalance ? parseFloat(initialBalance) : undefined;
+    const balanceNum = initialBalance ? parseIndianNumber(initialBalance) : undefined;
     const success = await registerUser({
       name: name.trim(),
       email: email.trim() || currentUser?.email || 'aditya@finance.local',
@@ -470,11 +471,11 @@ export const AccountModal = () => {
                   <label className="form-label" style={{ fontSize: '0.7rem' }}>Opening Balance</label>
                   <input
                     className="form-input"
-                    type="number"
-                    step="any"
-                    placeholder="e.g. 50000"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="e.g. 50,000"
                     value={initialBalance}
-                    onChange={e => setInitialBalance(e.target.value)}
+                    onChange={e => setInitialBalance(formatIndianNumberString(e.target.value))}
                   />
                 </div>
               </div>

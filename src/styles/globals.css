@@ -582,3 +582,32 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   }
 }
 
+.animate-spin {
+  animation: spin 1s linear infinite !important;
+}
+
+@keyframes topBarGlow {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.top-loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #4f46e5, #8b5cf6, #3b82f6, #10b981);
+  z-index: 99999;
+  animation: topBarGlow 1.5s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.8);
+  pointer-events: none;
+}
+

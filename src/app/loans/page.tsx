@@ -22,9 +22,10 @@ import {
 } from 'lucide-react';
 import { ModernDatePicker } from '@/components/ModernDatePicker';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { formatIndianNumberString, parseIndianNumber } from '@/lib/amount-evaluator';
 
 export default function LoansPage() {
-  const { showToast, refreshKey, triggerRefresh } = useApp();
+  const { showToast, refreshKey, triggerRefresh, startAsyncOp, stopAsyncOp } = useApp();
   const [loans, setLoans] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +88,7 @@ export default function LoansPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const principalMinor = Math.round(parseFloat(principalStr) * 100);
+    const principalMinor = Math.round(parseIndianNumber(principalStr) * 100);
     const rate = parseFloat(interestRateStr) || 0;
     const tenure = parseInt(tenureMonthsStr, 10) || 12;
 
@@ -96,6 +97,7 @@ export default function LoansPage() {
       return;
     }
 
+    startAsyncOp();
     try {
       const res = await fetch('/api/loans', {
         method: 'POST',
@@ -108,25 +110,23 @@ export default function LoansPage() {
           startDate,
           accountId,
           type: recordType,
-          notes: notes.trim() || undefined,
+          notes: notes.trim(),
         }),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to record entry');
-      }
 
-      showToast(
-        recordType === 'emi'
-          ? 'Purchase EMI installment schedule recorded!'
-          : 'Bank Loan added with full amortization schedule!'
-      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create entry');
+
+      showToast(recordType === 'emi' ? 'EMI plan saved!' : 'Bank loan registered!');
       setIsOpen(false);
       setName('');
       setPrincipalStr('');
+      setNotes('');
       triggerRefresh();
     } catch (err: any) {
       showToast(err.message, 'error');
+    } finally {
+      stopAsyncOp();
     }
   };
 
@@ -136,6 +136,7 @@ export default function LoansPage() {
     if (!payModalLoan) return;
 
     setPayLoading(true);
+    startAsyncOp();
     try {
       const res = await fetch(`/api/loans/${payModalLoan.id}/pay`, {
         method: 'POST',
@@ -157,6 +158,7 @@ export default function LoansPage() {
       showToast(err.message, 'error');
     } finally {
       setPayLoading(false);
+      stopAsyncOp();
     }
   };
 
@@ -646,13 +648,13 @@ export default function LoansPage() {
                     {recordType === 'emi' ? 'TOTAL PURCHASE PRICE (₹) *' : 'PRINCIPAL AMOUNT (₹) *'}
                   </label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     required
-                    min="1"
-                    placeholder={recordType === 'emi' ? '85000' : '800000'}
+                    placeholder={recordType === 'emi' ? '85,000' : '8,00,000'}
                     className="input-field"
                     value={principalStr}
-                    onChange={e => setPrincipalStr(e.target.value)}
+                    onChange={e => setPrincipalStr(formatIndianNumberString(e.target.value))}
                   />
                 </div>
 

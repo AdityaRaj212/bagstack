@@ -20,9 +20,10 @@ import {
 import { ModernDatePicker } from '@/components/ModernDatePicker';
 import { formatDateDMY } from '@/lib/date';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { formatIndianNumberString, parseIndianNumber } from '@/lib/amount-evaluator';
 
 export default function SubscriptionsPage() {
-  const { showToast, refreshKey, triggerRefresh } = useApp();
+  const { showToast, refreshKey, triggerRefresh, startAsyncOp, stopAsyncOp } = useApp();
   const [data, setData] = useState<any>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,12 +81,13 @@ export default function SubscriptionsPage() {
       return;
     }
 
-    const minor = Math.round(parseFloat(amountStr) * 100);
+    const minor = Math.round(parseIndianNumber(amountStr) * 100);
     if (isNaN(minor) || minor <= 0) {
       showToast('Please enter a valid amount', 'error');
       return;
     }
 
+    startAsyncOp();
     try {
       const res = await fetch('/api/subscriptions', {
         method: 'POST',
@@ -118,12 +120,15 @@ export default function SubscriptionsPage() {
       triggerRefresh();
     } catch (err: any) {
       showToast(err.message, 'error');
+    } finally {
+      stopAsyncOp();
     }
   };
 
   const confirmDelete = async () => {
     if (!subToDelete) return;
     setDeletingSub(true);
+    startAsyncOp();
     try {
       const res = await fetch(`/api/subscriptions?id=${subToDelete.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
@@ -134,6 +139,7 @@ export default function SubscriptionsPage() {
     } finally {
       setDeletingSub(false);
       setSubToDelete(null);
+      stopAsyncOp();
     }
   };
 
@@ -141,6 +147,7 @@ export default function SubscriptionsPage() {
     e.preventDefault();
     if (!subToPay) return;
     setProcessingPay(true);
+    startAsyncOp();
     try {
       const res = await fetch('/api/subscriptions', {
         method: 'PATCH',
@@ -164,6 +171,7 @@ export default function SubscriptionsPage() {
       showToast(err.message, 'error');
     } finally {
       setProcessingPay(false);
+      stopAsyncOp();
     }
   };
 
@@ -171,6 +179,7 @@ export default function SubscriptionsPage() {
     e.preventDefault();
     if (!subToSnooze || !snoozeDate) return;
     setProcessingSnooze(true);
+    startAsyncOp();
     try {
       const res = await fetch('/api/subscriptions', {
         method: 'PATCH',
@@ -193,6 +202,7 @@ export default function SubscriptionsPage() {
       showToast(err.message, 'error');
     } finally {
       setProcessingSnooze(false);
+      stopAsyncOp();
     }
   };
 
@@ -467,13 +477,13 @@ export default function SubscriptionsPage() {
                     AMOUNT (₹) *
                   </label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     required
-                    step="any"
                     placeholder="649"
                     className="input-field"
                     value={amountStr}
-                    onChange={e => setAmountStr(e.target.value)}
+                    onChange={e => setAmountStr(formatIndianNumberString(e.target.value))}
                     style={{
                       width: '100%',
                       padding: '0.6rem 0.85rem',

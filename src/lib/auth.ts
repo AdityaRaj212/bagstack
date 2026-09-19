@@ -101,14 +101,31 @@ export function createNewUser(data: {
   const id = `user_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   const currency = data.baseCurrency || 'INR';
   const ownerEmail = (data.ownerEmail || data.email || 'aditya@finance.local').trim().toLowerCase();
-  const profileEmail = data.email
-    ? data.email.trim().toLowerCase()
-    : `${ownerEmail.split('@')[0]}+${Date.now()}@${ownerEmail.split('@')[1] || 'workspace.local'}`;
 
-  // Check if profile email already exists
-  const existing = db.prepare('SELECT * FROM users WHERE email = ?').get(profileEmail) as any;
-  if (existing) {
-    throw new Error('A workspace profile with this identifier already exists');
+  let profileEmail = data.email?.trim().toLowerCase();
+
+  // If profileEmail was not specified OR matches ownerEmail, check if this is an additional profile
+  // under the same owner account
+  if (!profileEmail || profileEmail === ownerEmail) {
+    const existingPrimary = db.prepare('SELECT id FROM users WHERE email = ?').get(ownerEmail) as any;
+    if (!existingPrimary) {
+      // First workspace under this email
+      profileEmail = ownerEmail;
+    } else {
+      // Additional workspace profile under the same verified email account!
+      // Generate a unique workspace alias so SQLite UNIQUE constraint is satisfied
+      // while owner_email remains ownerEmail to group all profiles together
+      const slug = data.name.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+      const uniqueSuffix = `${slug ? slug + '_' : ''}${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 5)}`;
+      const [local, domain] = ownerEmail.split('@');
+      profileEmail = `${local}+${uniqueSuffix}@${domain || 'workspace.local'}`;
+    }
+  } else {
+    // A specific distinct email was requested - check if already taken
+    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(profileEmail) as any;
+    if (existing) {
+      throw new Error('An account with this email identifier already exists. Please sign in instead.');
+    }
   }
 
   db.prepare(`
@@ -131,11 +148,15 @@ export function createNewUser(data: {
 /**
  * List all workspaces/profiles belonging strictly to the active authenticated account
  */
-export function getAllUsers(currentUser?: UserSession): Array<UserSession & { isDefault: boolean }> {
+export function getAllUsers(currentUser?: UserSession | string): Array<UserSession & { isDefault: boolean }> {
   const db = getDb();
 
+  const userObj: UserSession | undefined = typeof currentUser === 'string'
+    ? { id: 'lookup', email: currentUser, name: '', baseCurrency: 'INR', ownerEmail: currentUser }
+    : currentUser;
+
   // If unauthenticated or demo user, only return demo user
-  if (!currentUser || currentUser.id === DEFAULT_USER_ID) {
+  if (!userObj || userObj.id === DEFAULT_USER_ID) {
     const demo = db.prepare('SELECT * FROM users WHERE id = ?').get(DEFAULT_USER_ID) as any;
     if (!demo) return [];
     return [{
@@ -148,7 +169,9 @@ export function getAllUsers(currentUser?: UserSession): Array<UserSession & { is
     }];
   }
 
-  const effectiveEmail = currentUser.ownerEmail || currentUser.email;
+  const effectiveEmail = (userObj.ownerEmail || userObj.email || '').trim().toLowerCase();
+  if (!effectiveEmail) return [];
+
   const rows = db.prepare(`
     SELECT * FROM users 
     WHERE owner_email = ? OR email = ?

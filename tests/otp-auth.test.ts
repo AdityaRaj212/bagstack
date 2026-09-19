@@ -110,4 +110,47 @@ describe('OTP Authentication & Session Engine', () => {
     const verifyResult = await service.verifyOtp(testEmail, res.devCode!);
     expect(verifyResult.success).toBe(true);
   });
+
+  it('allows creating multiple workspace profiles under the same owner email', async () => {
+    const { createNewUser, getAllUsers } = await import('../src/lib/auth');
+    const ownerEmail = 'multi_profile_owner@example.com';
+    db.prepare(`DELETE FROM users WHERE owner_email = ? OR email = ?`).run(ownerEmail, ownerEmail);
+
+    // Primary profile
+    const profile1 = await createNewUser({
+      name: 'Aditya Personal',
+      email: ownerEmail,
+      ownerEmail: ownerEmail,
+    });
+    expect(profile1.email).toBe(ownerEmail);
+    expect(profile1.ownerEmail).toBe(ownerEmail);
+
+    // Second profile under the same owner email (e.g. Freelance)
+    const profile2 = await createNewUser({
+      name: 'Aditya Freelance',
+      email: ownerEmail,
+      ownerEmail: ownerEmail,
+    });
+    expect(profile2).toBeDefined();
+    expect(profile2.name).toBe('Aditya Freelance');
+    expect(profile2.ownerEmail).toBe(ownerEmail);
+    expect(profile2.id).not.toBe(profile1.id);
+
+    // Third profile under the same owner email (e.g. Business)
+    const profile3 = await createNewUser({
+      name: 'Aditya Business',
+      email: ownerEmail,
+      ownerEmail: ownerEmail,
+    });
+    expect(profile3).toBeDefined();
+    expect(profile3.name).toBe('Aditya Business');
+    expect(profile3.ownerEmail).toBe(ownerEmail);
+
+    // All profiles for this owner
+    const all = await getAllUsers(ownerEmail);
+    const profileNames = all.map(p => p.name);
+    expect(profileNames).toContain('Aditya Personal');
+    expect(profileNames).toContain('Aditya Freelance');
+    expect(profileNames).toContain('Aditya Business');
+  });
 });

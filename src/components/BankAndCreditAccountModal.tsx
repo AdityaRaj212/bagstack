@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Landmark, CreditCard, Wallet, TrendingUp, ShieldCheck, X, Star } from 'lucide-react';
+import { formatIndianNumberString, parseIndianNumber } from '@/lib/amount-evaluator';
 
 interface BankAndCreditAccountModalProps {
   isOpen: boolean;
@@ -17,7 +18,7 @@ export const BankAndCreditAccountModal: React.FC<BankAndCreditAccountModalProps>
   onSuccess,
   accountToEdit,
 }) => {
-  const { showToast, triggerRefresh } = useApp();
+  const { showToast, triggerRefresh, startAsyncOp, stopAsyncOp } = useApp();
 
   const [accountType, setAccountType] = useState('savings');
   const [name, setName] = useState('');
@@ -40,10 +41,10 @@ export const BankAndCreditAccountModal: React.FC<BankAndCreditAccountModalProps>
       setCurrency(accountToEdit.currency || 'INR');
       setColor(accountToEdit.color || '#4f46e5');
       const lim = accountToEdit.creditLimit ?? accountToEdit.credit_limit;
-      setCreditLimitStr(lim !== undefined && lim !== null ? (lim / 100).toString() : '0');
+      setCreditLimitStr(lim !== undefined && lim !== null ? formatIndianNumberString((lim / 100).toString()) : '0');
       setIsDefault(Boolean(accountToEdit.isDefault ?? accountToEdit.is_default));
       const opBal = accountToEdit.openingBalance ?? accountToEdit.opening_balance;
-      setOpeningBalanceStr(opBal !== undefined && opBal !== null ? (opBal / 100).toString() : '0');
+      setOpeningBalanceStr(opBal !== undefined && opBal !== null ? formatIndianNumberString((opBal / 100).toString()) : '0');
     } else {
       setName('');
       setInstitution('');
@@ -76,10 +77,11 @@ export const BankAndCreditAccountModal: React.FC<BankAndCreditAccountModalProps>
       return;
     }
 
-    const openingPaise = Math.round((parseFloat(openingBalanceStr) || 0) * 100);
-    const limitPaise = accountType === 'credit_card' ? Math.round((parseFloat(creditLimitStr) || 0) * 100) : 0;
+    const openingPaise = Math.round((parseIndianNumber(openingBalanceStr) || 0) * 100);
+    const limitPaise = accountType === 'credit_card' ? Math.round((parseIndianNumber(creditLimitStr) || 0) * 100) : 0;
 
     setLoading(true);
+    startAsyncOp();
     try {
       if (accountToEdit) {
         // Edit / Rename existing account
@@ -142,6 +144,7 @@ export const BankAndCreditAccountModal: React.FC<BankAndCreditAccountModalProps>
       showToast(err.message || 'Failed to save account', 'error');
     } finally {
       setLoading(false);
+      stopAsyncOp();
     }
   };
 
@@ -303,12 +306,12 @@ export const BankAndCreditAccountModal: React.FC<BankAndCreditAccountModalProps>
                 {isCard ? 'OUTSTANDING BALANCE (₹)' : 'OPENING BALANCE (₹)'}
               </label>
               <input
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 className="form-input"
                 placeholder="0"
                 value={openingBalanceStr}
-                onChange={e => setOpeningBalanceStr(e.target.value)}
+                onChange={e => setOpeningBalanceStr(formatIndianNumberString(e.target.value))}
               />
             </div>
 
@@ -316,13 +319,13 @@ export const BankAndCreditAccountModal: React.FC<BankAndCreditAccountModalProps>
               <div className="form-group">
                 <label className="form-label">TOTAL CREDIT LIMIT (₹) *</label>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   required
                   className="form-input"
-                  placeholder="e.g. 100000"
+                  placeholder="e.g. 1,00,000"
                   value={creditLimitStr}
-                  onChange={e => setCreditLimitStr(e.target.value)}
+                  onChange={e => setCreditLimitStr(formatIndianNumberString(e.target.value))}
                 />
               </div>
             )}

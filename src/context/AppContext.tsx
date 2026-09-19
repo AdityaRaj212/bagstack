@@ -56,6 +56,9 @@ interface AppContextType {
   authChecked: boolean;
   refreshKey: number;
   triggerRefresh: () => void;
+  isAsyncOperationRunning: boolean;
+  startAsyncOp: () => void;
+  stopAsyncOp: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -83,6 +86,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [asyncOpCount, setAsyncOpCount] = useState(0);
+
+  const startAsyncOp = useCallback(() => setAsyncOpCount(prev => prev + 1), []);
+  const stopAsyncOp = useCallback(() => setAsyncOpCount(prev => Math.max(0, prev - 1)), []);
 
   const triggerRefresh = useCallback(() => setRefreshKey(prev => prev + 1), []);
 
@@ -410,6 +417,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         removeToast,
         refreshKey,
         triggerRefresh,
+        isAsyncOperationRunning: asyncOpCount > 0,
+        startAsyncOp,
+        stopAsyncOp,
       }}
     >
       {children}

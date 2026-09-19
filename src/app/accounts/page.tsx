@@ -16,17 +16,20 @@ import {
   Star,
   Trash2,
   Pencil,
+  Loader2,
 } from 'lucide-react';
 import { BankAndCreditAccountModal } from '@/components/BankAndCreditAccountModal';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { ModernDatePicker } from '@/components/ModernDatePicker';
+import { formatIndianNumberString, parseIndianNumber } from '@/lib/amount-evaluator';
 
 export default function AccountsPage() {
-  const { openTransactionModal, showToast, refreshKey, triggerRefresh } = useApp();
+  const { openTransactionModal, showToast, refreshKey, triggerRefresh, startAsyncOp, stopAsyncOp } = useApp();
 
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loans, setLoans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
   const [isNewAccountModalOpen, setIsNewAccountModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<any | null>(null);
 
@@ -61,6 +64,14 @@ export default function AccountsPage() {
   }, [refreshKey]);
 
   const handleSetDefault = async (accId: string, accName: string) => {
+    setSettingDefaultId(accId);
+    startAsyncOp();
+    // Optimistically update default account indicator in local UI
+    setAccounts(prev => prev.map(a => ({
+      ...a,
+      is_default: a.id === accId ? 1 : 0,
+    })));
+
     try {
       const res = await fetch('/api/accounts', {
         method: 'PATCH',
@@ -72,6 +83,10 @@ export default function AccountsPage() {
       triggerRefresh();
     } catch {
       showToast('Failed to set default account', 'error');
+      triggerRefresh(); // revert optimistic state on failure
+    } finally {
+      setSettingDefaultId(null);
+      stopAsyncOp();
     }
   };
 
@@ -82,6 +97,7 @@ export default function AccountsPage() {
   const confirmDeleteAccount = async () => {
     if (!accountToDelete) return;
     setDeletingAccount(true);
+    startAsyncOp();
     try {
       const res = await fetch(`/api/accounts?id=${accountToDelete.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
@@ -92,13 +108,15 @@ export default function AccountsPage() {
     } finally {
       setDeletingAccount(false);
       setAccountToDelete(null);
+      stopAsyncOp();
     }
   };
 
   const handleReconcileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reconAccount || !stmtBalanceStr) return;
-    const stmtMinor = Math.round(parseFloat(stmtBalanceStr) * 100);
+    const stmtMinor = Math.round(parseIndianNumber(stmtBalanceStr) * 100);
+    startAsyncOp();
 
     try {
       const res = await fetch('/api/reconciliation', {
@@ -116,6 +134,8 @@ export default function AccountsPage() {
       triggerRefresh();
     } catch (err: any) {
       showToast(err.message || 'Reconciliation failed', 'error');
+    } finally {
+      stopAsyncOp();
     }
   };
 
@@ -288,21 +308,31 @@ export default function AccountsPage() {
                       {!isDefault && (
                         <button
                           onClick={() => handleSetDefault(acc.id, acc.name)}
+                          disabled={settingDefaultId === acc.id}
                           style={{
                             fontSize: '0.725rem',
                             color: 'var(--text-muted)',
                             background: 'none',
                             border: 'none',
-                            cursor: 'pointer',
+                            cursor: settingDefaultId === acc.id ? 'not-allowed' : 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '4px',
                             padding: '2px 4px',
                             borderRadius: 'var(--radius-sm)',
+                            opacity: settingDefaultId === acc.id ? 0.7 : 1,
                           }}
                           title="Set as default transaction account"
                         >
-                          <Star size={12} /> Set as default
+                          {settingDefaultId === acc.id ? (
+                            <>
+                              <Loader2 size={12} className="animate-spin" /> Setting...
+                            </>
+                          ) : (
+                            <>
+                              <Star size={12} /> Set as default
+                            </>
+                          )}
                         </button>
                       )}
                     </div>
@@ -494,20 +524,30 @@ export default function AccountsPage() {
                       {!isDefault && (
                         <button
                           onClick={() => handleSetDefault(card.id, card.name)}
+                          disabled={settingDefaultId === card.id}
                           style={{
                             fontSize: '0.725rem',
                             color: 'var(--text-muted)',
                             backgroundColor: 'transparent',
                             border: 'none',
-                            cursor: 'pointer',
+                            cursor: settingDefaultId === card.id ? 'not-allowed' : 'pointer',
                             padding: '2px 4px',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '4px',
+                            opacity: settingDefaultId === card.id ? 0.7 : 1,
                           }}
                           title="Set as default transaction account"
                         >
-                          <Star size={12} /> Set as default
+                          {settingDefaultId === card.id ? (
+                            <>
+                              <Loader2 size={12} className="animate-spin" /> Setting...
+                            </>
+                          ) : (
+                            <>
+                              <Star size={12} /> Set as default
+                            </>
+                          )}
                         </button>
                       )}
                     </div>
@@ -593,13 +633,13 @@ export default function AccountsPage() {
                 <div className="form-group">
                   <label className="form-label">BANK STATEMENT ENDING BALANCE (₹)</label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     required
-                    placeholder="e.g. 84530.00"
+                    placeholder="e.g. 84,530.00"
                     className="form-input"
                     value={stmtBalanceStr}
-                    onChange={e => setStmtBalanceStr(e.target.value)}
+                    onChange={e => setStmtBalanceStr(formatIndianNumberString(e.target.value))}
                   />
                 </div>
 

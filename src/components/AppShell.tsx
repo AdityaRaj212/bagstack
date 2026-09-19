@@ -21,6 +21,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
     enterDemoMode,
     logout,
     authChecked,
+    isAsyncOperationRunning,
   } = useApp();
 
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -92,6 +93,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
   // Authenticated: Render full application shell with Sidebar & Navigation
   return (
     <>
+      {isAsyncOperationRunning && <div className="top-loading-bar" />}
       {isDemoMode && (
         <div
           style={{

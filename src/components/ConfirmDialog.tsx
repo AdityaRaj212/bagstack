@@ -202,6 +202,27 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                   {details}
                 </div>
               )}
+
+              {isLoading && (
+                <div
+                  style={{
+                    marginTop: '0.75rem',
+                    padding: '0.65rem 0.85rem',
+                    backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid rgba(99, 102, 241, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontSize: '0.8rem',
+                    color: 'var(--brand-primary)',
+                    fontWeight: 500,
+                  }}
+                >
+                  <Loader2 size={15} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
+                  <span>Processing database request and updating ledger...</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -250,11 +271,17 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               border: 'none',
               cursor: isLoading ? 'not-allowed' : 'pointer',
               transition: 'opacity var(--transition-fast)',
-              opacity: isLoading ? 0.7 : 1,
+              opacity: isLoading ? 0.75 : 1,
             }}
           >
-            {isLoading && <Loader2 size={16} className="animate-spin" />}
-            {confirmText}
+            {isLoading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
+                <span>Processing...</span>
+              </>
+            ) : (
+              confirmText
+            )}
           </button>
         </div>
       </div>

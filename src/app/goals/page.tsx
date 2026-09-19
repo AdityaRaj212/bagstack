@@ -7,9 +7,10 @@ import { Plus, Target, Calendar, CheckCircle2, TrendingUp, X, Edit2, Trash2, Arr
 import { ModernDatePicker } from '@/components/ModernDatePicker';
 import { formatDateDMY } from '@/lib/date';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { formatIndianNumberString, parseIndianNumber } from '@/lib/amount-evaluator';
 
 export default function GoalsPage() {
-  const { showToast, refreshKey, triggerRefresh } = useApp();
+  const { showToast, refreshKey, triggerRefresh, startAsyncOp, stopAsyncOp } = useApp();
   const [goals, setGoals] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,9 +61,10 @@ export default function GoalsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const targetMinor = Math.round(parseFloat(targetAmountStr) * 100);
-    const currMinor = Math.round((parseFloat(currentAmountStr) || 0) * 100);
+    const targetMinor = Math.round(parseIndianNumber(targetAmountStr) * 100);
+    const currMinor = Math.round((parseIndianNumber(currentAmountStr) || 0) * 100);
 
+    startAsyncOp();
     try {
       const res = await fetch('/api/goals', {
         method: 'POST',
@@ -102,18 +104,21 @@ export default function GoalsPage() {
       loadData();
     } catch (err: any) {
       showToast(err.message, 'error');
+    } finally {
+      stopAsyncOp();
     }
   };
 
   const handleContribute = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!contributeGoal) return;
-    const addMinor = Math.round(parseFloat(contribStr) * 100);
+    const addMinor = Math.round(parseIndianNumber(contribStr) * 100);
     if (addMinor <= 0) {
       showToast('Enter a valid contribution amount', 'error');
       return;
     }
 
+    startAsyncOp();
     try {
       const res = await fetch('/api/goals', {
         method: 'PATCH',
@@ -150,14 +155,16 @@ export default function GoalsPage() {
       loadData();
     } catch (err: any) {
       showToast(err.message, 'error');
+    } finally {
+      stopAsyncOp();
     }
   };
 
   const openEditModal = (g: any) => {
     setEditGoal(g);
     setEditName(g.name);
-    setEditTargetAmountStr((g.target_amount / 100).toString());
-    setEditCurrentAmountStr((g.current_amount / 100).toString());
+    setEditTargetAmountStr(formatIndianNumberString((g.target_amount / 100).toString()));
+    setEditCurrentAmountStr(formatIndianNumberString((g.current_amount / 100).toString()));
     setEditTargetDate(g.target_date || '');
     setEditNotes(g.notes || '');
   };
@@ -165,9 +172,10 @@ export default function GoalsPage() {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editGoal) return;
-    const targetMinor = Math.round(parseFloat(editTargetAmountStr) * 100);
-    const currMinor = Math.round(parseFloat(editCurrentAmountStr) * 100);
+    const targetMinor = Math.round(parseIndianNumber(editTargetAmountStr) * 100);
+    const currMinor = Math.round(parseIndianNumber(editCurrentAmountStr) * 100);
 
+    startAsyncOp();
     try {
       const res = await fetch('/api/goals', {
         method: 'PUT',
@@ -204,6 +212,8 @@ export default function GoalsPage() {
       loadData();
     } catch (err: any) {
       showToast(err.message, 'error');
+    } finally {
+      stopAsyncOp();
     }
   };
 
@@ -214,6 +224,7 @@ export default function GoalsPage() {
   const confirmDeleteGoal = async () => {
     if (!goalToDelete) return;
     setDeletingGoal(true);
+    startAsyncOp();
     try {
       const res = await fetch(`/api/goals?id=${goalToDelete.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
@@ -226,6 +237,7 @@ export default function GoalsPage() {
     } finally {
       setDeletingGoal(false);
       setGoalToDelete(null);
+      stopAsyncOp();
     }
   };
 
@@ -377,23 +389,25 @@ export default function GoalsPage() {
                 <div className="form-group">
                   <label className="form-label">TARGET AMOUNT (₹) *</label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     required
-                    placeholder="150000"
+                    placeholder="1,50,000"
                     className="form-input"
                     value={targetAmountStr}
-                    onChange={e => setTargetAmountStr(e.target.value)}
+                    onChange={e => setTargetAmountStr(formatIndianNumberString(e.target.value))}
                   />
                 </div>
 
                 <div className="form-group">
                   <label className="form-label">INITIAL SAVED (₹)</label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="0"
                     className="form-input"
                     value={currentAmountStr}
-                    onChange={e => setCurrentAmountStr(e.target.value)}
+                    onChange={e => setCurrentAmountStr(formatIndianNumberString(e.target.value))}
                   />
                 </div>
               </div>
@@ -459,24 +473,24 @@ export default function GoalsPage() {
                 <div className="form-group">
                   <label className="form-label">CURRENT / OPENING BALANCE (₹) *</label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     required
                     className="form-input"
                     value={editCurrentAmountStr}
-                    onChange={e => setEditCurrentAmountStr(e.target.value)}
+                    onChange={e => setEditCurrentAmountStr(formatIndianNumberString(e.target.value))}
                   />
                 </div>
 
                 <div className="form-group">
                   <label className="form-label">TARGET AMOUNT (₹) *</label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     required
                     className="form-input"
                     value={editTargetAmountStr}
-                    onChange={e => setEditTargetAmountStr(e.target.value)}
+                    onChange={e => setEditTargetAmountStr(formatIndianNumberString(e.target.value))}
                   />
                 </div>
               </div>
@@ -529,14 +543,14 @@ export default function GoalsPage() {
               <div className="form-group">
                 <label className="form-label">CONTRIBUTION AMOUNT (₹) *</label>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   required
                   autoFocus
-                  placeholder="e.g. 5000"
+                  placeholder="e.g. 5,000"
                   className="form-input"
                   value={contribStr}
-                  onChange={e => setContribStr(e.target.value)}
+                  onChange={e => setContribStr(formatIndianNumberString(e.target.value))}
                 />
               </div>
 

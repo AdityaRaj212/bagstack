@@ -4,9 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { MoneyDisplay } from '@/components/MoneyDisplay';
 import { Plus, PieChart, AlertTriangle, CheckCircle2, Trash2, X } from 'lucide-react';
+import { formatIndianNumberString, parseIndianNumber } from '@/lib/amount-evaluator';
 
 export default function BudgetsPage() {
-  const { showToast, refreshKey, triggerRefresh } = useApp();
+  const { showToast, refreshKey, triggerRefresh, startAsyncOp, stopAsyncOp } = useApp();
   const [budgets, setBudgets] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,12 +39,13 @@ export default function BudgetsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const minor = Math.round((parseFloat(amountStr) || 0) * 100);
+    const minor = Math.round((parseIndianNumber(amountStr) || 0) * 100);
     if (minor <= 0) {
       showToast('Please enter a valid budget amount', 'error');
       return;
     }
 
+    startAsyncOp();
     try {
       const res = await fetch('/api/budgets', {
         method: 'POST',
@@ -62,6 +64,8 @@ export default function BudgetsPage() {
       triggerRefresh();
     } catch (err: any) {
       showToast(err.message, 'error');
+    } finally {
+      stopAsyncOp();
     }
   };
 
@@ -217,12 +221,13 @@ export default function BudgetsPage() {
                   MONTHLY LIMIT (₹)
                 </label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   required
-                  placeholder="e.g. 15000"
+                  placeholder="e.g. 15,000"
                   className="input-field"
                   value={amountStr}
-                  onChange={e => setAmountStr(e.target.value)}
+                  onChange={e => setAmountStr(formatIndianNumberString(e.target.value))}
                 />
               </div>
 
