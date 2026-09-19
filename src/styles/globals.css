@@ -565,12 +565,32 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
-    transform: scale(1);
   }
   50% {
     opacity: 0.4;
-    transform: scale(0.9);
   }
+}
+
+@keyframes rowFadeProcess {
+  0%, 100% {
+    opacity: 0.9;
+    background-color: transparent;
+  }
+  50% {
+    opacity: 0.25;
+    background-color: rgba(239, 68, 68, 0.05);
+  }
+}
+
+.row-deleting {
+  animation: rowFadeProcess 1.4s ease-in-out infinite !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.row-deleting td {
+  background-color: transparent !important;
+  transition: opacity 0.3s ease !important;
 }
 
 @keyframes pulseGlow {

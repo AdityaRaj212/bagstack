@@ -19,6 +19,7 @@ import {
   ChevronDown,
   Check,
   X,
+  Loader2,
 } from 'lucide-react';
 
 export default function TransactionsPage() {
@@ -990,13 +991,9 @@ export default function TransactionsPage() {
                           key={tx.id}
                           style={{
                             borderBottom: '1px solid var(--border-subtle)',
-                            opacity: isDeleting ? 0.35 : 1,
-                            filter: isDeleting ? 'grayscale(0.6)' : 'none',
                             pointerEvents: isDeleting ? 'none' : 'auto',
-                            animation: isDeleting ? 'pulse 0.8s ease-in-out infinite alternate' : 'none',
-                            transition: 'opacity 0.2s ease, filter 0.2s ease',
                           }}
-                          className={isDeleting ? '' : 'card-interactive'}
+                          className={isDeleting ? 'row-deleting' : 'card-interactive'}
                         >
                           {/* Col 1: Title & Notes & Splits & Tags */}
                           <td style={{ padding: '0.75rem 1rem', verticalAlign: 'middle' }}>
@@ -1163,7 +1160,11 @@ export default function TransactionsPage() {
                                 title={isDeleting ? 'Deleting...' : 'Delete transaction (with undo)'}
                                 style={{ color: isDeleting ? 'var(--color-danger)' : 'var(--text-muted)', width: '28px', height: '28px' }}
                               >
-                                <Trash2 size={14} />
+                                {isDeleting ? (
+                                  <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                  <Trash2 size={14} />
+                                )}
                               </button>
                             </div>
                           </td>
