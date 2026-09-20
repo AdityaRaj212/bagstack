@@ -9,6 +9,9 @@
     "lint": "eslint",
     "test": "vitest run --fileParallelism=false"
   },
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "dependencies": {
     "@libsql/client": "^0.18.0",
     "@vercel/analytics": "^2.0.1",
