@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, handleApiError } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -71,6 +71,6 @@ export async function GET(req: Request) {
       },
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Search failed' }, { status: 500 });
+    return handleApiError(error, 'Search failed');
   }
 }

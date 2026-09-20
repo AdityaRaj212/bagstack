@@ -16,8 +16,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Profile name is required' }, { status: 400 });
     }
 
-    const isAuthed = currentUser && currentUser.id !== DEFAULT_USER_ID;
-    const ownerEmail = isAuthed ? (currentUser.ownerEmail || currentUser.email) : (email?.trim().toLowerCase() || 'aditya@finance.local');
+    if (!currentUser || currentUser.id === DEFAULT_USER_ID) {
+      return NextResponse.json(
+        { error: 'Unauthorized: You must be logged in to create a workspace profile' },
+        { status: 401 }
+      );
+    }
+
+    const ownerEmail = (currentUser.ownerEmail || currentUser.email).toLowerCase();
 
     const newUser = createNewUser({
       name: name.trim(),
@@ -49,18 +55,21 @@ export async function POST(req: Request) {
       db.prepare('UPDATE user_sessions SET user_id = ? WHERE token = ?').run(newUser.id, token);
     }
 
+    const isProd = process.env.NODE_ENV === 'production';
     const response = NextResponse.json({ success: true, user: newUser }, { status: 201 });
 
     // Set cookie for automatic session retention
     response.cookies.set('finance_user_id', newUser.id, {
       path: '/',
-      httpOnly: false,
+      httpOnly: true,
+      secure: isProd,
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 365, // 1 year
     });
 
     return response;
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Registration failed' }, { status: 400 });
+    const status = error.message?.includes('Unauthorized') ? 401 : 400;
+    return NextResponse.json({ error: error.message || 'Registration failed' }, { status });
   }
 }

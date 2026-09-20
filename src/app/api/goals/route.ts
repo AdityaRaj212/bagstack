@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, handleApiError } from '@/lib/auth';
 import { FinanceService } from '@/lib/finance-service';
 
 export const runtime = 'nodejs';
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     const goals = service.getGoals(user.id);
     return NextResponse.json({ goals });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to fetch goals' }, { status: 500 });
+    return handleApiError(error, 'Failed to fetch goals');
   }
 }
 
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ id: goalId }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to create goal' }, { status: 500 });
+    return handleApiError(error, 'Failed to create goal');
   }
 }
 
@@ -53,7 +53,7 @@ export async function PATCH(req: Request) {
     const result = service.contributeToGoal(body.id, user.id, body.addAmount, body.sourceAccountId);
     return NextResponse.json(result);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to update goal' }, { status: 500 });
+    return handleApiError(error, 'Failed to update goal');
   }
 }
 
@@ -77,7 +77,7 @@ export async function PUT(req: Request) {
     });
     return NextResponse.json(result);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to edit goal' }, { status: 500 });
+    return handleApiError(error, 'Failed to edit goal');
   }
 }
 
@@ -95,6 +95,6 @@ export async function DELETE(req: Request) {
     service.deleteGoal(id, user.id);
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to delete goal' }, { status: 500 });
+    return handleApiError(error, 'Failed to delete goal');
   }
 }

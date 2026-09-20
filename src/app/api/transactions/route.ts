@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, handleApiError } from '@/lib/auth';
 import { FinanceService } from '@/lib/finance-service';
 
 export const runtime = 'nodejs';
@@ -41,7 +41,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ transactions });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to fetch transactions' }, { status: 500 });
+    return handleApiError(error, 'Failed to fetch transactions');
   }
 }
 
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ transaction }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to create transaction' }, { status: 500 });
+    return handleApiError(error, 'Failed to create transaction');
   }
 }
 
@@ -112,7 +112,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ transaction });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to update transaction' }, { status: 500 });
+    return handleApiError(error, 'Failed to update transaction');
   }
 }
 
@@ -136,6 +136,6 @@ export async function DELETE(req: Request) {
     const result = service.deleteTransaction(id, user.id, false); // soft delete enables undo!
     return NextResponse.json(result);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to process transaction' }, { status: 500 });
+    return handleApiError(error, 'Failed to process transaction');
   }
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, handleApiError } from '@/lib/auth';
 import { FinanceService } from '@/lib/finance-service';
 
 export const runtime = 'nodejs';
@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     const history = service.getReconciliations(user.id, accountId);
     return NextResponse.json({ history });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to fetch reconciliation' }, { status: 500 });
+    return handleApiError(error, 'Failed to fetch reconciliation');
   }
 }
 
@@ -42,6 +42,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to execute reconciliation' }, { status: 500 });
+    return handleApiError(error, 'Failed to execute reconciliation');
   }
 }

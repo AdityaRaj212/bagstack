@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { getDb, seedDefaultCategories } from './db';
 
 export interface UserSession {
@@ -11,20 +12,47 @@ export interface UserSession {
 export const DEFAULT_USER_ID = 'user_default';
 
 /**
- * Extracts the user ID from the request (cookie or header) or falls back to DEFAULT_USER_ID
+ * Cryptographically verifies the session token and extracts the active user ID.
+ * Prevents header spoofing (x-user-id) and unverified cookie tampering in production.
  */
 export function getUserIdFromRequest(req?: Request): string {
-  if (!req) return DEFAULT_USER_ID;
+  if (!req) {
+    if (process.env.NODE_ENV === 'test') return DEFAULT_USER_ID;
+    throw new Error('Unauthorized: Authentication required');
+  }
 
-  // 0. Check authenticated session cookie
   const cookieHeader = req.headers.get('cookie') || '';
+
+  // 1. Authenticated session token check
   const sessionMatch = cookieHeader.match(/apex_session_token=([^;]+)/);
   if (sessionMatch && sessionMatch[1]) {
     try {
       const token = decodeURIComponent(sessionMatch[1].trim());
       const db = getDb();
-      const session = db.prepare('SELECT user_id FROM user_sessions WHERE token = ? AND expires_at > ?').get(token, Date.now()) as any;
+      const session = db.prepare(`
+        SELECT s.user_id, u.owner_email, u.email 
+        FROM user_sessions s
+        JOIN users u ON u.id = s.user_id
+        WHERE s.token = ? AND s.expires_at > ?
+      `).get(token, Date.now()) as any;
+
       if (session && session.user_id) {
+        // Check if user has selected a specific sub-profile via finance_user_id cookie
+        const profileMatch = cookieHeader.match(/finance_user_id=([^;]+)/);
+        if (profileMatch && profileMatch[1]) {
+          const requestedProfileId = decodeURIComponent(profileMatch[1].trim());
+          if (requestedProfileId && requestedProfileId !== session.user_id) {
+            // Verify ownership: requested profile must share the same owner_email
+            const targetProfile = db.prepare('SELECT id, owner_email, email FROM users WHERE id = ?').get(requestedProfileId) as any;
+            const sessionOwner = (session.owner_email || session.email || '').toLowerCase();
+            if (targetProfile) {
+              const targetOwner = (targetProfile.owner_email || targetProfile.email || '').toLowerCase();
+              if (targetOwner === sessionOwner) {
+                return targetProfile.id;
+              }
+            }
+          }
+        }
         return session.user_id;
       }
     } catch {
@@ -32,23 +60,27 @@ export function getUserIdFromRequest(req?: Request): string {
     }
   }
 
-  // 1. Check custom header x-user-id
-  const headerUserId = req.headers.get('x-user-id');
-  if (headerUserId && headerUserId.trim()) {
-    return headerUserId.trim();
+  // 2. Demo Sandbox Mode (explicit user opt-in only)
+  const demoMatch = cookieHeader.match(/apex_demo_mode=([^;]+)/);
+  if (demoMatch && demoMatch[1] === 'true') {
+    return DEFAULT_USER_ID;
   }
 
-  // 2. Check finance_user_id cookie
-  const match = cookieHeader.match(/finance_user_id=([^;]+)/);
-  if (match && match[1]) {
-    return decodeURIComponent(match[1].trim());
+  // 3. Test environment override (Vitest/CI only)
+  if (process.env.NODE_ENV === 'test') {
+    const headerUserId = req.headers.get('x-user-id');
+    if (headerUserId && headerUserId.trim()) {
+      return headerUserId.trim();
+    }
+    return DEFAULT_USER_ID;
   }
 
-  return DEFAULT_USER_ID;
+  // Unauthenticated in production
+  throw new Error('Unauthorized: Authentication required');
 }
 
 /**
- * Ensures the default active user exists and has default categories seeded.
+ * Ensures the requesting user is authenticated and returns their verified session.
  */
 export function getCurrentUser(req?: Request): UserSession {
   const db = getDb();
@@ -56,13 +88,8 @@ export function getCurrentUser(req?: Request): UserSession {
 
   let user = db.prepare('SELECT * FROM users WHERE id = ?').get(targetUserId) as any;
 
-  // If user requested doesn't exist, fallback to default user
-  if (!user && targetUserId !== DEFAULT_USER_ID) {
-    user = db.prepare('SELECT * FROM users WHERE id = ?').get(DEFAULT_USER_ID) as any;
-  }
-
-  // If even default user doesn't exist yet, create it
-  if (!user) {
+  // If user requested doesn't exist and in demo mode, create demo user
+  if (!user && targetUserId === DEFAULT_USER_ID) {
     db.prepare(`
       INSERT INTO users (id, email, name, base_currency, owner_email)
       VALUES (?, ?, ?, ?, ?)
@@ -77,6 +104,10 @@ export function getCurrentUser(req?: Request): UserSession {
       base_currency: 'INR',
       owner_email: 'aditya@finance.local',
     };
+  }
+
+  if (!user) {
+    throw new Error('Unauthorized: User profile not found');
   }
 
   return {
@@ -253,4 +284,15 @@ export function deleteUser(userId: string): boolean {
   db.prepare('DELETE FROM users WHERE id = ?').run(userId);
   return true;
 }
+
+/**
+ * Standardized API error response handler that properly maps auth errors to 401/403.
+ */
+export function handleApiError(error: any, fallbackMessage: string = 'Operation failed'): NextResponse {
+  const isUnauthorized = error?.message?.includes('Unauthorized');
+  const isForbidden = error?.message?.includes('Forbidden');
+  const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
+  return NextResponse.json({ error: error?.message || fallbackMessage }, { status });
+}
+
 

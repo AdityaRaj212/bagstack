@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, handleApiError } from '@/lib/auth';
 import { FinanceService } from '@/lib/finance-service';
 
 export const runtime = 'nodejs';
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     const result = service.getSubscriptions(user.id);
     return NextResponse.json(result);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to fetch subscriptions' }, { status: 500 });
+    return handleApiError(error, 'Failed to fetch subscriptions');
   }
 }
 
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ id }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to create subscription' }, { status: 500 });
+    return handleApiError(error, 'Failed to create subscription');
   }
 }
 
@@ -78,7 +78,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to update subscription' }, { status: 500 });
+    return handleApiError(error, 'Failed to update subscription');
   }
 }
 
@@ -93,6 +93,6 @@ export async function DELETE(req: Request) {
     service.deleteSubscription(id, user.id);
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to delete subscription' }, { status: 500 });
+    return handleApiError(error, 'Failed to delete subscription');
   }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { OtpService } from '@/lib/otp-service';
+import { rateLimiter, getClientIp } from '@/lib/rate-limiter';
 
 export const runtime = 'nodejs';
 
@@ -10,6 +11,15 @@ export async function POST(req: Request) {
 
     if (!email || !code) {
       return NextResponse.json({ error: 'Email and verification code are required' }, { status: 400 });
+    }
+
+    const clientIp = getClientIp(req);
+    const ipCheck = rateLimiter.check(`otp:verify:${clientIp}`, 10, 60_000);
+    if (!ipCheck.allowed) {
+      return NextResponse.json(
+        { error: 'Too many verification attempts. Please wait a minute.' },
+        { status: 429 }
+      );
     }
 
     const otpService = new OtpService();
@@ -24,19 +34,21 @@ export async function POST(req: Request) {
       user: result.user,
     });
 
+    const isProd = process.env.NODE_ENV === 'production';
+
     // Set secure HTTP-only session cookie for 30 days
     response.cookies.set('apex_session_token', result.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isProd,
       sameSite: 'lax',
       path: '/',
       maxAge: 30 * 24 * 60 * 60, // 30 days
     });
 
-    // Also set finance_user_id for backwards compatibility with existing services
+    // Also set finance_user_id for profile routing
     response.cookies.set('finance_user_id', result.user.id, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      secure: isProd,
       sameSite: 'lax',
       path: '/',
       maxAge: 30 * 24 * 60 * 60,

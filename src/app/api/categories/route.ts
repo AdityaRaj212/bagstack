@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, handleApiError } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ categories, tree });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to fetch categories' }, { status: 500 });
+    return handleApiError(error, 'Failed to fetch categories');
   }
 }
 
@@ -56,6 +56,6 @@ export async function POST(req: Request) {
     const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(id);
     return NextResponse.json({ category }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to create category' }, { status: 500 });
+    return handleApiError(error, 'Failed to create category');
   }
 }

@@ -1,52 +1,63 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   try {
+    const currentUser = getCurrentUser(req);
     const body = await req.json();
-    const { userId, email } = body;
+    const { userId } = body;
 
-    const db = getDb();
-    let user = null;
-
-    if (userId) {
-      user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as any;
-    } else if (email) {
-      user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.trim().toLowerCase()) as any;
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    const db = getDb();
+    const targetUser = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as any;
+
+    if (!targetUser) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+    }
+
+    // Ownership verification: Can only switch to profiles belonging to the same owner account
+    const currentOwner = (currentUser.ownerEmail || currentUser.email).toLowerCase();
+    const targetOwner = (targetUser.owner_email || targetUser.email).toLowerCase();
+
+    if (currentOwner !== targetOwner && currentUser.id !== targetUser.id) {
+      return NextResponse.json({ error: 'Forbidden: You do not have permission to switch to this profile' }, { status: 403 });
     }
 
     const sessionUser = {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      baseCurrency: user.base_currency || 'INR',
-      ownerEmail: user.owner_email || user.email,
+      id: targetUser.id,
+      email: targetUser.email,
+      name: targetUser.name,
+      baseCurrency: targetUser.base_currency || 'INR',
+      ownerEmail: targetUser.owner_email || targetUser.email,
     };
 
-    // If an authenticated session cookie exists, update the session record to point to this switched profile!
+    // Update active session record
     const cookieHeader = req.headers.get('cookie') || '';
     const sessionMatch = cookieHeader.match(/apex_session_token=([^;]+)/);
     if (sessionMatch && sessionMatch[1]) {
       const token = decodeURIComponent(sessionMatch[1].trim());
-      db.prepare('UPDATE user_sessions SET user_id = ? WHERE token = ?').run(user.id, token);
+      db.prepare('UPDATE user_sessions SET user_id = ? WHERE token = ?').run(targetUser.id, token);
     }
 
+    const isProd = process.env.NODE_ENV === 'production';
     const response = NextResponse.json({ success: true, user: sessionUser });
-    response.cookies.set('finance_user_id', user.id, {
+    response.cookies.set('finance_user_id', targetUser.id, {
       path: '/',
-      httpOnly: false,
+      httpOnly: true,
+      secure: isProd,
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 365,
     });
 
     return response;
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Login failed' }, { status: 500 });
+    const status = error.message?.includes('Unauthorized') ? 401 : 500;
+    return NextResponse.json({ error: error.message || 'Profile switch failed' }, { status });
   }
 }

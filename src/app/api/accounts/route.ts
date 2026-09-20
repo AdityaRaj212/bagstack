@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, handleApiError } from '@/lib/auth';
 import { FinanceService } from '@/lib/finance-service';
 
 export const runtime = 'nodejs';
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     const accounts = service.getAccounts(user.id);
     return NextResponse.json({ accounts });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to fetch accounts' }, { status: 500 });
+    return handleApiError(error, 'Failed to fetch accounts');
   }
 }
 
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ account }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to create account' }, { status: 500 });
+    return handleApiError(error, 'Failed to create account');
   }
 }
 
@@ -72,7 +72,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ success: true, account: updated });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to update account' }, { status: 500 });
+    return handleApiError(error, 'Failed to update account');
   }
 }
 
@@ -89,7 +89,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to update account' }, { status: 500 });
+    return handleApiError(error, 'Failed to update account');
   }
 }
 
@@ -104,7 +104,7 @@ export async function DELETE(req: Request) {
     service.deleteAccount(id, user.id);
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to delete account' }, { status: 500 });
+    return handleApiError(error, 'Failed to delete account');
   }
 }
 

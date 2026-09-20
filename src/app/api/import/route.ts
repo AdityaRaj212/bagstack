@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, handleApiError } from '@/lib/auth';
 import { FinanceService } from '@/lib/finance-service';
 import { parseCsvContent, autoDetectColumnMapping, processCsvRows, CsvColumnMapping } from '@/lib/csv-importer';
 
@@ -82,6 +82,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ error: 'Invalid action. Use "preview" or "execute"' }, { status: 400 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Import failed' }, { status: 500 });
+    return handleApiError(error, 'Import failed');
   }
 }

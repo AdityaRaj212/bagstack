@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, handleApiError } from '@/lib/auth';
 import { FinanceService } from '@/lib/finance-service';
 
 export const runtime = 'nodejs';
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     const tags = service.getTags(user.id);
     return NextResponse.json({ tags });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to fetch tags' }, { status: 500 });
+    return handleApiError(error, 'Failed to fetch tags');
   }
 }
 
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     const tag = service.createTag(user.id, body.name, body.color);
     return NextResponse.json({ success: true, tag }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to create tag' }, { status: 500 });
+    return handleApiError(error, 'Failed to create tag');
   }
 }
 
@@ -46,7 +46,7 @@ export async function PUT(req: Request) {
     });
     return NextResponse.json({ success: true, tag });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to update tag' }, { status: 500 });
+    return handleApiError(error, 'Failed to update tag');
   }
 }
 
@@ -64,6 +64,6 @@ export async function DELETE(req: Request) {
     service.deleteTag(user.id, id);
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to delete tag' }, { status: 500 });
+    return handleApiError(error, 'Failed to delete tag');
   }
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, handleApiError } from '@/lib/auth';
 import { FinanceService } from '@/lib/finance-service';
 
 export const runtime = 'nodejs';
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     const recurring = service.getRecurring(user.id);
     return NextResponse.json({ recurring });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to fetch recurring' }, { status: 500 });
+    return handleApiError(error, 'Failed to fetch recurring');
   }
 }
 
@@ -40,6 +40,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ id }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to create recurring' }, { status: 500 });
+    return handleApiError(error, 'Failed to create recurring');
   }
 }

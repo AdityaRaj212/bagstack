@@ -2138,9 +2138,7 @@ export class FinanceService {
   }
 
   getSplitTransactionsAnalytics(userId: string, monthStr?: string) {
-    const monthFilter = monthStr ? `AND t.date LIKE '${monthStr}%'` : '';
-
-    const splits = this.db.prepare(`
+    let query = `
       SELECT 
         ts.id as split_id, ts.transaction_id, ts.category_id, ts.amount as split_amount, ts.notes as split_notes,
         t.date, t.amount as transaction_total, t.merchant_name,
@@ -2148,9 +2146,18 @@ export class FinanceService {
       FROM transaction_splits ts
       JOIN transactions t ON t.id = ts.transaction_id
       LEFT JOIN categories c ON c.id = ts.category_id
-      WHERE t.user_id = ? AND t.is_deleted = 0 ${monthFilter}
-      ORDER BY t.date DESC
-    `).all(userId) as any[];
+      WHERE t.user_id = ? AND t.is_deleted = 0
+    `;
+    const params: any[] = [userId];
+
+    if (monthStr) {
+      query += ` AND t.date LIKE ?`;
+      params.push(`${monthStr}%`);
+    }
+
+    query += ` ORDER BY t.date DESC`;
+
+    const splits = this.db.prepare(query).all(...params) as any[];
 
     const txMap: Record<string, any> = {};
     const categoryTotals: Record<string, { name: string; color: string; total: number; count: number }> = {};

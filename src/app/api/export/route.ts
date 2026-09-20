@@ -79,7 +79,8 @@ export async function GET(req: Request) {
       },
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Export failed' }, { status: 500 });
+    const status = error.message?.includes('Unauthorized') ? 401 : 500;
+    return NextResponse.json({ error: error.message || 'Export failed' }, { status });
   }
 }
 
@@ -153,6 +154,7 @@ export async function POST(req: Request) {
       throw e;
     }
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Restore failed' }, { status: 500 });
+    const status = error.message?.includes('Unauthorized') ? 401 : 500;
+    return NextResponse.json({ error: error.message || 'Restore failed' }, { status });
   }
 }
