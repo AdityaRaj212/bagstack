@@ -2,6 +2,8 @@
 
 > **A production-grade, local-first personal financial command center built with deterministic financial math, multi-account ledgering, automated recurring obligations, deep analytics, and PWA mobile support.**
 
+🌐 **Live Production App**: [https://bagstack.tech](https://bagstack.tech)
+
 ---
 
 ## Highlights & Features
