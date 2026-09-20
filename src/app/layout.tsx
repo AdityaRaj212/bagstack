@@ -8,6 +8,7 @@ import { CommandPalette } from '@/components/CommandPalette';
 import { ImportModal } from '@/components/ImportModal';
 import { AccountModal } from '@/components/AccountModal';
 import { ToastContainer } from '@/components/ToastContainer';
+import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -66,6 +67,7 @@ export default function RootLayout({
           <AccountModal />
           <ToastContainer />
         </AppProvider>
+        <Analytics />
       </body>
     </html>
   );
