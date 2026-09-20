@@ -95,9 +95,6 @@ PORT=3000
 # Generate a Google App Password at: https://myaccount.google.com/apppasswords
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-16-char-app-password
-
-# Public App URL
-NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 > *Note: If SMTP credentials are omitted, OTP codes are logged directly to the server terminal console for local development.*
 
