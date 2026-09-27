@@ -5,6 +5,13 @@ import { FinanceService } from '@/lib/finance-service';
 
 export const runtime = 'nodejs';
 
+const toSafeCsvCell = (value: unknown) => {
+  const text = value == null ? '' : String(value);
+  const escaped = text.replace(/"/g, '""');
+  const shouldEscapeFormula = /^[=+\-@]/.test(escaped.trimStart());
+  return `"${shouldEscapeFormula ? `'${escaped}` : escaped}"`;
+};
+
 export async function GET(req: Request) {
   try {
     const user = getCurrentUser(req);
@@ -21,15 +28,15 @@ export async function GET(req: Request) {
         const amt = (t.amount / 100).toFixed(2);
         const tagStr = Array.isArray(t.tags) ? t.tags.join('; ') : '';
         const line = [
-          t.date,
-          t.type,
+          toSafeCsvCell(t.date),
+          toSafeCsvCell(t.type),
           amt,
-          t.currency,
-          `"${(t.account_name || '').replace(/"/g, '""')}"`,
-          `"${(t.category_name || '').replace(/"/g, '""')}"`,
-          `"${(t.merchant_name || '').replace(/"/g, '""')}"`,
-          `"${tagStr.replace(/"/g, '""')}"`,
-          `"${(t.notes || '').replace(/"/g, '""')}"`,
+          toSafeCsvCell(t.currency),
+          toSafeCsvCell(t.account_name),
+          toSafeCsvCell(t.category_name),
+          toSafeCsvCell(t.merchant_name),
+          toSafeCsvCell(tagStr),
+          toSafeCsvCell(t.notes),
         ].join(',');
         csv += line + '\n';
       }

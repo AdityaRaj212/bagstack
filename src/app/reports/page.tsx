@@ -67,7 +67,7 @@ function SpeedometerGauge({ value, max, label, sublabel }: { value: number; max:
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
-      <svg viewBox="0 0 200 140" width="180" height="126" style={{ overflow: 'visible' }}>
+      <svg viewBox="0 0 200 170" width="180" height="153" style={{ overflow: 'visible' }}>
         {/* Background track */}
         <path
           d={arcPath(startAngle, endAngle)}
@@ -864,17 +864,17 @@ export default function ReportsPage() {
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               {budgetHealth.overBudgetCount > 0 && (
-                <span className="badge" style={{ backgroundColor: 'rgba(239,68,68,0.15)', color: '#EF4444' }}>
+                <span className="badge badge-expense">
                   <ShieldAlert size={12} /> {budgetHealth.overBudgetCount} Over Budget
                 </span>
               )}
               {budgetHealth.nearLimitCount > 0 && (
-                <span className="badge" style={{ backgroundColor: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}>
+                <span className="badge" style={{ backgroundColor: 'var(--color-warning-subtle)', color: 'var(--color-warning)' }}>
                   <AlertTriangle size={12} /> {budgetHealth.nearLimitCount} Near Limit
                 </span>
               )}
               {budgetHealth.healthyCount > 0 && (
-                <span className="badge" style={{ backgroundColor: 'rgba(34,197,94,0.15)', color: '#22C55E' }}>
+                <span className="badge badge-income">
                   <CheckCircle2 size={12} /> {budgetHealth.healthyCount} Healthy
                 </span>
               )}
