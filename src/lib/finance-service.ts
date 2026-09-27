@@ -2024,24 +2024,124 @@ export class FinanceService {
 
   getSpendingByCategory(userId: string, monthStr?: string) {
     const month = monthStr || new Date().toISOString().substring(0, 7);
+
+    // Total expense for the month across all transactions (including uncategorized)
+    const totalRow = this.db.prepare(`
+      SELECT COALESCE(SUM(amount), 0) as total
+      FROM transactions
+      WHERE user_id = ?
+        AND type = 'expense'
+        AND is_deleted = 0
+        AND date LIKE ?
+    `).get(userId, `${month}%`) as any;
+    const totalExpense = totalRow?.total || 0;
+
     const rows = this.db.prepare(`
-      SELECT c.id, c.name, c.icon, c.color, SUM(t.amount) as total
+      SELECT 
+        COALESCE(c.id, 'uncategorized') as id,
+        COALESCE(c.name, 'Uncategorized') as name,
+        COALESCE(c.icon, 'help-circle') as icon,
+        COALESCE(c.color, '#94A3B8') as color,
+        SUM(t.amount) as total,
+        COUNT(t.id) as count
       FROM transactions t
-      JOIN categories c ON c.id = t.category_id
+      LEFT JOIN categories c ON c.id = t.category_id
       WHERE t.user_id = ?
         AND t.type = 'expense'
         AND t.is_deleted = 0
         AND t.date LIKE ?
-      GROUP BY c.id
+      GROUP BY COALESCE(c.id, 'uncategorized')
       ORDER BY total DESC
     `).all(userId, `${month}%`) as any[];
-
-    const totalExpense = rows.reduce((sum, r) => sum + r.total, 0);
 
     return rows.map(r => ({
       ...r,
       percentage: totalExpense > 0 ? Math.round((r.total / totalExpense) * 100) : 0,
     }));
+  }
+
+  getSpendingByTag(userId: string, monthStr?: string) {
+    const month = monthStr || new Date().toISOString().substring(0, 7);
+
+    // Total expense for the month across all transactions
+    const totalRow = this.db.prepare(`
+      SELECT COALESCE(SUM(amount), 0) as total
+      FROM transactions
+      WHERE user_id = ?
+        AND type = 'expense'
+        AND is_deleted = 0
+        AND date LIKE ?
+    `).get(userId, `${month}%`) as any;
+    const totalExpense = totalRow?.total || 0;
+
+    // Tagged transactions
+    const taggedRows = this.db.prepare(`
+      SELECT tg.id, tg.name, tg.color, SUM(t.amount) as total, COUNT(t.id) as count
+      FROM transactions t
+      JOIN transaction_tags tt ON tt.transaction_id = t.id
+      JOIN tags tg ON tg.id = tt.tag_id
+      WHERE t.user_id = ?
+        AND t.type = 'expense'
+        AND t.is_deleted = 0
+        AND t.date LIKE ?
+      GROUP BY tg.id
+      ORDER BY total DESC
+    `).all(userId, `${month}%`) as any[];
+
+    // Untagged transactions (expense transactions with no tags in transaction_tags)
+    const untaggedRow = this.db.prepare(`
+      SELECT COALESCE(SUM(t.amount), 0) as total, COUNT(t.id) as count
+      FROM transactions t
+      WHERE t.user_id = ?
+        AND t.type = 'expense'
+        AND t.is_deleted = 0
+        AND t.date LIKE ?
+        AND NOT EXISTS (
+          SELECT 1 FROM transaction_tags tt WHERE tt.transaction_id = t.id
+        )
+    `).get(userId, `${month}%`) as any;
+
+    const allRows = [...taggedRows];
+    if (untaggedRow && untaggedRow.total > 0) {
+      allRows.push({
+        id: 'untagged',
+        name: 'Untagged',
+        color: '#94A3B8',
+        total: untaggedRow.total,
+        count: untaggedRow.count,
+      });
+      allRows.sort((a: any, b: any) => b.total - a.total);
+    }
+
+    return allRows.map((r: any) => ({
+      ...r,
+      percentage: totalExpense > 0 ? Math.round((r.total / totalExpense) * 100) : 0,
+    }));
+  }
+
+  getBudgetHealthSummary(userId: string, monthStr?: string) {
+    const budgets = this.getBudgets(userId, monthStr);
+    if (budgets.length === 0) return null;
+
+    const totalBudgeted = budgets.reduce((sum: number, b: any) => sum + b.amount, 0);
+    const totalSpent = budgets.reduce((sum: number, b: any) => sum + b.spent, 0);
+    const overBudgetItems = budgets.filter((b: any) => b.isOverspent);
+    const nearLimitItems = budgets.filter((b: any) => !b.isOverspent && b.percentUsed >= 80);
+    const healthyItems = budgets.filter((b: any) => !b.isOverspent && b.percentUsed < 80);
+    const overallPercent = totalBudgeted > 0 ? Math.round((totalSpent / totalBudgeted) * 100) : 0;
+
+    return {
+      totalBudgeted,
+      totalSpent,
+      totalRemaining: totalBudgeted - totalSpent,
+      overallPercent,
+      totalCategories: budgets.length,
+      overBudgetCount: overBudgetItems.length,
+      nearLimitCount: nearLimitItems.length,
+      healthyCount: healthyItems.length,
+      overBudgetItems: overBudgetItems.slice(0, 5),
+      nearLimitItems: nearLimitItems.slice(0, 5),
+    };
   }
 
   getSpendingByMerchant(userId: string, limit = 10) {
