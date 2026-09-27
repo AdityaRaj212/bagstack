@@ -55,9 +55,9 @@ function SpeedometerGauge({ value, max, label, sublabel }: { value: number; max:
 
   // Color zones
   const getColor = (pct: number) => {
-    if (pct <= 50) return '#22C55E';
-    if (pct <= 80) return '#F59E0B';
-    return '#EF4444';
+    if (pct <= 50) return 'var(--color-income)';
+    if (pct <= 80) return 'var(--color-warning)';
+    return 'var(--color-expense)';
   };
 
   const fillAngle = startAngle + (clampedPercent / 100) * sweepAngle;
@@ -139,8 +139,22 @@ function DailyBar({ day, date, spent, cumulative, maxSpend, avgSpend }: {
         justifyContent: 'flex-end',
         position: 'relative',
       }}
+    <div
+      ref={barRef}
+      tabIndex={0}
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        height: '100%',
+        justifyContent: 'flex-end',
+        position: 'relative',
+      }}
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
+      onFocus={() => setShowTooltip(true)}
+      onBlur={() => setShowTooltip(false)}
     >
       {/* Tooltip */}
       {showTooltip && (
@@ -545,7 +559,7 @@ export default function ReportsPage() {
           <SpeedometerGauge
             value={Math.max(0, savingsRate)}
             max={100}
-            label={`₹${Math.round((totalMonthIncome - totalMonthSpend) / 100).toLocaleString('en-IN')} saved`}
+label={totalMonthIncome >= totalMonthSpend ? `₹${Math.round((totalMonthIncome - totalMonthSpend) / 100).toLocaleString('en-IN')} saved` : `₹${Math.round((totalMonthSpend - totalMonthIncome) / 100).toLocaleString('en-IN')} deficit`}
             sublabel={`of ₹${Math.round(totalMonthIncome / 100).toLocaleString('en-IN')} income`}
           />
         </div>
