@@ -130,17 +130,6 @@ function DailyBar({ day, date, spent, cumulative, maxSpend, avgSpend }: {
   return (
     <div
       ref={barRef}
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        height: '100%',
-        justifyContent: 'flex-end',
-        position: 'relative',
-      }}
-    <div
-      ref={barRef}
       tabIndex={0}
       style={{
         flex: 1,
