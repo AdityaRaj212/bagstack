@@ -16,9 +16,10 @@ export async function GET(req: Request) {
 
     if (format === 'csv') {
       const txs = service.getTransactions(user.id, { limit: 10000 });
-      let csv = 'Date,Type,Amount,Currency,Account,Category,Merchant,Notes\n';
+      let csv = 'Date,Type,Amount,Currency,Account,Category,Merchant,Tags,Notes\n';
       for (const t of txs as any[]) {
         const amt = (t.amount / 100).toFixed(2);
+        const tagStr = Array.isArray(t.tags) ? t.tags.join('; ') : '';
         const line = [
           t.date,
           t.type,
@@ -27,6 +28,7 @@ export async function GET(req: Request) {
           `"${(t.account_name || '').replace(/"/g, '""')}"`,
           `"${(t.category_name || '').replace(/"/g, '""')}"`,
           `"${(t.merchant_name || '').replace(/"/g, '""')}"`,
+          `"${tagStr.replace(/"/g, '""')}"`,
           `"${(t.notes || '').replace(/"/g, '""')}"`,
         ].join(',');
         csv += line + '\n';
