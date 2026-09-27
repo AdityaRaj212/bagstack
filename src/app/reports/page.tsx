@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
 import { MoneyDisplay } from '@/components/MoneyDisplay';
 import { formatDateDMY } from '@/lib/date';
@@ -17,10 +17,174 @@ import {
   ArrowRight,
   ArrowUpRight,
   ArrowDownRight,
-  Split,
   Flame,
   Scale,
+  Tag,
+  Gauge,
+  ShieldCheck,
+  ShieldAlert,
+  AlertTriangle,
+  CheckCircle2,
 } from 'lucide-react';
+
+/* ──── SVG Speedometer Gauge ──── */
+function SpeedometerGauge({ value, max, label, sublabel }: { value: number; max: number; label: string; sublabel?: string }) {
+  const clampedPercent = Math.min(100, Math.max(0, max > 0 ? (value / max) * 100 : 0));
+  // Arc from 135° to 405° (270° sweep)
+  const startAngle = 135;
+  const sweepAngle = 270;
+  const endAngle = startAngle + sweepAngle;
+  const radius = 80;
+  const cx = 100;
+  const cy = 100;
+
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const arcPath = (from: number, to: number) => {
+    const x1 = cx + radius * Math.cos(toRad(from));
+    const y1 = cy + radius * Math.sin(toRad(from));
+    const x2 = cx + radius * Math.cos(toRad(to));
+    const y2 = cy + radius * Math.sin(toRad(to));
+    const largeArc = to - from > 180 ? 1 : 0;
+    return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
+  };
+
+  const needleAngle = startAngle + (clampedPercent / 100) * sweepAngle;
+  const needleLen = radius - 15;
+  const nx = cx + needleLen * Math.cos(toRad(needleAngle));
+  const ny = cy + needleLen * Math.sin(toRad(needleAngle));
+
+  // Color zones
+  const getColor = (pct: number) => {
+    if (pct <= 50) return '#22C55E';
+    if (pct <= 80) return '#F59E0B';
+    return '#EF4444';
+  };
+
+  const fillAngle = startAngle + (clampedPercent / 100) * sweepAngle;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+      <svg viewBox="0 0 200 140" width="180" height="126" style={{ overflow: 'visible' }}>
+        {/* Background track */}
+        <path
+          d={arcPath(startAngle, endAngle)}
+          fill="none"
+          stroke="var(--border-default)"
+          strokeWidth="12"
+          strokeLinecap="round"
+        />
+        {/* Filled arc */}
+        {clampedPercent > 0 && (
+          <path
+            d={arcPath(startAngle, fillAngle)}
+            fill="none"
+            stroke={getColor(clampedPercent)}
+            strokeWidth="12"
+            strokeLinecap="round"
+            style={{ transition: 'all 600ms ease' }}
+          />
+        )}
+        {/* Needle */}
+        <line
+          x1={cx}
+          y1={cy}
+          x2={nx}
+          y2={ny}
+          stroke="var(--text-primary)"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          style={{ transition: 'all 600ms ease' }}
+        />
+        <circle cx={cx} cy={cy} r="5" fill="var(--text-primary)" />
+        {/* Center value */}
+        <text
+          x={cx}
+          y={cy + 28}
+          textAnchor="middle"
+          fill="var(--text-primary)"
+          fontSize="20"
+          fontWeight="700"
+          fontFamily="inherit"
+        >
+          {Math.round(clampedPercent)}%
+        </text>
+      </svg>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{label}</div>
+        {sublabel && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{sublabel}</div>}
+      </div>
+    </div>
+  );
+}
+
+/* ──── Tooltip Bar for Daily Spending ──── */
+function DailyBar({ day, date, spent, cumulative, maxSpend, avgSpend }: {
+  day: number; date: string; spent: number; cumulative: number; maxSpend: number; avgSpend: number;
+}) {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const barRef = useRef<HTMLDivElement>(null);
+  const barHeight = maxSpend > 0 ? (spent / maxSpend) * 110 : 0;
+  const hasSpend = spent > 0;
+  const isSpike = spent > avgSpend * 1.5;
+
+  return (
+    <div
+      ref={barRef}
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        height: '100%',
+        justifyContent: 'flex-end',
+        position: 'relative',
+      }}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      {/* Tooltip */}
+      {showTooltip && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: `${Math.max(2, barHeight) + 8}px`,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 'var(--radius-md)',
+            padding: '0.4rem 0.6rem',
+            fontSize: '0.7rem',
+            whiteSpace: 'nowrap',
+            zIndex: 20,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            color: 'var(--text-primary)',
+            pointerEvents: 'none',
+          }}
+        >
+          <div style={{ fontWeight: 600 }}>Day {day} · {formatDateDMY(date)}</div>
+          <div>Spent: <strong>₹{(spent / 100).toLocaleString('en-IN')}</strong></div>
+          <div style={{ color: 'var(--text-muted)' }}>Cumulative: ₹{(cumulative / 100).toLocaleString('en-IN')}</div>
+        </div>
+      )}
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '14px',
+          height: `${Math.max(2, barHeight)}px`,
+          background: hasSpend
+            ? isSpike
+              ? 'linear-gradient(180deg, #F43F5E, #BE123C)'
+              : 'linear-gradient(180deg, #6366F1, #4F46E5)'
+            : 'var(--border-subtle)',
+          borderRadius: '2px 2px 0 0',
+          transition: 'height 300ms ease',
+          cursor: 'pointer',
+        }}
+      />
+    </div>
+  );
+}
 
 export default function ReportsPage() {
   const { refreshKey } = useApp();
@@ -40,6 +204,9 @@ export default function ReportsPage() {
     return `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
   }, [selectedMonth]);
   const [compareMonth, setCompareMonth] = useState<string>(prevMonthStr);
+
+  // Analytics view mode: 'category' or 'tag'
+  const [analyticsView, setAnalyticsView] = useState<'category' | 'tag'>('category');
 
   const [data, setData] = useState<any>(null);
   const [forecast, setForecast] = useState<any>(null);
@@ -100,21 +267,31 @@ export default function ReportsPage() {
   }
 
   const spendingByCategory = data?.spendingByCategory || [];
+  const spendingByTag = data?.spendingByTag || [];
   const spendingByMerchant = data?.spendingByMerchant || [];
   const periods = forecast?.periods || [];
   const dailySpending = data?.dailySpending?.days || (Array.isArray(data?.dailySpending) ? data?.dailySpending : []);
-  const splitAnalytics = data?.splitAnalytics || {};
-  const splitCount = splitAnalytics.totalSplitTransactions ?? splitAnalytics.count ?? 0;
-  const splitVolume = splitAnalytics.totalSplitVolume ?? splitAnalytics.totalAmount ?? 0;
-  const splitCategories = splitAnalytics.topCategories ?? splitAnalytics.topSplitCategories ?? [];
+  const budgetHealth = data?.budgetHealth;
   const comparison = data?.comparison;
-  const metrics = data?.metrics || { totalIncome: 0, totalExpense: 0, netSavings: 0, savingsRate: 0 };
+  const metrics = data?.metrics || {};
 
-  // Calculate max daily spend for chart scaling
-  const maxDailySpend = Math.max(...dailySpending.map((d: any) => d.dailySpent ?? d.amount ?? 0), 100);
-  const totalMonthSpend = metrics.totalExpense;
+  // Fix: use correct field names from getDashboardMetrics
+  const totalMonthSpend = metrics.monthlyExpenses || 0;
+  const totalMonthIncome = metrics.monthlyIncome || 0;
   const daysInMonth = dailySpending.length || 30;
-  const avgDailySpend = daysInMonth > 0 ? Math.round(totalMonthSpend / daysInMonth) : 0;
+  const today = new Date();
+  const [selYear, selMon] = selectedMonth.split('-').map(Number);
+  const isCurrentMonth = selYear === today.getFullYear() && selMon === (today.getMonth() + 1);
+  const elapsedDays = isCurrentMonth ? today.getDate() : daysInMonth;
+  const avgDailySpend = elapsedDays > 0 ? Math.round(totalMonthSpend / elapsedDays) : 0;
+  const maxDailySpend = Math.max(...dailySpending.map((d: any) => d.dailySpent ?? d.amount ?? 0), 100);
+
+  // Savings rate for speedometer
+  const savingsRate = totalMonthIncome > 0 ? Math.round(((totalMonthIncome - totalMonthSpend) / totalMonthIncome) * 100) : 0;
+
+  // Active analytics data based on view mode
+  const activeAnalytics = analyticsView === 'category' ? spendingByCategory : spendingByTag;
+  const analyticsLabel = analyticsView === 'category' ? 'Category' : 'Tag';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
@@ -123,7 +300,7 @@ export default function ReportsPage() {
         <div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Analytics & Reports</h1>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-            Deep dive into monthly cash flows, month-over-month comparisons, daily burn rate, and 90-day forecasts.
+            Deep dive into monthly cash flows, spending patterns, budget health, and forecasts.
           </p>
         </div>
 
@@ -358,6 +535,54 @@ export default function ReportsPage() {
         </div>
       )}
 
+      {/* Speedometer Gauges Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
+        {/* Savings Rate Gauge */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+            <Gauge size={15} /> SAVINGS RATE
+          </div>
+          <SpeedometerGauge
+            value={Math.max(0, savingsRate)}
+            max={100}
+            label={`₹${Math.round((totalMonthIncome - totalMonthSpend) / 100).toLocaleString('en-IN')} saved`}
+            sublabel={`of ₹${Math.round(totalMonthIncome / 100).toLocaleString('en-IN')} income`}
+          />
+        </div>
+
+        {/* Budget Utilization Gauge */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+            <BarChart3 size={15} /> BUDGET UTILIZATION
+          </div>
+          {budgetHealth ? (
+            <SpeedometerGauge
+              value={budgetHealth.overallPercent}
+              max={100}
+              label={`₹${Math.round(budgetHealth.totalSpent / 100).toLocaleString('en-IN')} spent`}
+              sublabel={`of ₹${Math.round(budgetHealth.totalBudgeted / 100).toLocaleString('en-IN')} budgeted`}
+            />
+          ) : (
+            <div style={{ padding: '2rem 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
+              No budgets set for this month.
+            </div>
+          )}
+        </div>
+
+        {/* Expense-to-Income Ratio Gauge */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+            <TrendingDown size={15} /> EXPENSE RATIO
+          </div>
+          <SpeedometerGauge
+            value={totalMonthSpend}
+            max={totalMonthIncome || totalMonthSpend || 1}
+            label={`₹${Math.round(totalMonthSpend / 100).toLocaleString('en-IN')} spent`}
+            sublabel={totalMonthIncome > 0 ? `${Math.round((totalMonthSpend / totalMonthIncome) * 100)}% of income` : 'No income recorded'}
+          />
+        </div>
+      </div>
+
       {/* Daily Spending Burn Trend for Selected Month */}
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -367,66 +592,65 @@ export default function ReportsPage() {
               Daily Spending Burn Rate ({formatMonthDisplay(selectedMonth)})
             </h2>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              Daily expense velocity and spending spikes across all {daysInMonth} days.
+              Daily expense velocity and spending spikes. Hover over any bar for details.
             </div>
           </div>
           <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-            Average: <strong style={{ color: 'var(--text-primary)' }}>₹{avgDailySpend.toLocaleString('en-IN')}/day</strong>
+            Average: <strong style={{ color: 'var(--text-primary)' }}>₹{(avgDailySpend / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}/day</strong>
           </div>
         </div>
 
-        {/* Daily Bars Visualizer */}
-        <div
-          style={{
-            height: '140px',
+        {/* Y-axis + Daily Bars */}
+        <div style={{ display: 'flex', gap: '4px' }}>
+          {/* Y-axis labels */}
+          <div style={{
             display: 'flex',
-            alignItems: 'flex-end',
-            gap: '3px',
-            paddingTop: '1rem',
-            borderBottom: '1px solid var(--border-default)',
-          }}
-        >
-          {dailySpending.map((d: any) => {
-            const spent = d.dailySpent ?? d.amount ?? 0;
-            const cum = d.cumulativeSpent ?? d.cumulative ?? 0;
-            const barHeight = maxDailySpend > 0 ? (spent / maxDailySpend) * 110 : 0;
-            const hasSpend = spent > 0;
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            height: '140px',
+            paddingBottom: '1px',
+            minWidth: '48px',
+            textAlign: 'right',
+            paddingRight: '6px',
+          }}>
+            <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', lineHeight: 1 }}>
+              ₹{Math.round(maxDailySpend / 100).toLocaleString('en-IN')}
+            </span>
+            <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', lineHeight: 1 }}>
+              ₹{Math.round(maxDailySpend / 200).toLocaleString('en-IN')}
+            </span>
+            <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', lineHeight: 1 }}>₹0</span>
+          </div>
 
-            return (
-              <div
+          {/* Bars */}
+          <div
+            style={{
+              flex: 1,
+              height: '140px',
+              display: 'flex',
+              alignItems: 'flex-end',
+              gap: '3px',
+              paddingTop: '1rem',
+              borderBottom: '1px solid var(--border-default)',
+              borderLeft: '1px solid var(--border-default)',
+            }}
+          >
+            {dailySpending.map((d: any) => (
+              <DailyBar
                 key={d.day}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  height: '100%',
-                  justifyContent: 'flex-end',
-                }}
-                title={`Day ${d.day} (${formatDateDMY(d.date)}): ₹${(spent / 100).toLocaleString('en-IN')} | Cumulative: ₹${(cum / 100).toLocaleString('en-IN')}`}
-              >
-                <div
-                  style={{
-                    width: '100%',
-                    maxWidth: '14px',
-                    height: `${Math.max(2, barHeight)}px`,
-                    background: hasSpend
-                      ? spent > avgDailySpend * 1.5 * 100
-                        ? 'linear-gradient(180deg, #F43F5E, #BE123C)'
-                        : 'linear-gradient(180deg, #6366F1, #4F46E5)'
-                      : 'var(--border-subtle)',
-                    borderRadius: '2px 2px 0 0',
-                    transition: 'height 300ms ease',
-                    cursor: 'pointer',
-                  }}
-                />
-              </div>
-            );
-          })}
+                day={d.day}
+                date={d.date}
+                spent={d.dailySpent ?? d.amount ?? 0}
+                cumulative={d.cumulativeSpent ?? d.cumulative ?? 0}
+                maxSpend={maxDailySpend}
+                avgSpend={avgDailySpend * 100}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Day scale markings */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6875rem', color: 'var(--text-muted)', padding: '0 2px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6875rem', color: 'var(--text-muted)', padding: '0 2px', marginLeft: '52px' }}>
           <span>Day 1</span>
           <span>Day 7</span>
           <span>Day 14</span>
@@ -435,126 +659,172 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* Split Transactions Breakdown & Forecast Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.25rem' }}>
-        {/* Split Transactions Analysis */}
+      {/* Budget Health Summary */}
+      {budgetHealth && (
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div>
               <h2 style={{ fontSize: '1.05rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Split size={16} style={{ color: 'var(--brand-primary)' }} /> Split Transactions Analytics
+                <ShieldCheck size={18} style={{ color: 'var(--brand-primary)' }} />
+                Budget Health ({formatMonthDisplay(selectedMonth)})
               </h2>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Multi-category receipts and itemized purchases
+                {budgetHealth.totalCategories} budget categories tracked · {budgetHealth.overallPercent}% overall utilization
               </div>
             </div>
-            <span className="badge badge-neutral">
-              {splitCount} splits
-            </span>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {budgetHealth.overBudgetCount > 0 && (
+                <span className="badge" style={{ backgroundColor: 'rgba(239,68,68,0.15)', color: '#EF4444' }}>
+                  <ShieldAlert size={12} /> {budgetHealth.overBudgetCount} Over Budget
+                </span>
+              )}
+              {budgetHealth.nearLimitCount > 0 && (
+                <span className="badge" style={{ backgroundColor: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}>
+                  <AlertTriangle size={12} /> {budgetHealth.nearLimitCount} Near Limit
+                </span>
+              )}
+              {budgetHealth.healthyCount > 0 && (
+                <span className="badge" style={{ backgroundColor: 'rgba(34,197,94,0.15)', color: '#22C55E' }}>
+                  <CheckCircle2 size={12} /> {budgetHealth.healthyCount} Healthy
+                </span>
+              )}
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-            <div style={{ backgroundColor: 'var(--bg-subtle)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SPLIT VOLUME</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>
-                ₹{Math.round(splitVolume / 100).toLocaleString('en-IN')}
-              </div>
-            </div>
-            <div style={{ backgroundColor: 'var(--bg-subtle)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>AVG PER SPLIT</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>
-                ₹{splitCount > 0 ? Math.round(splitVolume / splitCount / 100).toLocaleString('en-IN') : 0}
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-              MOST SPLIT CATEGORIES
-            </div>
-            {splitCategories.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                {splitCategories.map((sc: any) => (
-                  <div
-                    key={sc.name}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: '0.8125rem',
-                      padding: '0.35rem 0.5rem',
-                      backgroundColor: 'var(--bg-subtle)',
-                      borderRadius: 'var(--radius-sm)',
-                    }}
-                  >
-                    <span>{sc.name}</span>
-                    <span style={{ fontWeight: 600 }}>₹{Math.round(sc.total / 100).toLocaleString('en-IN')} ({sc.count}x)</span>
+          {/* Over budget alerts */}
+          {budgetHealth.overBudgetItems.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-expense)' }}>OVER BUDGET</div>
+              {budgetHealth.overBudgetItems.map((b: any) => (
+                <div
+                  key={b.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'rgba(239,68,68,0.06)',
+                    border: '1px solid rgba(239,68,68,0.15)',
+                    fontSize: '0.8125rem',
+                  }}
+                >
+                  <span style={{ fontWeight: 500 }}>{b.category_name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>
+                      ₹{Math.round(b.spent / 100).toLocaleString('en-IN')} / ₹{Math.round(b.amount / 100).toLocaleString('en-IN')}
+                    </span>
+                    <span style={{ fontWeight: 700, color: '#EF4444' }}>{b.percentUsed}%</span>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', padding: '0.5rem 0' }}>
-                No split transactions recorded for this month.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 30/60/90 Day Cash-Flow Forecast */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h2 style={{ fontSize: '1.05rem', fontWeight: 600 }}>30 / 60 / 90-Day Cash Flow Forecast</h2>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Deterministic projections based on recurring schedules & obligations.
-              </div>
+                </div>
+              ))}
             </div>
-            <span className="badge badge-neutral">Estimate</span>
-          </div>
+          )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
-            {periods.map((p: any) => (
-              <div
-                key={p.days}
+          {/* Near limit warnings */}
+          {budgetHealth.nearLimitItems.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#F59E0B' }}>APPROACHING LIMIT (≥80%)</div>
+              {budgetHealth.nearLimitItems.map((b: any) => (
+                <div
+                  key={b.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'rgba(245,158,11,0.06)',
+                    border: '1px solid rgba(245,158,11,0.15)',
+                    fontSize: '0.8125rem',
+                  }}
+                >
+                  <span style={{ fontWeight: 500 }}>{b.category_name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>
+                      ₹{Math.round(b.spent / 100).toLocaleString('en-IN')} / ₹{Math.round(b.amount / 100).toLocaleString('en-IN')}
+                    </span>
+                    <span style={{ fontWeight: 700, color: '#F59E0B' }}>{b.percentUsed}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 2-Column Analytics: Category/Tag & Top Merchants */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.25rem' }}>
+        {/* Spending by Category or Tag */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>
+              Expenses by {analyticsLabel} ({formatMonthDisplay(selectedMonth)})
+            </h2>
+            {/* Toggle: Category / Tag */}
+            <div style={{
+              display: 'flex',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-default)',
+              overflow: 'hidden',
+            }}>
+              <button
+                type="button"
+                onClick={() => setAnalyticsView('category')}
                 style={{
-                  backgroundColor: 'var(--bg-subtle)',
-                  padding: '0.75rem 1rem',
-                  borderRadius: 'var(--radius-md)',
+                  padding: '0.3rem 0.65rem',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
                   display: 'flex',
-                  justifyContent: 'space-between',
                   alignItems: 'center',
+                  gap: '0.3rem',
+                  backgroundColor: analyticsView === 'category' ? 'var(--brand-primary)' : 'var(--bg-subtle)',
+                  color: analyticsView === 'category' ? '#fff' : 'var(--text-secondary)',
+                  transition: 'all 200ms ease',
                 }}
               >
-                <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-                    {p.days}-DAY PROJECTION
-                  </div>
-                  <MoneyDisplay amount={p.projectedBalance} size="lg" weight="bold" />
-                </div>
-                <div style={{ fontSize: '0.75rem', textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: 'var(--color-income)' }}>In: +₹{Math.round(p.expectedIncome / 100).toLocaleString('en-IN')}</span>
-                  <span style={{ color: 'var(--color-expense)' }}>Out: -₹{Math.round(p.expectedExpenses / 100).toLocaleString('en-IN')}</span>
-                </div>
-              </div>
-            ))}
+                <Layers size={12} /> Category
+              </button>
+              <button
+                type="button"
+                onClick={() => setAnalyticsView('tag')}
+                style={{
+                  padding: '0.3rem 0.65rem',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  borderLeft: '1px solid var(--border-default)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  backgroundColor: analyticsView === 'tag' ? 'var(--brand-primary)' : 'var(--bg-subtle)',
+                  color: analyticsView === 'tag' ? '#fff' : 'var(--text-secondary)',
+                  transition: 'all 200ms ease',
+                }}
+              >
+                <Tag size={12} /> Tag
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* 2-Column Analytics: Categories & Top Merchants */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.25rem' }}>
-        {/* Spending by Category */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>
-            Expenses by Category ({formatMonthDisplay(selectedMonth)})
-          </h2>
-          {spendingByCategory.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No category data available for this month.</div>
+          {activeAnalytics.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+              No {analyticsLabel.toLowerCase()} data available for this month.
+            </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {spendingByCategory.map((c: any) => (
+              {activeAnalytics.map((c: any) => (
                 <div key={c.id}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
-                    <span style={{ fontWeight: 500 }}>{c.name}</span>
+                    <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      {analyticsView === 'tag' && <Tag size={12} style={{ color: c.color || 'var(--text-muted)' }} />}
+                      {c.name}
+                      {analyticsView === 'tag' && c.count && (
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>({c.count} txns)</span>
+                      )}
+                    </span>
                     <span style={{ fontWeight: 600 }}>
                       ₹{Math.round(c.total / 100).toLocaleString('en-IN')} ({c.percentage}%)
                     </span>
@@ -607,6 +877,48 @@ export default function ReportsPage() {
           )}
         </div>
       </div>
+
+      {/* 30/60/90 Day Cash-Flow Forecast — moved to end */}
+      {periods.length > 0 && (
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ fontSize: '1.05rem', fontWeight: 600 }}>30 / 60 / 90-Day Cash Flow Forecast</h2>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                Deterministic projections based on recurring schedules & obligations.
+              </div>
+            </div>
+            <span className="badge badge-neutral">Estimate</span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+            {periods.map((p: any) => (
+              <div
+                key={p.days}
+                style={{
+                  backgroundColor: 'var(--bg-subtle)',
+                  padding: '0.75rem 1rem',
+                  borderRadius: 'var(--radius-md)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                    {p.days}-DAY PROJECTION
+                  </div>
+                  <MoneyDisplay amount={p.projectedBalance} size="lg" weight="bold" />
+                </div>
+                <div style={{ fontSize: '0.75rem', textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span style={{ color: 'var(--color-income)' }}>In: +₹{Math.round(p.expectedIncome / 100).toLocaleString('en-IN')}</span>
+                  <span style={{ color: 'var(--color-expense)' }}>Out: -₹{Math.round(p.expectedExpenses / 100).toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

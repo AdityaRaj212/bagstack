@@ -13,11 +13,12 @@ export async function GET(req: Request) {
 
     const service = new FinanceService();
     const spendingByCategory = service.getSpendingByCategory(user.id, month);
+    const spendingByTag = service.getSpendingByTag(user.id, month);
     const spendingByMerchant = service.getSpendingByMerchant(user.id, 15);
     const cashFlowTrend = service.getMonthlyCashFlowTrend(user.id, 12);
     const metrics = service.getDashboardMetrics(user.id, month);
     const dailySpending = service.getDailySpending(user.id, month);
-    const splitAnalytics = service.getSplitTransactionsAnalytics(user.id, month);
+    const budgetHealth = service.getBudgetHealthSummary(user.id, month);
 
     let comparison = null;
     if (compareMonth) {
@@ -27,11 +28,12 @@ export async function GET(req: Request) {
     return NextResponse.json({
       selectedMonth: month,
       spendingByCategory,
+      spendingByTag,
       spendingByMerchant,
       cashFlowTrend,
       metrics,
       dailySpending,
-      splitAnalytics,
+      budgetHealth,
       comparison,
     });
   } catch (error: any) {

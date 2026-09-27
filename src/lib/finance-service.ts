@@ -2044,6 +2044,54 @@ export class FinanceService {
     }));
   }
 
+  getSpendingByTag(userId: string, monthStr?: string) {
+    const month = monthStr || new Date().toISOString().substring(0, 7);
+    const rows = this.db.prepare(`
+      SELECT tg.id, tg.name, tg.color, SUM(t.amount) as total, COUNT(t.id) as count
+      FROM transactions t
+      JOIN transaction_tags tt ON tt.transaction_id = t.id
+      JOIN tags tg ON tg.id = tt.tag_id
+      WHERE t.user_id = ?
+        AND t.type = 'expense'
+        AND t.is_deleted = 0
+        AND t.date LIKE ?
+      GROUP BY tg.id
+      ORDER BY total DESC
+    `).all(userId, `${month}%`) as any[];
+
+    const totalExpense = rows.reduce((sum: number, r: any) => sum + r.total, 0);
+
+    return rows.map((r: any) => ({
+      ...r,
+      percentage: totalExpense > 0 ? Math.round((r.total / totalExpense) * 100) : 0,
+    }));
+  }
+
+  getBudgetHealthSummary(userId: string, monthStr?: string) {
+    const budgets = this.getBudgets(userId, monthStr);
+    if (budgets.length === 0) return null;
+
+    const totalBudgeted = budgets.reduce((sum: number, b: any) => sum + b.amount, 0);
+    const totalSpent = budgets.reduce((sum: number, b: any) => sum + b.spent, 0);
+    const overBudgetItems = budgets.filter((b: any) => b.isOverspent);
+    const nearLimitItems = budgets.filter((b: any) => !b.isOverspent && b.percentUsed >= 80);
+    const healthyItems = budgets.filter((b: any) => !b.isOverspent && b.percentUsed < 80);
+    const overallPercent = totalBudgeted > 0 ? Math.round((totalSpent / totalBudgeted) * 100) : 0;
+
+    return {
+      totalBudgeted,
+      totalSpent,
+      totalRemaining: totalBudgeted - totalSpent,
+      overallPercent,
+      totalCategories: budgets.length,
+      overBudgetCount: overBudgetItems.length,
+      nearLimitCount: nearLimitItems.length,
+      healthyCount: healthyItems.length,
+      overBudgetItems: overBudgetItems.slice(0, 5),
+      nearLimitItems: nearLimitItems.slice(0, 5),
+    };
+  }
+
   getSpendingByMerchant(userId: string, limit = 10) {
     return this.db.prepare(`
       SELECT merchant_name, COUNT(*) as count, SUM(amount) as total
