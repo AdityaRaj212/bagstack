@@ -2024,19 +2024,35 @@ export class FinanceService {
 
   getSpendingByCategory(userId: string, monthStr?: string) {
     const month = monthStr || new Date().toISOString().substring(0, 7);
+
+    // Total expense for the month across all transactions (including uncategorized)
+    const totalRow = this.db.prepare(`
+      SELECT COALESCE(SUM(amount), 0) as total
+      FROM transactions
+      WHERE user_id = ?
+        AND type = 'expense'
+        AND is_deleted = 0
+        AND date LIKE ?
+    `).get(userId, `${month}%`) as any;
+    const totalExpense = totalRow?.total || 0;
+
     const rows = this.db.prepare(`
-      SELECT c.id, c.name, c.icon, c.color, SUM(t.amount) as total
+      SELECT 
+        COALESCE(c.id, 'uncategorized') as id,
+        COALESCE(c.name, 'Uncategorized') as name,
+        COALESCE(c.icon, 'help-circle') as icon,
+        COALESCE(c.color, '#94A3B8') as color,
+        SUM(t.amount) as total,
+        COUNT(t.id) as count
       FROM transactions t
-      JOIN categories c ON c.id = t.category_id
+      LEFT JOIN categories c ON c.id = t.category_id
       WHERE t.user_id = ?
         AND t.type = 'expense'
         AND t.is_deleted = 0
         AND t.date LIKE ?
-      GROUP BY c.id
+      GROUP BY COALESCE(c.id, 'uncategorized')
       ORDER BY total DESC
     `).all(userId, `${month}%`) as any[];
-
-    const totalExpense = rows.reduce((sum, r) => sum + r.total, 0);
 
     return rows.map(r => ({
       ...r,
@@ -2046,7 +2062,20 @@ export class FinanceService {
 
   getSpendingByTag(userId: string, monthStr?: string) {
     const month = monthStr || new Date().toISOString().substring(0, 7);
-    const rows = this.db.prepare(`
+
+    // Total expense for the month across all transactions
+    const totalRow = this.db.prepare(`
+      SELECT COALESCE(SUM(amount), 0) as total
+      FROM transactions
+      WHERE user_id = ?
+        AND type = 'expense'
+        AND is_deleted = 0
+        AND date LIKE ?
+    `).get(userId, `${month}%`) as any;
+    const totalExpense = totalRow?.total || 0;
+
+    // Tagged transactions
+    const taggedRows = this.db.prepare(`
       SELECT tg.id, tg.name, tg.color, SUM(t.amount) as total, COUNT(t.id) as count
       FROM transactions t
       JOIN transaction_tags tt ON tt.transaction_id = t.id
@@ -2059,9 +2088,32 @@ export class FinanceService {
       ORDER BY total DESC
     `).all(userId, `${month}%`) as any[];
 
-    const totalExpense = rows.reduce((sum: number, r: any) => sum + r.total, 0);
+    // Untagged transactions (expense transactions with no tags in transaction_tags)
+    const untaggedRow = this.db.prepare(`
+      SELECT COALESCE(SUM(t.amount), 0) as total, COUNT(t.id) as count
+      FROM transactions t
+      WHERE t.user_id = ?
+        AND t.type = 'expense'
+        AND t.is_deleted = 0
+        AND t.date LIKE ?
+        AND NOT EXISTS (
+          SELECT 1 FROM transaction_tags tt WHERE tt.transaction_id = t.id
+        )
+    `).get(userId, `${month}%`) as any;
 
-    return rows.map((r: any) => ({
+    const allRows = [...taggedRows];
+    if (untaggedRow && untaggedRow.total > 0) {
+      allRows.push({
+        id: 'untagged',
+        name: 'Untagged',
+        color: '#94A3B8',
+        total: untaggedRow.total,
+        count: untaggedRow.count,
+      });
+      allRows.sort((a: any, b: any) => b.total - a.total);
+    }
+
+    return allRows.map((r: any) => ({
       ...r,
       percentage: totalExpense > 0 ? Math.round((r.total / totalExpense) * 100) : 0,
     }));
