@@ -25,6 +25,9 @@ import {
   ShieldAlert,
   AlertTriangle,
   CheckCircle2,
+  PieChart,
+  List,
+  Columns2,
 } from 'lucide-react';
 
 /* ──── SVG Speedometer Gauge ──── */
@@ -189,6 +192,199 @@ function DailyBar({ day, date, spent, cumulative, maxSpend, avgSpend }: {
   );
 }
 
+/* ──── Interactive SVG Donut / Pie Chart ──── */
+const DONUT_PALETTE = [
+  '#6366F1', '#EC4899', '#10B981', '#F59E0B', '#3B82F6',
+  '#8B5CF6', '#14B8A6', '#F43F5E', '#06B6D4', '#EAB308',
+  '#84CC16', '#A855F7',
+];
+
+interface DonutSliceData {
+  id: string;
+  name: string;
+  total: number;
+  percentage: number;
+  color: string;
+  count?: number;
+}
+
+function ExpenseDonutChart({
+  items,
+  totalSpend,
+  analyticsLabel,
+  hoveredId,
+  onHover,
+}: {
+  items: Array<{ id: string; name: string; total: number; percentage: number; color?: string; count?: number }>;
+  totalSpend: number;
+  analyticsLabel: string;
+  hoveredId: string | null;
+  onHover: (id: string | null) => void;
+}) {
+  const cx = 110;
+  const cy = 110;
+  const rIn = 60;
+  const rOutDefault = 88;
+  const rOutHover = 96;
+
+  // Curated color mapping
+  const slices: DonutSliceData[] = useMemo(() => {
+    return items.map((it, idx) => ({
+      ...it,
+      color: it.color || DONUT_PALETTE[idx % DONUT_PALETTE.length],
+    }));
+  }, [items]);
+
+  const totalSum = useMemo(() => {
+    return slices.reduce((acc, s) => acc + (s.total || 0), 0);
+  }, [slices]);
+
+  // Angles for each slice
+  const sliceAngles = useMemo(() => {
+    if (totalSum <= 0 || slices.length === 0) return [];
+    let currentAngle = 0;
+    return slices.map(s => {
+      const angleSweep = (s.total / totalSum) * 360;
+      const startAngle = currentAngle;
+      const endAngle = currentAngle + angleSweep;
+      currentAngle = endAngle;
+      return { ...s, startAngle, endAngle, angleSweep };
+    });
+  }, [slices, totalSum]);
+
+  const activeSlice = useMemo(() => {
+    if (!hoveredId) return null;
+    return slices.find(s => s.id === hoveredId) || null;
+  }, [hoveredId, slices]);
+
+  const toRad = (deg: number) => ((deg - 90) * Math.PI) / 180;
+
+  const getPath = (startAngle: number, endAngle: number, isHovered: boolean) => {
+    const rOut = isHovered ? rOutHover : rOutDefault;
+    const sweep = endAngle - startAngle;
+
+    if (sweep >= 359.9) {
+      return `
+        M ${cx} ${cy - rOut}
+        A ${rOut} ${rOut} 0 1 1 ${cx - 0.01} ${cy - rOut}
+        L ${cx - 0.01} ${cy - rIn}
+        A ${rIn} ${rIn} 0 1 0 ${cx} ${cy - rIn}
+        Z
+      `;
+    }
+
+    const gap = slices.length > 1 ? Math.min(1.5, sweep * 0.1) : 0;
+    const actualStart = startAngle + gap / 2;
+    const actualEnd = endAngle - gap / 2;
+
+    const x1 = cx + rOut * Math.cos(toRad(actualStart));
+    const y1 = cy + rOut * Math.sin(toRad(actualStart));
+    const x2 = cx + rOut * Math.cos(toRad(actualEnd));
+    const y2 = cy + rOut * Math.sin(toRad(actualEnd));
+
+    const x3 = cx + rIn * Math.cos(toRad(actualEnd));
+    const y3 = cy + rIn * Math.sin(toRad(actualEnd));
+    const x4 = cx + rIn * Math.cos(toRad(actualStart));
+    const y4 = cy + rIn * Math.sin(toRad(actualStart));
+
+    const largeArc = (actualEnd - actualStart) > 180 ? 1 : 0;
+
+    return `
+      M ${x1} ${y1}
+      A ${rOut} ${rOut} 0 ${largeArc} 1 ${x2} ${y2}
+      L ${x3} ${y3}
+      A ${rIn} ${rIn} 0 ${largeArc} 0 ${x4} ${y4}
+      Z
+    `;
+  };
+
+  if (slices.length === 0 || totalSum === 0) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '220px', color: 'var(--text-muted)' }}>
+        <svg viewBox="0 0 220 220" width="180" height="180">
+          <circle cx="110" cy="110" r="75" fill="none" stroke="var(--border-subtle)" strokeWidth="22" />
+          <text x="110" y="115" textAnchor="middle" fill="var(--text-muted)" fontSize="12" fontWeight="500">No expenses</text>
+        </svg>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+      <svg
+        viewBox="0 0 220 220"
+        width="210"
+        height="210"
+        style={{ overflow: 'visible' }}
+        role="img"
+        aria-label={`Donut chart of expenses by ${analyticsLabel}`}
+      >
+        {/* Background center circle */}
+        <circle cx={cx} cy={cy} r={rIn} fill="var(--bg-surface)" />
+
+        {/* Slices */}
+        {sliceAngles.map(s => {
+          const isHovered = hoveredId === s.id;
+          const isDimmed = hoveredId !== null && !isHovered;
+          return (
+            <path
+              key={s.id}
+              d={getPath(s.startAngle, s.endAngle, isHovered)}
+              fill={s.color}
+              opacity={isDimmed ? 0.35 : 1}
+              style={{
+                transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={() => onHover(s.id)}
+              onMouseLeave={() => onHover(null)}
+              tabIndex={0}
+              onFocus={() => onHover(s.id)}
+              onBlur={() => onHover(null)}
+            />
+          );
+        })}
+
+        {/* Center cutout label */}
+        <text
+          x={cx}
+          y={activeSlice ? cy - 14 : cy - 10}
+          textAnchor="middle"
+          fill="var(--text-muted)"
+          fontSize="9.5"
+          fontWeight="600"
+          letterSpacing="0.04em"
+          style={{ textTransform: 'uppercase' }}
+        >
+          {activeSlice ? (activeSlice.name.length > 14 ? activeSlice.name.substring(0, 12) + '…' : activeSlice.name) : 'TOTAL SPENT'}
+        </text>
+
+        <text
+          x={cx}
+          y={activeSlice ? cy + 8 : cy + 12}
+          textAnchor="middle"
+          fill="var(--text-primary)"
+          fontSize={activeSlice ? '15' : '17'}
+          fontWeight="700"
+        >
+          ₹{Math.round((activeSlice ? activeSlice.total : (totalSpend || totalSum)) / 100).toLocaleString('en-IN')}
+        </text>
+
+        <text
+          x={cx}
+          y={activeSlice ? cy + 24 : cy + 28}
+          textAnchor="middle"
+          fill={activeSlice ? activeSlice.color : 'var(--text-muted)'}
+          fontSize="11"
+          fontWeight="600"
+        >
+          {activeSlice ? `${activeSlice.percentage}% of total` : `${slices.length} ${analyticsLabel.toLowerCase()}s`}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
 export default function ReportsPage() {
   const { refreshKey } = useApp();
 
@@ -210,6 +406,10 @@ export default function ReportsPage() {
 
   // Analytics view mode: 'category' or 'tag'
   const [analyticsView, setAnalyticsView] = useState<'category' | 'tag'>('category');
+
+  // Chart presentation mode: 'split' | 'chart' | 'list'
+  const [chartLayout, setChartLayout] = useState<'split' | 'chart' | 'list'>('split');
+  const [hoveredAnalyticsId, setHoveredAnalyticsId] = useState<string | null>(null);
 
   const [data, setData] = useState<any>(null);
   const [forecast, setForecast] = useState<any>(null);
@@ -758,91 +958,288 @@ label={totalMonthIncome >= totalMonthSpend ? `₹${Math.round((totalMonthIncome 
 
       {/* 2-Column Analytics: Category/Tag & Top Merchants */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.25rem' }}>
-        {/* Spending by Category or Tag */}
+        {/* Spending by Category or Tag with Donut Chart / Split View */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <PieChart size={18} style={{ color: 'var(--brand-primary)' }} />
               Expenses by {analyticsLabel} ({formatMonthDisplay(selectedMonth)})
             </h2>
-            {/* Toggle: Category / Tag */}
-            <div style={{
-              display: 'flex',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-default)',
-              overflow: 'hidden',
-            }}>
-              <button
-                type="button"
-                onClick={() => setAnalyticsView('category')}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {/* Layout Switcher: Split | Chart | List */}
+              <div
                 style={{
-                  padding: '0.3rem 0.65rem',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.3rem',
-                  backgroundColor: analyticsView === 'category' ? 'var(--brand-primary)' : 'var(--bg-subtle)',
-                  color: analyticsView === 'category' ? '#fff' : 'var(--text-secondary)',
-                  transition: 'all 200ms ease',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-default)',
+                  overflow: 'hidden',
                 }}
+                role="group"
+                aria-label="Chart display layout"
               >
-                <Layers size={12} /> Category
-              </button>
-              <button
-                type="button"
-                onClick={() => setAnalyticsView('tag')}
+                <button
+                  type="button"
+                  title="Split view: Chart & List side-by-side"
+                  onClick={() => setChartLayout('split')}
+                  style={{
+                    padding: '0.3rem 0.55rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    backgroundColor: chartLayout === 'split' ? 'var(--brand-primary)' : 'var(--bg-subtle)',
+                    color: chartLayout === 'split' ? '#fff' : 'var(--text-secondary)',
+                    transition: 'all 150ms ease',
+                  }}
+                >
+                  <Columns2 size={12} /> Split
+                </button>
+                <button
+                  type="button"
+                  title="Circle / Donut Chart view"
+                  onClick={() => setChartLayout('chart')}
+                  style={{
+                    padding: '0.3rem 0.55rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    border: 'none',
+                    borderLeft: '1px solid var(--border-default)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    backgroundColor: chartLayout === 'chart' ? 'var(--brand-primary)' : 'var(--bg-subtle)',
+                    color: chartLayout === 'chart' ? '#fff' : 'var(--text-secondary)',
+                    transition: 'all 150ms ease',
+                  }}
+                >
+                  <PieChart size={12} /> Chart
+                </button>
+                <button
+                  type="button"
+                  title="List view"
+                  onClick={() => setChartLayout('list')}
+                  style={{
+                    padding: '0.3rem 0.55rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    border: 'none',
+                    borderLeft: '1px solid var(--border-default)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    backgroundColor: chartLayout === 'list' ? 'var(--brand-primary)' : 'var(--bg-subtle)',
+                    color: chartLayout === 'list' ? '#fff' : 'var(--text-secondary)',
+                    transition: 'all 150ms ease',
+                  }}
+                >
+                  <List size={12} /> List
+                </button>
+              </div>
+
+              {/* Dimension Switcher: Category vs Tag */}
+              <div
                 style={{
-                  padding: '0.3rem 0.65rem',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  border: 'none',
-                  borderLeft: '1px solid var(--border-default)',
-                  cursor: 'pointer',
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.3rem',
-                  backgroundColor: analyticsView === 'tag' ? 'var(--brand-primary)' : 'var(--bg-subtle)',
-                  color: analyticsView === 'tag' ? '#fff' : 'var(--text-secondary)',
-                  transition: 'all 200ms ease',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-default)',
+                  overflow: 'hidden',
                 }}
+                role="group"
+                aria-label="Dimension filter"
               >
-                <Tag size={12} /> Tag
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setAnalyticsView('category')}
+                  style={{
+                    padding: '0.3rem 0.65rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                    backgroundColor: analyticsView === 'category' ? 'var(--brand-primary)' : 'var(--bg-subtle)',
+                    color: analyticsView === 'category' ? '#fff' : 'var(--text-secondary)',
+                    transition: 'all 150ms ease',
+                  }}
+                >
+                  <Layers size={12} /> Category
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAnalyticsView('tag')}
+                  style={{
+                    padding: '0.3rem 0.65rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    border: 'none',
+                    borderLeft: '1px solid var(--border-default)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                    backgroundColor: analyticsView === 'tag' ? 'var(--brand-primary)' : 'var(--bg-subtle)',
+                    color: analyticsView === 'tag' ? '#fff' : 'var(--text-secondary)',
+                    transition: 'all 150ms ease',
+                  }}
+                >
+                  <Tag size={12} /> Tag
+                </button>
+              </div>
             </div>
           </div>
+
           {activeAnalytics.length === 0 ? (
             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
               No {analyticsLabel.toLowerCase()} data available for this month.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {activeAnalytics.map((c: any) => (
-                <div key={c.id}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
-                    <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      {analyticsView === 'tag' && <Tag size={12} style={{ color: c.color || 'var(--text-muted)' }} />}
-                      {c.name}
-                      {analyticsView === 'tag' && c.count && (
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>({c.count} txns)</span>
-                      )}
-                    </span>
-                    <span style={{ fontWeight: 600 }}>
-                      ₹{Math.round(c.total / 100).toLocaleString('en-IN')} ({c.percentage}%)
-                    </span>
-                  </div>
-                  <div className="progress-bar-bg">
-                    <div
-                      className="progress-bar-fill"
-                      style={{
-                        width: `${c.percentage}%`,
-                        backgroundColor: c.color || 'var(--brand-primary)',
-                      }}
-                    />
+            <div>
+              {/* Split Mode: Donut Chart on left + Progress List on right */}
+              {chartLayout === 'split' && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                    gap: '1.5rem',
+                    alignItems: 'center',
+                  }}
+                >
+                  <ExpenseDonutChart
+                    items={activeAnalytics}
+                    totalSpend={totalMonthSpend}
+                    analyticsLabel={analyticsLabel}
+                    hoveredId={hoveredAnalyticsId}
+                    onHover={setHoveredAnalyticsId}
+                  />
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxHeight: '360px', overflowY: 'auto', paddingRight: '4px' }}>
+                    {activeAnalytics.map((c: any) => {
+                      const isHovered = hoveredAnalyticsId === c.id;
+                      return (
+                        <div
+                          key={c.id}
+                          onMouseEnter={() => setHoveredAnalyticsId(c.id)}
+                          onMouseLeave={() => setHoveredAnalyticsId(null)}
+                          style={{
+                            padding: '0.35rem 0.5rem',
+                            borderRadius: 'var(--radius-sm)',
+                            backgroundColor: isHovered ? 'var(--bg-subtle)' : 'transparent',
+                            transition: 'background-color 150ms ease',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '0.25rem' }}>
+                            <span style={{ fontWeight: isHovered ? 600 : 500, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: c.color || 'var(--brand-primary)', flexShrink: 0 }} />
+                              {c.name}
+                              {analyticsView === 'tag' && c.count && (
+                                <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>({c.count} txns)</span>
+                              )}
+                            </span>
+                            <span style={{ fontWeight: 600 }}>
+                              ₹{Math.round(c.total / 100).toLocaleString('en-IN')} <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>({c.percentage}%)</span>
+                            </span>
+                          </div>
+                          <div className="progress-bar-bg" style={{ height: '5px' }}>
+                            <div
+                              className="progress-bar-fill"
+                              style={{
+                                width: `${c.percentage}%`,
+                                backgroundColor: c.color || 'var(--brand-primary)',
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              ))}
+              )}
+
+              {/* Chart-Only Mode: Large Donut Chart + Interactive Badges */}
+              {chartLayout === 'chart' && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem', padding: '0.5rem 0' }}>
+                  <ExpenseDonutChart
+                    items={activeAnalytics}
+                    totalSpend={totalMonthSpend}
+                    analyticsLabel={analyticsLabel}
+                    hoveredId={hoveredAnalyticsId}
+                    onHover={setHoveredAnalyticsId}
+                  />
+
+                  {/* Interactive Badges / Pill Legend */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', maxWidth: '520px' }}>
+                    {activeAnalytics.map((c: any) => {
+                      const isHovered = hoveredAnalyticsId === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onMouseEnter={() => setHoveredAnalyticsId(c.id)}
+                          onMouseLeave={() => setHoveredAnalyticsId(null)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            padding: '0.3rem 0.6rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.75rem',
+                            fontWeight: 500,
+                            backgroundColor: isHovered ? 'var(--bg-subtle)' : 'var(--bg-surface)',
+                            border: `1px solid ${isHovered ? c.color || 'var(--brand-primary)' : 'var(--border-default)'}`,
+                            color: 'var(--text-primary)',
+                            cursor: 'pointer',
+                            transition: 'all 150ms ease',
+                          }}
+                        >
+                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: c.color || 'var(--brand-primary)', flexShrink: 0 }} />
+                          <span>{c.name}</span>
+                          <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{c.percentage}%</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* List-Only Mode: Full Width Progress Bars */}
+              {chartLayout === 'list' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {activeAnalytics.map((c: any) => (
+                    <div key={c.id}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                        <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: c.color || 'var(--brand-primary)', flexShrink: 0 }} />
+                          {c.name}
+                          {analyticsView === 'tag' && c.count && (
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>({c.count} txns)</span>
+                          )}
+                        </span>
+                        <span style={{ fontWeight: 600 }}>
+                          ₹{Math.round(c.total / 100).toLocaleString('en-IN')} ({c.percentage}%)
+                        </span>
+                      </div>
+                      <div className="progress-bar-bg">
+                        <div
+                          className="progress-bar-fill"
+                          style={{
+                            width: `${c.percentage}%`,
+                            backgroundColor: c.color || 'var(--brand-primary)',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
