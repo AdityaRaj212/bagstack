@@ -738,8 +738,8 @@ export default function ReportsPage() {
         </div>
       )}
 
-      {/* Speedometer Gauges Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
+      {/* Speedometer Gauges Row: Savings Rate & Budget Health */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
         {/* Savings Rate Gauge */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
@@ -748,8 +748,8 @@ export default function ReportsPage() {
           <SpeedometerGauge
             value={Math.max(0, savingsRate)}
             max={100}
-label={totalMonthIncome >= totalMonthSpend ? `₹${Math.round((totalMonthIncome - totalMonthSpend) / 100).toLocaleString('en-IN')} saved` : `₹${Math.round((totalMonthSpend - totalMonthIncome) / 100).toLocaleString('en-IN')} deficit`}
-            sublabel={`of ₹${Math.round(totalMonthIncome / 100).toLocaleString('en-IN')} income`}
+            label={totalMonthIncome >= totalMonthSpend ? `₹${Math.round((totalMonthIncome - totalMonthSpend) / 100).toLocaleString('en-IN')} saved` : `₹${Math.round((totalMonthSpend - totalMonthIncome) / 100).toLocaleString('en-IN')} deficit`}
+            sublabel={`of ₹${Math.round(totalMonthIncome / 100).toLocaleString('en-IN')} income (${Math.round(totalMonthIncome > 0 ? (totalMonthSpend / totalMonthIncome) * 100 : 0)}% spent)`}
           />
         </div>
 
@@ -763,26 +763,13 @@ label={totalMonthIncome >= totalMonthSpend ? `₹${Math.round((totalMonthIncome 
               value={budgetHealth.overallPercent}
               max={100}
               label={`₹${Math.round(budgetHealth.totalSpent / 100).toLocaleString('en-IN')} spent`}
-              sublabel={`of ₹${Math.round(budgetHealth.totalBudgeted / 100).toLocaleString('en-IN')} budgeted`}
+              sublabel={`of ₹${Math.round(budgetHealth.totalBudgeted / 100).toLocaleString('en-IN')} budgeted (${budgetHealth.healthyCount} healthy, ${budgetHealth.overBudgetCount} over)`}
             />
           ) : (
             <div style={{ padding: '2rem 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
               No budgets set for this month.
             </div>
           )}
-        </div>
-
-        {/* Expense-to-Income Ratio Gauge */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            <TrendingDown size={15} /> EXPENSE RATIO
-          </div>
-          <SpeedometerGauge
-            value={totalMonthSpend}
-            max={totalMonthIncome || totalMonthSpend || 1}
-            label={`₹${Math.round(totalMonthSpend / 100).toLocaleString('en-IN')} spent`}
-            sublabel={totalMonthIncome > 0 ? `${Math.round((totalMonthSpend / totalMonthIncome) * 100)}% of income` : 'No income recorded'}
-          />
         </div>
       </div>
 
