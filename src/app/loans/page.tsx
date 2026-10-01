@@ -445,9 +445,9 @@ export default function LoansPage() {
                   </div>
                   <div>
                     <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
-                      {isEmi ? 'REMAINING BALANCE' : 'OUTSTANDING PRINCIPAL'}
+                      {isEmi ? 'REMAINING BALANCE' : 'OUTSTANDING BALANCE'}
                     </div>
-                    <MoneyDisplay amount={loan.outstanding_principal} size="lg" weight="bold" colored />
+                    <MoneyDisplay amount={loan.remainingBalance ?? loan.outstanding_principal} size="lg" weight="bold" colored />
                   </div>
                   <div>
                     <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
@@ -469,8 +469,8 @@ export default function LoansPage() {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.25rem' }}>
                     <span>
-                      Principal Repaid: ₹{Math.round(loan.paidPrincipal / 100).toLocaleString('en-IN')} of ₹
-                      {Math.round(loan.principal / 100).toLocaleString('en-IN')}
+                      Repaid: ₹{Math.round((loan.totalPaid ?? loan.paidPrincipal) / 100).toLocaleString('en-IN')} of ₹
+                      {Math.round((loan.totalPayable ?? loan.principal) / 100).toLocaleString('en-IN')}
                     </span>
                     <span style={{ fontWeight: 600, color: 'var(--color-income)' }}>{loan.progressPercent}% Completed</span>
                   </div>
@@ -517,8 +517,8 @@ export default function LoansPage() {
                               <td style={{ padding: '0.4rem 0.75rem', textAlign: 'right', color: 'var(--color-expense)' }}>
                                 ₹{Math.round(row.interestComponent / 100).toLocaleString('en-IN')}
                               </td>
-                              <td style={{ padding: '0.4rem 0.75rem', textAlign: 'right' }}>
-                                ₹{Math.round(row.remainingPrincipal / 100).toLocaleString('en-IN')}
+                              <td style={{ padding: '0.4rem 0.75rem', textAlign: 'right', fontWeight: 600 }}>
+                                ₹{Math.round((row.remainingBalance ?? row.remainingPrincipal) / 100).toLocaleString('en-IN')}
                               </td>
                             </tr>
                           ))}
