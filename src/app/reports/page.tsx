@@ -31,8 +31,10 @@ import {
 } from 'lucide-react';
 
 /* ──── SVG Speedometer Gauge ──── */
-function SpeedometerGauge({ value, max, label, sublabel }: { value: number; max: number; label: string; sublabel?: string }) {
-  const clampedPercent = Math.min(100, Math.max(0, max > 0 ? (value / max) * 100 : 0));
+export function SpeedometerGauge({ value, max, label, sublabel }: { value: number; max: number; label: string; sublabel?: string }) {
+  const safeVal = Number.isFinite(value) ? value : 0;
+  const safeMax = Number.isFinite(max) && max > 0 ? max : 100;
+  const clampedPercent = Math.min(100, Math.max(0, (safeVal / safeMax) * 100));
   // Arc from 135° to 405° (270° sweep)
   const startAngle = 135;
   const sweepAngle = 270;
@@ -121,14 +123,16 @@ function SpeedometerGauge({ value, max, label, sublabel }: { value: number; max:
 }
 
 /* ──── Tooltip Bar for Daily Spending ──── */
-function DailyBar({ day, date, spent, cumulative, maxSpend, avgSpend }: {
+export function DailyBar({ day, date, spent, cumulative, maxSpend, avgSpend }: {
   day: number; date: string; spent: number; cumulative: number; maxSpend: number; avgSpend: number;
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const barRef = useRef<HTMLDivElement>(null);
-  const barHeight = maxSpend > 0 ? (spent / maxSpend) * 110 : 0;
-  const hasSpend = spent > 0;
-  const isSpike = spent > avgSpend * 1.5;
+  const safeMax = Number.isFinite(maxSpend) && maxSpend > 0 ? maxSpend : 100;
+  const safeSpent = Number.isFinite(spent) ? spent : 0;
+  const barHeight = safeMax > 0 ? (safeSpent / safeMax) * 110 : 0;
+  const hasSpend = safeSpent > 0;
+  const isSpike = safeSpent > avgSpend * 1.5;
 
   return (
     <div
@@ -169,8 +173,8 @@ function DailyBar({ day, date, spent, cumulative, maxSpend, avgSpend }: {
           }}
         >
           <div style={{ fontWeight: 600 }}>Day {day} · {formatDateDMY(date)}</div>
-          <div>Spent: <strong>₹{(spent / 100).toLocaleString('en-IN')}</strong></div>
-          <div style={{ color: 'var(--text-muted)' }}>Cumulative: ₹{(cumulative / 100).toLocaleString('en-IN')}</div>
+          <div>Spent: <strong>₹{(safeSpent / 100).toLocaleString('en-IN')}</strong></div>
+          <div style={{ color: 'var(--text-muted)' }}>Cumulative: ₹{((cumulative || 0) / 100).toLocaleString('en-IN')}</div>
         </div>
       )}
       <div
@@ -208,7 +212,7 @@ interface DonutSliceData {
   count?: number;
 }
 
-function ExpenseDonutChart({
+export function ExpenseDonutChart({
   items,
   totalSpend,
   analyticsLabel,
@@ -229,10 +233,16 @@ function ExpenseDonutChart({
 
   // Curated color mapping
   const slices: DonutSliceData[] = useMemo(() => {
-    return items.map((it, idx) => ({
-      ...it,
-      color: it.color || DONUT_PALETTE[idx % DONUT_PALETTE.length],
-    }));
+    return (items || [])
+      .filter(it => (it?.total || 0) > 0)
+      .map((it, idx) => ({
+        ...it,
+        id: it.id || `slice_${idx}`,
+        name: it.name || 'Uncategorized',
+        total: it.total || 0,
+        percentage: Number.isFinite(it.percentage) ? it.percentage : 0,
+        color: it.color || DONUT_PALETTE[idx % DONUT_PALETTE.length],
+      }));
   }, [items]);
 
   const totalSum = useMemo(() => {
@@ -273,9 +283,9 @@ function ExpenseDonutChart({
       `;
     }
 
-    const gap = slices.length > 1 ? Math.min(1.5, sweep * 0.1) : 0;
+    const gap = slices.length > 1 ? Math.min(1.5, Math.max(0, sweep * 0.1)) : 0;
     const actualStart = startAngle + gap / 2;
-    const actualEnd = endAngle - gap / 2;
+    const actualEnd = Math.max(actualStart + 0.05, endAngle - gap / 2);
 
     const x1 = cx + rOut * Math.cos(toRad(actualStart));
     const y1 = cy + rOut * Math.sin(toRad(actualStart));
@@ -308,6 +318,8 @@ function ExpenseDonutChart({
       </div>
     );
   }
+
+  const activeSliceName = activeSlice?.name || 'Uncategorized';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
@@ -356,7 +368,9 @@ function ExpenseDonutChart({
           letterSpacing="0.04em"
           style={{ textTransform: 'uppercase' }}
         >
-          {activeSlice ? (activeSlice.name.length > 14 ? activeSlice.name.substring(0, 12) + '…' : activeSlice.name) : (analyticsLabel === 'Tag' ? 'TOTAL TAGGED' : 'TOTAL SPENT')}
+          {activeSlice
+            ? (activeSliceName.length > 14 ? activeSliceName.substring(0, 12) + '…' : activeSliceName)
+            : (analyticsLabel === 'Tag' ? 'TOTAL TAGGED' : 'TOTAL SPENT')}
         </text>
 
         <text
@@ -385,7 +399,13 @@ function ExpenseDonutChart({
   );
 }
 
-export default function ReportsPage() {
+export default function ReportsPage({
+  initialData,
+  initialForecast,
+}: {
+  initialData?: any;
+  initialForecast?: any;
+} = {}) {
   const { refreshKey } = useApp();
 
   // Selected Month (YYYY-MM)
@@ -411,12 +431,15 @@ export default function ReportsPage() {
   const [chartLayout, setChartLayout] = useState<'split' | 'chart' | 'list'>('split');
   const [hoveredAnalyticsId, setHoveredAnalyticsId] = useState<string | null>(null);
 
-  const [data, setData] = useState<any>(null);
-  const [forecast, setForecast] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(initialData || null);
+  const [forecast, setForecast] = useState<any>(initialForecast || null);
+  const [loading, setLoading] = useState(!initialData);
 
   // Load analytics when selectedMonth or compareMonth changes
   useEffect(() => {
+    if (initialData && !compareEnabled && selectedMonth === currentMonthStr) {
+      return;
+    }
     setLoading(true);
     const params = new URLSearchParams();
     params.set('month', selectedMonth);
@@ -469,14 +492,34 @@ export default function ReportsPage() {
     );
   }
 
-  const spendingByCategory = data?.spendingByCategory || [];
-  const spendingByTag = data?.spendingByTag || [];
-  const spendingByMerchant = data?.spendingByMerchant || [];
-  const periods = forecast?.periods || [];
-  const dailySpending = data?.dailySpending?.days || (Array.isArray(data?.dailySpending) ? data?.dailySpending : []);
-  const budgetHealth = data?.budgetHealth;
-  const comparison = data?.comparison;
-  const metrics = data?.metrics || {};
+  if (data?.error) {
+    return (
+      <div className="card" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--color-expense)' }}>
+        <p style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '0.5rem' }}>Failed to load reports data</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{data.error}</p>
+        <button
+          onClick={() => setSelectedMonth(currentMonthStr)}
+          className="btn-secondary"
+          style={{ marginTop: '1rem' }}
+        >
+          Reset to Current Month
+        </button>
+      </div>
+    );
+  }
+
+  const spendingByCategory = Array.isArray(data?.spendingByCategory) ? data.spendingByCategory : [];
+  const spendingByTag = Array.isArray(data?.spendingByTag) ? data.spendingByTag : [];
+  const spendingByMerchant = Array.isArray(data?.spendingByMerchant) ? data.spendingByMerchant : [];
+  const periods = Array.isArray(forecast?.periods) ? forecast.periods : [];
+  const dailySpending = Array.isArray(data?.dailySpending?.days)
+    ? data.dailySpending.days
+    : Array.isArray(data?.dailySpending)
+    ? data.dailySpending
+    : [];
+  const budgetHealth = data?.budgetHealth && typeof data.budgetHealth === 'object' ? data.budgetHealth : null;
+  const comparison = data?.comparison && typeof data.comparison === 'object' ? data.comparison : null;
+  const metrics = (data?.metrics && typeof data.metrics === 'object') ? data.metrics : {};
 
   // Fix: use correct field names from getDashboardMetrics
   const totalMonthSpend = metrics.monthlyExpenses || 0;
@@ -487,7 +530,7 @@ export default function ReportsPage() {
   const isCurrentMonth = selYear === today.getFullYear() && selMon === (today.getMonth() + 1);
   const elapsedDays = isCurrentMonth ? today.getDate() : daysInMonth;
   const avgDailySpend = elapsedDays > 0 ? Math.round(totalMonthSpend / elapsedDays) : 0;
-  const maxDailySpend = Math.max(...dailySpending.map((d: any) => d.dailySpent ?? d.amount ?? 0), 100);
+  const maxDailySpend = dailySpending.length > 0 ? Math.max(...dailySpending.map((d: any) => d.dailySpent ?? d.amount ?? 0), 100) : 100;
 
   // Savings rate for speedometer
   const savingsRate = totalMonthIncome > 0 ? Math.round(((totalMonthIncome - totalMonthSpend) / totalMonthIncome) * 100) : 0;
@@ -636,7 +679,7 @@ export default function ReportsPage() {
               </div>
               <div>
                 <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>
-                  Month Comparison: {formatMonthDisplay(comparison.monthA)} vs {formatMonthDisplay(comparison.monthB)}
+                  Month Comparison: {formatMonthDisplay(comparison.monthA || selectedMonth)} vs {formatMonthDisplay(comparison.monthB || compareMonth)}
                 </h3>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                   Detailed delta in income, expenses, and category variance.
@@ -651,15 +694,15 @@ export default function ReportsPage() {
             <div style={{ backgroundColor: 'var(--bg-subtle)', padding: '0.875rem 1rem', borderRadius: 'var(--radius-md)' }}>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>INCOME DELTA</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.25rem', fontWeight: 700, color: comparison.diff.income >= 0 ? 'var(--color-income)' : 'var(--color-expense)' }}>
-                  {comparison.diff.income >= 0 ? '+' : ''}₹{Math.round(comparison.diff.income / 100).toLocaleString('en-IN')}
+                <span style={{ fontSize: '1.25rem', fontWeight: 700, color: (comparison.diff?.income ?? 0) >= 0 ? 'var(--color-income)' : 'var(--color-expense)' }}>
+                  {(comparison.diff?.income ?? 0) >= 0 ? '+' : ''}₹{Math.round((comparison.diff?.income ?? 0) / 100).toLocaleString('en-IN')}
                 </span>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: comparison.diff.income >= 0 ? 'var(--color-income)' : 'var(--color-expense)' }}>
-                  ({comparison.diff.incomePercent}%)
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: (comparison.diff?.income ?? 0) >= 0 ? 'var(--color-income)' : 'var(--color-expense)' }}>
+                  ({comparison.diff?.incomePercent ?? 0}%)
                 </span>
               </div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                ₹{(comparison.metricsA.totalIncome / 100).toLocaleString('en-IN')} vs ₹{(comparison.metricsB.totalIncome / 100).toLocaleString('en-IN')}
+                ₹{(((comparison.metricsA?.totalIncome ?? comparison.metricsA?.monthlyIncome) || 0) / 100).toLocaleString('en-IN')} vs ₹{(((comparison.metricsB?.totalIncome ?? comparison.metricsB?.monthlyIncome) || 0) / 100).toLocaleString('en-IN')}
               </div>
             </div>
 
@@ -667,15 +710,15 @@ export default function ReportsPage() {
             <div style={{ backgroundColor: 'var(--bg-subtle)', padding: '0.875rem 1rem', borderRadius: 'var(--radius-md)' }}>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>EXPENSE DELTA</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.25rem', fontWeight: 700, color: comparison.diff.expense <= 0 ? 'var(--color-income)' : 'var(--color-expense)' }}>
-                  {comparison.diff.expense >= 0 ? '+' : ''}₹{Math.round(comparison.diff.expense / 100).toLocaleString('en-IN')}
+                <span style={{ fontSize: '1.25rem', fontWeight: 700, color: (comparison.diff?.expense ?? 0) <= 0 ? 'var(--color-income)' : 'var(--color-expense)' }}>
+                  {(comparison.diff?.expense ?? 0) >= 0 ? '+' : ''}₹{Math.round((comparison.diff?.expense ?? 0) / 100).toLocaleString('en-IN')}
                 </span>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: comparison.diff.expense <= 0 ? 'var(--color-income)' : 'var(--color-expense)' }}>
-                  ({comparison.diff.expensePercent}%)
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: (comparison.diff?.expense ?? 0) <= 0 ? 'var(--color-income)' : 'var(--color-expense)' }}>
+                  ({comparison.diff?.expensePercent ?? 0}%)
                 </span>
               </div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                ₹{(comparison.metricsA.totalExpense / 100).toLocaleString('en-IN')} vs ₹{(comparison.metricsB.totalExpense / 100).toLocaleString('en-IN')}
+                ₹{(((comparison.metricsA?.totalExpense ?? comparison.metricsA?.monthlyExpenses) || 0) / 100).toLocaleString('en-IN')} vs ₹{(((comparison.metricsB?.totalExpense ?? comparison.metricsB?.monthlyExpenses) || 0) / 100).toLocaleString('en-IN')}
               </div>
             </div>
 
@@ -683,28 +726,28 @@ export default function ReportsPage() {
             <div style={{ backgroundColor: 'var(--bg-subtle)', padding: '0.875rem 1rem', borderRadius: 'var(--radius-md)' }}>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>NET SAVINGS DELTA</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.25rem', fontWeight: 700, color: comparison.diff.netSavings >= 0 ? 'var(--color-income)' : 'var(--color-expense)' }}>
-                  {comparison.diff.netSavings >= 0 ? '+' : ''}₹{Math.round(comparison.diff.netSavings / 100).toLocaleString('en-IN')}
+                <span style={{ fontSize: '1.25rem', fontWeight: 700, color: (comparison.diff?.netSavings ?? 0) >= 0 ? 'var(--color-income)' : 'var(--color-expense)' }}>
+                  {(comparison.diff?.netSavings ?? 0) >= 0 ? '+' : ''}₹{Math.round((comparison.diff?.netSavings ?? 0) / 100).toLocaleString('en-IN')}
                 </span>
               </div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                Savings Rate: {comparison.metricsA.savingsRate}% vs {comparison.metricsB.savingsRate}%
+                Savings Rate: {comparison.metricsA?.savingsRate ?? 0}% vs {comparison.metricsB?.savingsRate ?? 0}%
               </div>
             </div>
           </div>
 
           {/* Category Variance Table */}
-          {comparison.categoryComparison?.length > 0 && (
+          {Array.isArray(comparison.categoryComparison) && comparison.categoryComparison.length > 0 && (
             <div>
               <div style={{ fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.5rem' }}>
                 Category-by-Category Shift
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {comparison.categoryComparison.slice(0, 6).map((c: any) => {
-                  const increased = c.diff > 0;
+                  const increased = (c.diff || 0) > 0;
                   return (
                     <div
-                      key={c.name}
+                      key={c.id || c.name}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -715,10 +758,10 @@ export default function ReportsPage() {
                         fontSize: '0.8125rem',
                       }}
                     >
-                      <span style={{ fontWeight: 500 }}>{c.name}</span>
+                      <span style={{ fontWeight: 500 }}>{c.name || 'Category'}</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <span style={{ color: 'var(--text-secondary)' }}>
-                          ₹{Math.round(c.amountA / 100).toLocaleString('en-IN')} vs ₹{Math.round(c.amountB / 100).toLocaleString('en-IN')}
+                          ₹{Math.round((c.amountA || 0) / 100).toLocaleString('en-IN')} vs ₹{Math.round((c.amountB || 0) / 100).toLocaleString('en-IN')}
                         </span>
                         <span
                           style={{
@@ -728,7 +771,7 @@ export default function ReportsPage() {
                             color: increased ? 'var(--color-expense)' : 'var(--color-income)',
                           }}
                         >
-                          {increased ? '↑ +' : '↓ '}₹{Math.round(Math.abs(c.diff) / 100).toLocaleString('en-IN')}
+                          {increased ? '↑ +' : '↓ '}₹{Math.round(Math.abs(c.diff || 0) / 100).toLocaleString('en-IN')}
                         </span>
                       </div>
                     </div>
@@ -762,10 +805,10 @@ export default function ReportsPage() {
           </div>
           {budgetHealth ? (
             <SpeedometerGauge
-              value={budgetHealth.overallPercent}
+              value={budgetHealth.overallPercent ?? 0}
               max={100}
-              label={`₹${Math.round(budgetHealth.totalSpent / 100).toLocaleString('en-IN')} spent`}
-              sublabel={`of ₹${Math.round(budgetHealth.totalBudgeted / 100).toLocaleString('en-IN')} budgeted (${budgetHealth.healthyCount} healthy, ${budgetHealth.overBudgetCount} over)`}
+              label={`₹${Math.round((budgetHealth.totalSpent || 0) / 100).toLocaleString('en-IN')} spent`}
+              sublabel={`of ₹${Math.round((budgetHealth.totalBudgeted || 0) / 100).toLocaleString('en-IN')} budgeted (${budgetHealth.healthyCount ?? 0} healthy, ${budgetHealth.overBudgetCount ?? 0} over)`}
             />
           ) : (
             <div style={{ padding: '2rem 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
@@ -835,7 +878,7 @@ export default function ReportsPage() {
                 spent={d.dailySpent ?? d.amount ?? 0}
                 cumulative={d.cumulativeSpent ?? d.cumulative ?? 0}
                 maxSpend={maxDailySpend}
-                avgSpend={avgDailySpend * 100}
+                avgSpend={avgDailySpend}
               />
             ))}
           </div>
@@ -861,21 +904,21 @@ export default function ReportsPage() {
                 Budget Health ({formatMonthDisplay(selectedMonth)})
               </h2>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                {budgetHealth.totalCategories} budget categories tracked · {budgetHealth.overallPercent}% overall utilization
+                {budgetHealth.totalCategories ?? 0} budget categories tracked · {budgetHealth.overallPercent ?? 0}% overall utilization
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {budgetHealth.overBudgetCount > 0 && (
+              {(budgetHealth.overBudgetCount || 0) > 0 && (
                 <span className="badge badge-expense">
                   <ShieldAlert size={12} /> {budgetHealth.overBudgetCount} Over Budget
                 </span>
               )}
-              {budgetHealth.nearLimitCount > 0 && (
+              {(budgetHealth.nearLimitCount || 0) > 0 && (
                 <span className="badge" style={{ backgroundColor: 'var(--color-warning-subtle)', color: 'var(--color-warning)' }}>
                   <AlertTriangle size={12} /> {budgetHealth.nearLimitCount} Near Limit
                 </span>
               )}
-              {budgetHealth.healthyCount > 0 && (
+              {(budgetHealth.healthyCount || 0) > 0 && (
                 <span className="badge badge-income">
                   <CheckCircle2 size={12} /> {budgetHealth.healthyCount} Healthy
                 </span>
@@ -884,10 +927,10 @@ export default function ReportsPage() {
           </div>
 
           {/* Over budget alerts */}
-          {budgetHealth.overBudgetItems.length > 0 && (
+          {(budgetHealth.overBudgetItems || []).length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-expense)' }}>OVER BUDGET</div>
-              {budgetHealth.overBudgetItems.map((b: any) => (
+              {(budgetHealth.overBudgetItems || []).map((b: any) => (
                 <div
                   key={b.id}
                   style={{
@@ -901,12 +944,12 @@ export default function ReportsPage() {
                     fontSize: '0.8125rem',
                   }}
                 >
-                  <span style={{ fontWeight: 500 }}>{b.category_name}</span>
+                  <span style={{ fontWeight: 500 }}>{b.category_name || 'Budget Category'}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <span style={{ color: 'var(--text-muted)' }}>
-                      ₹{Math.round(b.spent / 100).toLocaleString('en-IN')} / ₹{Math.round(b.amount / 100).toLocaleString('en-IN')}
+                      ₹{Math.round((b.spent || 0) / 100).toLocaleString('en-IN')} / ₹{Math.round((b.amount || 0) / 100).toLocaleString('en-IN')}
                     </span>
-                    <span style={{ fontWeight: 700, color: '#EF4444' }}>{b.percentUsed}%</span>
+                    <span style={{ fontWeight: 700, color: '#EF4444' }}>{b.percentUsed ?? 0}%</span>
                   </div>
                 </div>
               ))}
@@ -914,10 +957,10 @@ export default function ReportsPage() {
           )}
 
           {/* Near limit warnings */}
-          {budgetHealth.nearLimitItems.length > 0 && (
+          {(budgetHealth.nearLimitItems || []).length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#F59E0B' }}>APPROACHING LIMIT (≥80%)</div>
-              {budgetHealth.nearLimitItems.map((b: any) => (
+              {(budgetHealth.nearLimitItems || []).map((b: any) => (
                 <div
                   key={b.id}
                   style={{
@@ -931,12 +974,12 @@ export default function ReportsPage() {
                     fontSize: '0.8125rem',
                   }}
                 >
-                  <span style={{ fontWeight: 500 }}>{b.category_name}</span>
+                  <span style={{ fontWeight: 500 }}>{b.category_name || 'Budget Category'}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <span style={{ color: 'var(--text-muted)' }}>
-                      ₹{Math.round(b.spent / 100).toLocaleString('en-IN')} / ₹{Math.round(b.amount / 100).toLocaleString('en-IN')}
+                      ₹{Math.round((b.spent || 0) / 100).toLocaleString('en-IN')} / ₹{Math.round((b.amount || 0) / 100).toLocaleString('en-IN')}
                     </span>
-                    <span style={{ fontWeight: 700, color: '#F59E0B' }}>{b.percentUsed}%</span>
+                    <span style={{ fontWeight: 700, color: '#F59E0B' }}>{b.percentUsed ?? 0}%</span>
                   </div>
                 </div>
               ))}
@@ -1242,7 +1285,7 @@ export default function ReportsPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {spendingByMerchant.map((m: any, idx: number) => (
                 <div
-                  key={m.merchant_name}
+                  key={m.merchant_name || `merchant_${idx}`}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1254,11 +1297,13 @@ export default function ReportsPage() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '20px' }}>#{idx + 1}</span>
-                    <span style={{ fontWeight: 500 }}>{m.merchant_name}</span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({m.count} txns)</span>
+                    <span style={{ fontWeight: 500 }}>{m.merchant_name || 'Unknown Payee'}</span>
+                    {m.count != null && (
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({m.count} txns)</span>
+                    )}
                   </div>
                   <div style={{ fontWeight: 600 }}>
-                    ₹{Math.round(m.total / 100).toLocaleString('en-IN')}
+                    ₹{Math.round((m.total || 0) / 100).toLocaleString('en-IN')}
                   </div>
                 </div>
               ))}
@@ -1281,9 +1326,9 @@ export default function ReportsPage() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
-            {periods.map((p: any) => (
+            {periods.map((p: any, idx: number) => (
               <div
-                key={p.days}
+                key={p.days || idx}
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   padding: '0.75rem 1rem',
@@ -1297,11 +1342,11 @@ export default function ReportsPage() {
                   <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
                     {p.days}-DAY PROJECTION
                   </div>
-                  <MoneyDisplay amount={p.projectedBalance} size="lg" weight="bold" />
+                  <MoneyDisplay amount={p.projectedBalance || 0} size="lg" weight="bold" />
                 </div>
                 <div style={{ fontSize: '0.75rem', textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: 'var(--color-income)' }}>In: +₹{Math.round(p.expectedIncome / 100).toLocaleString('en-IN')}</span>
-                  <span style={{ color: 'var(--color-expense)' }}>Out: -₹{Math.round(p.expectedExpenses / 100).toLocaleString('en-IN')}</span>
+                  <span style={{ color: 'var(--color-income)' }}>In: +₹{Math.round((p.expectedIncome || 0) / 100).toLocaleString('en-IN')}</span>
+                  <span style={{ color: 'var(--color-expense)' }}>Out: -₹{Math.round((p.expectedExpenses || 0) / 100).toLocaleString('en-IN')}</span>
                 </div>
               </div>
             ))}
