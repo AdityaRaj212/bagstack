@@ -229,10 +229,12 @@ function ExpenseDonutChart({
 
   // Curated color mapping
   const slices: DonutSliceData[] = useMemo(() => {
-    return items.map((it, idx) => ({
-      ...it,
-      color: it.color || DONUT_PALETTE[idx % DONUT_PALETTE.length],
-    }));
+    return (items || [])
+      .filter(it => (it.total || 0) > 0)
+      .map((it, idx) => ({
+        ...it,
+        color: it.color || DONUT_PALETTE[idx % DONUT_PALETTE.length],
+      }));
   }, [items]);
 
   const totalSum = useMemo(() => {
@@ -273,9 +275,9 @@ function ExpenseDonutChart({
       `;
     }
 
-    const gap = slices.length > 1 ? Math.min(1.5, sweep * 0.1) : 0;
+    const gap = slices.length > 1 ? Math.min(1.5, Math.max(0, sweep * 0.1)) : 0;
     const actualStart = startAngle + gap / 2;
-    const actualEnd = endAngle - gap / 2;
+    const actualEnd = Math.max(actualStart + 0.05, endAngle - gap / 2);
 
     const x1 = cx + rOut * Math.cos(toRad(actualStart));
     const y1 = cy + rOut * Math.sin(toRad(actualStart));
@@ -469,14 +471,34 @@ export default function ReportsPage() {
     );
   }
 
-  const spendingByCategory = data?.spendingByCategory || [];
-  const spendingByTag = data?.spendingByTag || [];
-  const spendingByMerchant = data?.spendingByMerchant || [];
-  const periods = forecast?.periods || [];
-  const dailySpending = data?.dailySpending?.days || (Array.isArray(data?.dailySpending) ? data?.dailySpending : []);
-  const budgetHealth = data?.budgetHealth;
-  const comparison = data?.comparison;
-  const metrics = data?.metrics || {};
+  if (data?.error) {
+    return (
+      <div className="card" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--color-expense)' }}>
+        <p style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '0.5rem' }}>Failed to load reports data</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{data.error}</p>
+        <button
+          onClick={() => setSelectedMonth(currentMonthStr)}
+          className="btn-secondary"
+          style={{ marginTop: '1rem' }}
+        >
+          Reset to Current Month
+        </button>
+      </div>
+    );
+  }
+
+  const spendingByCategory = Array.isArray(data?.spendingByCategory) ? data.spendingByCategory : [];
+  const spendingByTag = Array.isArray(data?.spendingByTag) ? data.spendingByTag : [];
+  const spendingByMerchant = Array.isArray(data?.spendingByMerchant) ? data.spendingByMerchant : [];
+  const periods = Array.isArray(forecast?.periods) ? forecast.periods : [];
+  const dailySpending = Array.isArray(data?.dailySpending?.days)
+    ? data.dailySpending.days
+    : Array.isArray(data?.dailySpending)
+    ? data.dailySpending
+    : [];
+  const budgetHealth = data?.budgetHealth && typeof data.budgetHealth === 'object' ? data.budgetHealth : null;
+  const comparison = data?.comparison && typeof data.comparison === 'object' ? data.comparison : null;
+  const metrics = (data?.metrics && typeof data.metrics === 'object') ? data.metrics : {};
 
   // Fix: use correct field names from getDashboardMetrics
   const totalMonthSpend = metrics.monthlyExpenses || 0;
@@ -487,7 +509,7 @@ export default function ReportsPage() {
   const isCurrentMonth = selYear === today.getFullYear() && selMon === (today.getMonth() + 1);
   const elapsedDays = isCurrentMonth ? today.getDate() : daysInMonth;
   const avgDailySpend = elapsedDays > 0 ? Math.round(totalMonthSpend / elapsedDays) : 0;
-  const maxDailySpend = Math.max(...dailySpending.map((d: any) => d.dailySpent ?? d.amount ?? 0), 100);
+  const maxDailySpend = dailySpending.length > 0 ? Math.max(...dailySpending.map((d: any) => d.dailySpent ?? d.amount ?? 0), 100) : 100;
 
   // Savings rate for speedometer
   const savingsRate = totalMonthIncome > 0 ? Math.round(((totalMonthIncome - totalMonthSpend) / totalMonthIncome) * 100) : 0;
@@ -835,7 +857,7 @@ export default function ReportsPage() {
                 spent={d.dailySpent ?? d.amount ?? 0}
                 cumulative={d.cumulativeSpent ?? d.cumulative ?? 0}
                 maxSpend={maxDailySpend}
-                avgSpend={avgDailySpend * 100}
+                avgSpend={avgDailySpend}
               />
             ))}
           </div>

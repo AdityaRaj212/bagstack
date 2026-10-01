@@ -877,6 +877,80 @@ describe('Finance Domain Business Logic Tests', () => {
     const deleted = service.getAccountById(acc.id, userId);
     expect(deleted).toBeNull();
   });
+
+  it('correctly aggregates spending by category, tag, and daily burn for reports', () => {
+    const acc = service.createAccount({
+      userId,
+      name: 'HDFC Bank',
+      type: 'savings',
+      openingBalance: 10000000,
+    })!;
+
+    const cat = db.prepare('SELECT id, name FROM categories WHERE user_id = ? LIMIT 1').get(userId) as any;
+
+    // 1. Transaction with category and tag
+    service.createTransaction({
+      userId,
+      accountId: acc.id,
+      type: 'expense',
+      amount: 60000, // ₹600
+      date: '2026-03-05',
+      categoryId: cat.id,
+      tags: ['groceries'],
+    });
+
+    // 2. Transaction with another tag
+    service.createTransaction({
+      userId,
+      accountId: acc.id,
+      type: 'expense',
+      amount: 40000, // ₹400
+      date: '2026-03-12',
+      categoryId: cat.id,
+      tags: ['entertainment'],
+    });
+
+    // 3. Uncategorized and untagged transaction
+    service.createTransaction({
+      userId,
+      accountId: acc.id,
+      type: 'expense',
+      amount: 20000, // ₹200
+      date: '2026-03-20',
+    });
+
+    // Total expense = 600 + 400 + 200 = 1200 (120000 paise)
+
+    // Test getSpendingByCategory
+    const byCategory = service.getSpendingByCategory(userId, '2026-03');
+    expect(byCategory.length).toBe(2); // Known category + Uncategorized
+    const knownCat = byCategory.find(c => c.id === cat.id);
+    expect(knownCat?.total).toBe(100000); // 1000.00
+    expect(knownCat?.percentage).toBe(83); // 100000 / 120000 = 83.33% -> 83%
+
+    const uncat = byCategory.find(c => c.id === 'uncategorized');
+    expect(uncat?.total).toBe(20000);
+    expect(uncat?.percentage).toBe(17); // 20000 / 120000 = 16.66% -> 17%
+
+    // Test getSpendingByTag
+    const byTag = service.getSpendingByTag(userId, '2026-03');
+    expect(byTag.length).toBe(2);
+    const groceriesTag = byTag.find(t => t.name === 'groceries');
+    expect(groceriesTag?.total).toBe(60000);
+    expect(groceriesTag?.percentage).toBe(60); // 60000 / (60000 + 40000) = 60% of tagged
+
+    // Test getDailySpending
+    const daily = service.getDailySpending(userId, '2026-03');
+    expect(daily.days.length).toBe(31);
+    expect(daily.totalSpent).toBe(120000);
+    const day5 = daily.days.find(d => d.day === 5);
+    expect(day5?.dailySpent).toBe(60000);
+    expect(day5?.cumulativeSpent).toBe(60000);
+
+    const day12 = daily.days.find(d => d.day === 12);
+    expect(day12?.dailySpent).toBe(40000);
+    expect(day12?.cumulativeSpent).toBe(100000);
+  });
 });
 
 
