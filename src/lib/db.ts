@@ -147,7 +147,9 @@ export function initSchema(db: DatabaseSync) {
     const hasGoalNotes = (db as any).prepare("SELECT 1 FROM pragma_table_info('goals') WHERE name = 'notes'").get();
     const hasLoanType = (db as any).prepare("SELECT 1 FROM pragma_table_info('loans') WHERE name = 'type'").get();
     const hasLoanNotes = (db as any).prepare("SELECT 1 FROM pragma_table_info('loans') WHERE name = 'notes'").get();
-    if (hasGoalNotes && hasLoanType && hasLoanNotes) {
+    const hasTxLoanId = (db as any).prepare("SELECT 1 FROM pragma_table_info('transactions') WHERE name = 'loan_id'").get();
+    const hasLoanPayments = (db as any).prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='loan_payments'").get();
+    if (hasGoalNotes && hasLoanType && hasLoanNotes && hasTxLoanId && hasLoanPayments) {
       isFullyMigrated = true;
     }
   } catch {
@@ -240,6 +242,7 @@ export function initSchema(db: DatabaseSync) {
       transfer_group_id TEXT, -- pairs the 2 sides of a transfer
       transfer_peer_account_id TEXT, -- for display convenience
       destination_account_id TEXT, -- for outgoing transfer target
+      loan_id TEXT,
       is_deleted INTEGER DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
@@ -377,6 +380,7 @@ export function initSchema(db: DatabaseSync) {
       name TEXT NOT NULL,
       principal INTEGER NOT NULL,
       outstanding_principal INTEGER NOT NULL,
+      initial_outstanding_principal INTEGER DEFAULT 0,
       interest_rate REAL NOT NULL, -- percentage e.g. 8.5
       emi_amount INTEGER NOT NULL,
       tenure_months INTEGER NOT NULL,
@@ -387,6 +391,21 @@ export function initSchema(db: DatabaseSync) {
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS loan_payments (
+      id TEXT PRIMARY KEY,
+      loan_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      transaction_id TEXT,
+      transfer_group_id TEXT,
+      amount INTEGER NOT NULL DEFAULT 0,
+      principal_paid INTEGER NOT NULL DEFAULT 0,
+      interest_paid INTEGER NOT NULL DEFAULT 0,
+      payment_date TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (loan_id) REFERENCES loans(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS reconciliations (
@@ -456,6 +475,7 @@ export function initSchema(db: DatabaseSync) {
     `ALTER TABLE transactions ADD COLUMN recurring_id TEXT`,
     `ALTER TABLE transactions ADD COLUMN transfer_peer_account_id TEXT`,
     `ALTER TABLE transactions ADD COLUMN destination_account_id TEXT`,
+    `ALTER TABLE transactions ADD COLUMN loan_id TEXT`,
     `ALTER TABLE budgets ADD COLUMN period_type TEXT DEFAULT 'monthly'`,
     `ALTER TABLE budgets ADD COLUMN period_start TEXT`,
     `ALTER TABLE budgets ADD COLUMN period_end TEXT`,
@@ -464,10 +484,16 @@ export function initSchema(db: DatabaseSync) {
     `ALTER TABLE investments ADD COLUMN cost_basis INTEGER DEFAULT 0`,
     `ALTER TABLE loans ADD COLUMN principal INTEGER DEFAULT 0`,
     `ALTER TABLE loans ADD COLUMN outstanding_principal INTEGER DEFAULT 0`,
+    `ALTER TABLE loans ADD COLUMN initial_outstanding_principal INTEGER DEFAULT 0`,
     `ALTER TABLE loans ADD COLUMN tenure_months INTEGER DEFAULT 12`,
     `ALTER TABLE loans ADD COLUMN emi_day INTEGER DEFAULT 5`,
     `ALTER TABLE loans ADD COLUMN type TEXT DEFAULT 'loan'`,
     `ALTER TABLE loans ADD COLUMN notes TEXT`,
+    `CREATE INDEX IF NOT EXISTS idx_loan_payments_loan ON loan_payments(loan_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_loan_payments_user ON loan_payments(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_loan_payments_tx ON loan_payments(transaction_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_loan_payments_tg ON loan_payments(transfer_group_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_tx_loan_id ON transactions(loan_id)`,
   ];
 
   for (const sql of safeAlterations) {
