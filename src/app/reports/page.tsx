@@ -356,7 +356,7 @@ function ExpenseDonutChart({
           letterSpacing="0.04em"
           style={{ textTransform: 'uppercase' }}
         >
-          {activeSlice ? (activeSlice.name.length > 14 ? activeSlice.name.substring(0, 12) + '…' : activeSlice.name) : 'TOTAL SPENT'}
+          {activeSlice ? (activeSlice.name.length > 14 ? activeSlice.name.substring(0, 12) + '…' : activeSlice.name) : (analyticsLabel === 'Tag' ? 'TOTAL TAGGED' : 'TOTAL SPENT')}
         </text>
 
         <text
@@ -378,7 +378,7 @@ function ExpenseDonutChart({
           fontSize="11"
           fontWeight="600"
         >
-          {activeSlice ? `${activeSlice.percentage}% of total` : `${slices.length} ${analyticsLabel.toLowerCase()}s`}
+          {activeSlice ? `${activeSlice.percentage}% of ${analyticsLabel === 'Tag' ? 'tagged' : 'total'}` : `${slices.length} ${analyticsLabel.toLowerCase()}s`}
         </text>
       </svg>
     </div>
@@ -493,7 +493,9 @@ export default function ReportsPage() {
   const savingsRate = totalMonthIncome > 0 ? Math.round(((totalMonthIncome - totalMonthSpend) / totalMonthIncome) * 100) : 0;
 
   // Active analytics data based on view mode
+  const totalTaggedSpend = useMemo(() => spendingByTag.reduce((acc: number, t: any) => acc + (t.total || 0), 0), [spendingByTag]);
   const activeAnalytics = analyticsView === 'category' ? spendingByCategory : spendingByTag;
+  const activeAnalyticsTotal = analyticsView === 'category' ? totalMonthSpend : totalTaggedSpend;
   const analyticsLabel = analyticsView === 'category' ? 'Category' : 'Tag';
 
   return (
@@ -1101,7 +1103,7 @@ export default function ReportsPage() {
                 >
                   <ExpenseDonutChart
                     items={activeAnalytics}
-                    totalSpend={totalMonthSpend}
+                    totalSpend={activeAnalyticsTotal}
                     analyticsLabel={analyticsLabel}
                     hoveredId={hoveredAnalyticsId}
                     onHover={setHoveredAnalyticsId}
@@ -1156,7 +1158,7 @@ export default function ReportsPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem', padding: '0.5rem 0' }}>
                   <ExpenseDonutChart
                     items={activeAnalytics}
-                    totalSpend={totalMonthSpend}
+                    totalSpend={activeAnalyticsTotal}
                     analyticsLabel={analyticsLabel}
                     hoveredId={hoveredAnalyticsId}
                     onHover={setHoveredAnalyticsId}

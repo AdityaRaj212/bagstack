@@ -151,7 +151,7 @@ export default function LoansPage() {
       if (!res.ok) throw new Error(data.error || 'Failed to record payment');
 
       const emiFormatted = Math.round(payModalLoan.emi_amount / 100).toLocaleString('en-IN');
-      showToast(`Installment of ₹${emiFormatted} recorded! Bank cash & liabilities updated.`);
+      showToast(`Repayment transfer of ₹${emiFormatted} recorded! Cash & debt updated.`);
       setPayModalLoan(null);
       triggerRefresh();
     } catch (err: any) {
@@ -402,7 +402,8 @@ export default function LoansPage() {
                         className="btn-primary"
                         onClick={() => {
                           setPayModalLoan(loan);
-                          if (loan.account_id) setPayAccountId(loan.account_id);
+                          const defaultDebit = accounts.find(a => a.id !== loan.account_id && (a.type === 'bank' || a.type === 'savings' || a.type === 'current' || a.type === 'cash')) || accounts.find(a => a.id !== loan.account_id) || accounts[0];
+                          if (defaultDebit) setPayAccountId(defaultDebit.id);
                           setPayDate(new Date().toISOString().substring(0, 10));
                         }}
                         style={{
@@ -445,9 +446,9 @@ export default function LoansPage() {
                   </div>
                   <div>
                     <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
-                      {isEmi ? 'REMAINING BALANCE' : 'OUTSTANDING PRINCIPAL'}
+                      {isEmi ? 'REMAINING BALANCE' : 'OUTSTANDING BALANCE'}
                     </div>
-                    <MoneyDisplay amount={loan.outstanding_principal} size="lg" weight="bold" colored />
+                    <MoneyDisplay amount={loan.remainingBalance ?? loan.outstanding_principal} size="lg" weight="bold" colored />
                   </div>
                   <div>
                     <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
@@ -469,8 +470,8 @@ export default function LoansPage() {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.25rem' }}>
                     <span>
-                      Principal Repaid: ₹{Math.round(loan.paidPrincipal / 100).toLocaleString('en-IN')} of ₹
-                      {Math.round(loan.principal / 100).toLocaleString('en-IN')}
+                      Repaid: ₹{Math.round((loan.totalPaid ?? loan.paidPrincipal) / 100).toLocaleString('en-IN')} of ₹
+                      {Math.round((loan.totalPayable ?? loan.principal) / 100).toLocaleString('en-IN')}
                     </span>
                     <span style={{ fontWeight: 600, color: 'var(--color-income)' }}>{loan.progressPercent}% Completed</span>
                   </div>
@@ -501,27 +502,42 @@ export default function LoansPage() {
                             <th style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>Principal</th>
                             <th style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>Interest</th>
                             <th style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>Remaining Balance</th>
+                            <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>Status</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {amort.schedule.map((row: any) => (
-                            <tr key={row.monthNumber} style={{ borderBottom: '1px solid var(--border-default)' }}>
-                              <td style={{ padding: '0.4rem 0.75rem' }}>#{row.monthNumber}</td>
-                              <td style={{ padding: '0.4rem 0.75rem' }}>{row.paymentDate}</td>
-                              <td style={{ padding: '0.4rem 0.75rem', textAlign: 'right', fontWeight: 600 }}>
-                                ₹{Math.round(row.emi / 100).toLocaleString('en-IN')}
-                              </td>
-                              <td style={{ padding: '0.4rem 0.75rem', textAlign: 'right', color: 'var(--color-income)' }}>
-                                ₹{Math.round(row.principalComponent / 100).toLocaleString('en-IN')}
-                              </td>
-                              <td style={{ padding: '0.4rem 0.75rem', textAlign: 'right', color: 'var(--color-expense)' }}>
-                                ₹{Math.round(row.interestComponent / 100).toLocaleString('en-IN')}
-                              </td>
-                              <td style={{ padding: '0.4rem 0.75rem', textAlign: 'right' }}>
-                                ₹{Math.round(row.remainingPrincipal / 100).toLocaleString('en-IN')}
-                              </td>
-                            </tr>
-                          ))}
+                          {amort.schedule.map((row: any) => {
+                            const isPaid = Boolean(row.isPaid);
+                            return (
+                              <tr key={row.monthNumber} style={{ borderBottom: '1px solid var(--border-default)', opacity: isPaid ? 0.75 : 1 }}>
+                                <td style={{ padding: '0.4rem 0.75rem' }}>#{row.monthNumber}</td>
+                                <td style={{ padding: '0.4rem 0.75rem' }}>{row.paymentDate}</td>
+                                <td style={{ padding: '0.4rem 0.75rem', textAlign: 'right', fontWeight: 600 }}>
+                                  ₹{Math.round(row.emi / 100).toLocaleString('en-IN')}
+                                </td>
+                                <td style={{ padding: '0.4rem 0.75rem', textAlign: 'right', color: 'var(--color-income)' }}>
+                                  ₹{Math.round(row.principalComponent / 100).toLocaleString('en-IN')}
+                                </td>
+                                <td style={{ padding: '0.4rem 0.75rem', textAlign: 'right', color: 'var(--color-expense)' }}>
+                                  ₹{Math.round(row.interestComponent / 100).toLocaleString('en-IN')}
+                                </td>
+                                <td style={{ padding: '0.4rem 0.75rem', textAlign: 'right', fontWeight: 600 }}>
+                                  ₹{Math.round((row.remainingBalance ?? row.remainingPrincipal) / 100).toLocaleString('en-IN')}
+                                </td>
+                                <td style={{ padding: '0.4rem 0.75rem', textAlign: 'center' }}>
+                                  {isPaid ? (
+                                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--color-income)', backgroundColor: 'rgba(16, 185, 129, 0.12)', padding: '0.15rem 0.45rem', borderRadius: 'var(--radius-sm)' }}>
+                                      ✓ Paid
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', backgroundColor: 'var(--bg-subtle)', padding: '0.15rem 0.45rem', borderRadius: 'var(--radius-sm)' }}>
+                                      Upcoming
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -828,9 +844,30 @@ export default function LoansPage() {
                 </div>
               </div>
 
+              {payModalLoan.account_name && (
+                <div
+                  style={{
+                    padding: '0.6rem 0.75rem',
+                    borderRadius: 'var(--radius-md)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: '0.78rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <CreditCard size={15} style={{ color: 'var(--brand-primary)' }} />
+                    <span>Target Account: <strong>{payModalLoan.account_name}</strong></span>
+                  </div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--brand-primary)', fontWeight: 600 }}>Repayment Transfer</span>
+                </div>
+              )}
+
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
-                  PAY FROM ACCOUNT (LIQUID CASH) *
+                  PAY FROM ACCOUNT (LIQUID CASH / BANK) *
                 </label>
                 <select
                   className="input-field"
@@ -839,12 +876,12 @@ export default function LoansPage() {
                 >
                   {accounts.map(a => (
                     <option key={a.id} value={a.id}>
-                      {a.name} (Balance: ₹{Math.round(a.current_balance / 100).toLocaleString('en-IN')})
+                      {a.name} ({a.type}) - Balance: ₹{Math.round(a.current_balance / 100).toLocaleString('en-IN')}
                     </option>
                   ))}
                 </select>
                 <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                  This will record an expense transaction and automatically deduct ₹{Math.round(payModalLoan.emi_amount / 100).toLocaleString('en-IN')} from your liquid cash.
+                  This will record a repayment transfer from your selected account to {payModalLoan.account_name || 'the linked debt account'}, reducing both your liquid cash and debt.
                 </p>
               </div>
 
