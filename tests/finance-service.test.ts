@@ -596,6 +596,47 @@ describe('Finance Domain Business Logic Tests', () => {
     }
   });
 
+  it('automatically attaches cc-repayment tag to credit card transfers without explicit tags', () => {
+    const sbi = service.createAccount({
+      userId,
+      name: 'SBI Bank',
+      type: 'savings',
+      openingBalance: 10000000,
+    })!;
+
+    const card = service.createAccount({
+      userId,
+      name: 'Axis Bank Credit Card',
+      type: 'credit_card',
+      openingBalance: 0,
+      creditLimit: 5000000,
+    })!;
+
+    // Create transfer to credit card with NO explicit tags passed
+    const transfer = service.createTransaction({
+      userId,
+      accountId: sbi.id,
+      destinationAccountId: card.id,
+      type: 'transfer',
+      amount: 1500000,
+      date: '2026-03-20',
+      notes: 'Monthly Bill payment #march-bill',
+    });
+
+    expect(transfer.type).toBe('transfer');
+
+    // Check that both legs got auto-attached 'cc-repayment' AND '#march-bill' from notes
+    const txList = service.getTransactions(userId, { accountId: card.id });
+    expect(txList.length).toBe(1);
+    expect(txList[0].tags).toContain('cc-repayment');
+    expect(txList[0].tags).toContain('march-bill');
+
+    const sbiTxList = service.getTransactions(userId, { accountId: sbi.id });
+    expect(sbiTxList.length).toBe(1);
+    expect(sbiTxList[0].tags).toContain('cc-repayment');
+    expect(sbiTxList[0].tags).toContain('march-bill');
+  });
+
   it('supports updating tag color, renaming, and merging duplicates safely', () => {
     const bank = service.createAccount({
       userId,

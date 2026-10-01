@@ -604,13 +604,37 @@ export class FinanceService {
         accountId
       );
 
+      // Collect tags: user-provided tags + tags extracted from notes
+      const finalTags: string[] = Array.isArray(tags) ? [...tags] : [];
+
+      if (notes) {
+        const matches = (notes.match(/#[a-zA-Z0-9_\-]+/g) || []).map((t: string) => t.replace(/^#/, ''));
+        finalTags.push(...matches);
+      }
+
+      // Auto-detect Credit Card repayment (destAccount or account is credit card, or notes indicate cc repayment)
+      const isCcRepayment =
+        destAccount.type === 'credit_card' ||
+        account.type === 'credit_card' ||
+        /cc[-_\s]?repay|credit\s*card\s*repay|credit\s*card\s*bill|cc\s*bill|card\s*payment/i.test(notes || '');
+
+      if (isCcRepayment) {
+        const hasCcTag = finalTags.some(t => {
+          const c = t.trim().replace(/^#/, '').toLowerCase();
+          return c === 'cc-repayment' || c === 'cc_repayment' || c === 'ccrepayment';
+        });
+        if (!hasCcTag) {
+          finalTags.push('cc-repayment');
+        }
+      }
+
       // Save tags for transfer legs
-      if (tags.length > 0) {
+      if (finalTags.length > 0) {
         const linkInsert = this.db.prepare(`
           INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)
         `);
 
-        for (const tag of tags) {
+        for (const tag of finalTags) {
           const cleanTag = tag.trim().replace(/^#/, '');
           if (!cleanTag) continue;
           const tagObj = this.createTag(userId, cleanTag);
@@ -668,13 +692,19 @@ export class FinanceService {
       }
     }
 
-    // Save tags
-    if (tags.length > 0) {
+    // Save tags (user provided + extracted from notes)
+    const finalTags: string[] = Array.isArray(tags) ? [...tags] : [];
+    if (notes) {
+      const matches = (notes.match(/#[a-zA-Z0-9_\-]+/g) || []).map((t: string) => t.replace(/^#/, ''));
+      finalTags.push(...matches);
+    }
+
+    if (finalTags.length > 0) {
       const linkInsert = this.db.prepare(`
         INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)
       `);
 
-      for (const tag of tags) {
+      for (const tag of finalTags) {
         const cleanTag = tag.trim().replace(/^#/, '');
         if (!cleanTag) continue;
         const tagObj = this.createTag(userId, cleanTag);
@@ -787,22 +817,53 @@ export class FinanceService {
         `).run(newDestAccountId, newAmount, newDate, newNotes, newAccountId, newStatus, inLeg.id);
       }
 
-      // Update tags if provided for transfer legs
-      if (data.tags !== undefined) {
-        const txIds = [outLeg?.id, inLeg?.id].filter(Boolean);
+      // Update tags for transfer legs
+      let tagsToApply = data.tags !== undefined ? [...data.tags] : undefined;
+      if (tagsToApply !== undefined && newNotes) {
+        const matches = (newNotes.match(/#[a-zA-Z0-9_\-]+/g) || []).map((t: string) => t.replace(/^#/, ''));
+        tagsToApply.push(...matches);
+      }
+
+      const destAcc = this.getAccountById(newDestAccountId, userId);
+      const srcAcc = this.getAccountById(newAccountId, userId);
+      const isCcRepayment =
+        (destAcc && destAcc.type === 'credit_card') ||
+        (srcAcc && srcAcc.type === 'credit_card') ||
+        /cc[-_\s]?repay|credit\s*card\s*repay|credit\s*card\s*bill|cc\s*bill|card\s*payment/i.test(newNotes || '');
+
+      if (tagsToApply !== undefined && isCcRepayment) {
+        const hasCcTag = tagsToApply.some(t => {
+          const c = t.trim().replace(/^#/, '').toLowerCase();
+          return c === 'cc-repayment' || c === 'cc_repayment' || c === 'ccrepayment';
+        });
+        if (!hasCcTag) {
+          tagsToApply.push('cc-repayment');
+        }
+      }
+
+      const txIds = [outLeg?.id, inLeg?.id].filter(Boolean);
+      if (tagsToApply !== undefined) {
         for (const tid of txIds) {
           this.db.prepare('DELETE FROM transaction_tags WHERE transaction_id = ?').run(tid);
-          if (data.tags.length > 0) {
+          if (tagsToApply.length > 0) {
             const linkInsert = this.db.prepare(`
               INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)
             `);
-            for (const tag of data.tags) {
+            for (const tag of tagsToApply) {
               const cleanTag = tag.trim().replace(/^#/, '');
               if (!cleanTag) continue;
               const tagObj = this.createTag(userId, cleanTag);
               linkInsert.run(tid, tagObj.id);
             }
           }
+        }
+      } else if (isCcRepayment) {
+        const tagObj = this.createTag(userId, 'cc-repayment');
+        const linkInsert = this.db.prepare(`
+          INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)
+        `);
+        for (const tid of txIds) {
+          linkInsert.run(tid, tagObj.id);
         }
       }
 
@@ -856,12 +917,18 @@ export class FinanceService {
 
     // Update tags if provided
     if (data.tags !== undefined) {
+      const expenseTags = [...data.tags];
+      if (newNotes) {
+        const matches = (newNotes.match(/#[a-zA-Z0-9_\-]+/g) || []).map((t: string) => t.replace(/^#/, ''));
+        expenseTags.push(...matches);
+      }
+
       this.db.prepare('DELETE FROM transaction_tags WHERE transaction_id = ?').run(id);
-      if (data.tags.length > 0) {
+      if (expenseTags.length > 0) {
         const linkInsert = this.db.prepare(`
           INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)
         `);
-        for (const tag of data.tags) {
+        for (const tag of expenseTags) {
           const cleanTag = tag.trim().replace(/^#/, '');
           if (!cleanTag) continue;
           const tagObj = this.createTag(userId, cleanTag);
