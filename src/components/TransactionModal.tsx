@@ -233,13 +233,28 @@ export const TransactionModal = () => {
             setAccounts(d.accounts);
             if (!editingTransaction) {
               if (preselectedAccountId) {
-                setAccountId(preselectedAccountId);
+                const preselectedAcc = d.accounts.find((a: any) => a.id === preselectedAccountId);
+                if (preselectedAcc && preselectedAcc.type === 'credit_card' && transactionModalType === 'transfer') {
+                  const defaultBank = d.accounts.find((a: any) => a.id !== preselectedAcc.id && a.type !== 'credit_card') || d.accounts.find((a: any) => a.id !== preselectedAcc.id);
+                  if (defaultBank) setAccountId(defaultBank.id);
+                  setDestinationAccountId(preselectedAcc.id);
+                  setSelectedTags(prev => prev.some(t => t.name.toLowerCase() === 'cc-repayment') ? prev : [...prev, { id: 'cc-repayment', name: 'cc-repayment', color: '#3B82F6' }]);
+                } else {
+                  setAccountId(preselectedAccountId);
+                  const otherAcc = d.accounts.find((a: any) => a.id !== preselectedAccountId);
+                  if (otherAcc) setDestinationAccountId(otherAcc.id);
+                }
               } else {
                 const defaultAcc = d.accounts.find((a: any) => Boolean(a.is_default)) || d.accounts[0];
                 if (defaultAcc) {
                   setAccountId(defaultAcc.id);
                   const otherAcc = d.accounts.find((a: any) => a.id !== defaultAcc.id);
-                  if (otherAcc) setDestinationAccountId(otherAcc.id);
+                  if (otherAcc) {
+                    setDestinationAccountId(otherAcc.id);
+                    if (otherAcc.type === 'credit_card' && transactionModalType === 'transfer') {
+                      setSelectedTags(prev => prev.some(t => t.name.toLowerCase() === 'cc-repayment') ? prev : [...prev, { id: 'cc-repayment', name: 'cc-repayment', color: '#3B82F6' }]);
+                    }
+                  }
                 }
               }
             }
@@ -517,6 +532,7 @@ export const TransactionModal = () => {
             amount: minorAmount,
             date,
             notes,
+            tags: selectedTags.map(t => t.name),
           }),
         });
         const data = await res.json();
@@ -1006,7 +1022,14 @@ export const TransactionModal = () => {
                 <select
                   className="form-select"
                   value={destinationAccountId}
-                  onChange={e => setDestinationAccountId(e.target.value)}
+                  onChange={e => {
+                    const newDestId = e.target.value;
+                    setDestinationAccountId(newDestId);
+                    const destAcc = accounts.find(a => a.id === newDestId);
+                    if (destAcc && destAcc.type === 'credit_card') {
+                      setSelectedTags(prev => prev.some(t => t.name.toLowerCase() === 'cc-repayment') ? prev : [...prev, { id: 'cc-repayment', name: 'cc-repayment', color: '#3B82F6' }]);
+                    }
+                  }}
                 >
                   {accounts.map(acc => {
                     const bal = acc.isLiability ? (acc.totalDebt ?? acc.current_balance) : acc.current_balance;
