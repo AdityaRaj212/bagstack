@@ -7,7 +7,7 @@ import { Plus, PieChart, AlertTriangle, CheckCircle2, Trash2, X } from 'lucide-r
 import { formatIndianNumberString, parseIndianNumber } from '@/lib/amount-evaluator';
 
 export default function BudgetsPage() {
-  const { showToast, refreshKey, triggerRefresh, startAsyncOp, stopAsyncOp } = useApp();
+  const { showToast, refreshKey, triggerRefresh, startAsyncOp, stopAsyncOp, openCategoryModal } = useApp();
   const [budgets, setBudgets] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,9 +94,14 @@ export default function BudgetsPage() {
           </p>
         </div>
 
-        <button className="btn-primary" onClick={() => setIsOpen(true)}>
-          <Plus size={16} /> Create Budget
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <button className="btn-secondary" onClick={() => openCategoryModal('expense')}>
+            <Plus size={15} /> Add Category
+          </button>
+          <button className="btn-primary" onClick={() => setIsOpen(true)}>
+            <Plus size={16} /> Create Budget
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -200,9 +205,28 @@ export default function BudgetsPage() {
 
             <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
-                  CATEGORY
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>
+                    CATEGORY
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      openCategoryModal('expense', undefined, '', false, newCat => {
+                        fetch('/api/categories')
+                          .then(r => r.json())
+                          .then(d => {
+                            const exp = (d.categories || []).filter((c: any) => c.type === 'expense');
+                            setCategories(exp);
+                            if (newCat?.id) setCategoryId(newCat.id);
+                          });
+                      });
+                    }}
+                    style={{ fontSize: '0.75rem', color: 'var(--brand-primary)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  >
+                    + Add Category
+                  </button>
+                </div>
                 <select
                   className="input-field"
                   value={categoryId}

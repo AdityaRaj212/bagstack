@@ -452,6 +452,175 @@ export class FinanceService {
     return { success: true };
   }
 
+  getCategories(userId: string) {
+    const categories = this.db.prepare(`
+      SELECT * FROM categories 
+      WHERE (user_id = ? OR id LIKE 'cat-%') AND archived = 0
+      ORDER BY sort_order ASC, name ASC
+    `).all(userId) as any[];
+
+    const parents = categories.filter(c => !c.parent_id);
+    const tree = parents.map(p => ({
+      ...p,
+      subcategories: categories.filter(c => c.parent_id === p.id),
+    }));
+
+    return { categories, tree };
+  }
+
+  createCategory(userId: string, data: {
+    name: string;
+    type?: 'expense' | 'income';
+    parentId?: string | null;
+    isSubcategory?: boolean;
+    icon?: string;
+    color?: string;
+    sortOrder?: number;
+  }) {
+    const cleanName = data.name ? data.name.trim() : '';
+    if (!cleanName) {
+      throw new Error('Category name is required');
+    }
+
+    let parentId: string | null = data.parentId && data.parentId !== 'none' ? data.parentId.trim() : null;
+    let categoryType: 'expense' | 'income' = data.type || 'expense';
+    let categoryColor = data.color || '#6B7280';
+    let categoryIcon = data.icon || 'tag';
+
+    // If a parent ID was explicitly provided, verify parent exists & inherit its type/color if not given
+    if (parentId) {
+      const parent = this.db.prepare(`
+        SELECT * FROM categories 
+        WHERE id = ? AND (user_id = ? OR id LIKE 'cat-%') AND archived = 0
+      `).get(parentId, userId) as any;
+
+      if (!parent) {
+        throw new Error('Parent category not found');
+      }
+      categoryType = parent.type || categoryType;
+      if (!data.color) categoryColor = parent.color || categoryColor;
+    } else if (data.isSubcategory) {
+      // Subcategory requested but no parent specified -> Default to 'Others' parent category
+      let othersParent = this.db.prepare(`
+        SELECT * FROM categories 
+        WHERE (user_id = ? OR id LIKE 'cat-%') 
+          AND parent_id IS NULL 
+          AND LOWER(name) IN ('others', 'other', 'other expenses', 'other income') 
+          AND type = ?
+          AND archived = 0
+        ORDER BY CASE WHEN user_id = ? THEN 0 ELSE 1 END, sort_order ASC
+        LIMIT 1
+      `).get(userId, categoryType, userId) as any;
+
+      if (!othersParent) {
+        // Create an 'Others' parent category for the user
+        const othersId = `cat_${userId}_others_${categoryType}`;
+        const othersName = categoryType === 'income' ? 'Other Income' : 'Others';
+        this.db.prepare(`
+          INSERT INTO categories (id, user_id, parent_id, name, type, icon, color, sort_order)
+          VALUES (?, ?, NULL, ?, ?, 'more-horizontal', '#6B7280', 99)
+        `).run(othersId, userId, othersName, categoryType);
+
+        othersParent = { id: othersId, name: othersName, type: categoryType };
+      }
+
+      parentId = othersParent.id;
+      if (!data.color) categoryColor = othersParent.color || categoryColor;
+    }
+
+    // Check if category already exists under same parent
+    let existing: any = null;
+    if (parentId) {
+      existing = this.db.prepare(`
+        SELECT * FROM categories 
+        WHERE (user_id = ? OR id LIKE 'cat-%') 
+          AND parent_id = ? 
+          AND LOWER(name) = ?
+          AND archived = 0
+      `).get(userId, parentId, cleanName.toLowerCase());
+    } else {
+      existing = this.db.prepare(`
+        SELECT * FROM categories 
+        WHERE (user_id = ? OR id LIKE 'cat-%') 
+          AND parent_id IS NULL 
+          AND LOWER(name) = ? 
+          AND type = ?
+          AND archived = 0
+      `).get(userId, cleanName.toLowerCase(), categoryType);
+    }
+
+    if (existing) {
+      return existing;
+    }
+
+    const id = `cat_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const sortOrder = data.sortOrder ?? 50;
+
+    this.db.prepare(`
+      INSERT INTO categories (id, user_id, parent_id, name, type, icon, color, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      userId,
+      parentId,
+      cleanName,
+      categoryType,
+      categoryIcon,
+      categoryColor,
+      sortOrder
+    );
+
+    const created = this.db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as any;
+    return created;
+  }
+
+  updateCategory(userId: string, id: string, data: {
+    name?: string;
+    parentId?: string | null;
+    icon?: string;
+    color?: string;
+    sortOrder?: number;
+  }) {
+    const existing = this.db.prepare(`
+      SELECT * FROM categories WHERE id = ? AND (user_id = ? OR id LIKE 'cat-%')
+    `).get(id, userId) as any;
+
+    if (!existing) throw new Error('Category not found');
+
+    const newName = data.name !== undefined ? data.name.trim() : existing.name;
+    if (!newName) throw new Error('Category name cannot be empty');
+
+    const newParentId = data.parentId !== undefined ? (data.parentId === 'none' ? null : data.parentId) : existing.parent_id;
+    const newIcon = data.icon || existing.icon || 'tag';
+    const newColor = data.color || existing.color || '#6B7280';
+    const newSortOrder = data.sortOrder !== undefined ? data.sortOrder : existing.sort_order;
+
+    this.db.prepare(`
+      UPDATE categories
+      SET name = ?, parent_id = ?, icon = ?, color = ?, sort_order = ?
+      WHERE id = ? AND user_id = ?
+    `).run(newName, newParentId, newIcon, newColor, newSortOrder, id, userId);
+
+    return this.db.prepare('SELECT * FROM categories WHERE id = ?').get(id);
+  }
+
+  deleteCategory(userId: string, id: string) {
+    const existing = this.db.prepare(`
+      SELECT * FROM categories WHERE id = ? AND (user_id = ? OR id LIKE 'cat-%')
+    `).get(id, userId) as any;
+
+    if (!existing) throw new Error('Category not found');
+
+    // Reassign subcategories if this is a parent
+    this.db.prepare(`
+      UPDATE categories SET parent_id = NULL WHERE parent_id = ? AND user_id = ?
+    `).run(id, userId);
+
+    // Delete category
+    this.db.prepare('DELETE FROM categories WHERE id = ? AND user_id = ?').run(id, userId);
+    return { success: true };
+  }
+
   suggestCategory(userId: string, merchantName?: string, notes?: string, amount?: number): string | null {
     // 1. Check rules
     const rules = this.db.prepare(`
