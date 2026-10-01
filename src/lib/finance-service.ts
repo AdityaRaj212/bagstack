@@ -2491,7 +2491,7 @@ export class FinanceService {
         AND t.type = 'expense'
         AND t.is_deleted = 0
         AND t.date LIKE ?
-      GROUP BY COALESCE(c.id, 'uncategorized')
+      GROUP BY COALESCE(c.id, 'uncategorized'), c.name, c.icon, c.color
       ORDER BY total DESC
     `).all(userId, `${month}%`) as any[];
 
@@ -2514,7 +2514,7 @@ export class FinanceService {
         AND t.type = 'expense'
         AND t.is_deleted = 0
         AND t.date LIKE ?
-      GROUP BY tg.id
+      GROUP BY tg.id, tg.name, tg.color
       ORDER BY total DESC
     `).all(userId, `${month}%`) as any[];
 
@@ -2621,7 +2621,9 @@ export class FinanceService {
 
     const dayMap: Record<number, number> = {};
     for (const r of rows) {
-      dayMap[r.day] = r.total;
+      if (r.day && r.day >= 1 && r.day <= daysInMonth) {
+        dayMap[r.day] = r.total;
+      }
     }
 
     let runningCumulative = 0;
