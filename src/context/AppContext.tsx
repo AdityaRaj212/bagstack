@@ -38,6 +38,22 @@ interface AppContextType {
   isCommandPaletteOpen: boolean;
   openCommandPalette: () => void;
   closeCommandPalette: () => void;
+  isCategoryModalOpen: boolean;
+  categoryModalOptions: {
+    initialType?: 'expense' | 'income';
+    initialParentId?: string;
+    initialName?: string;
+    initialIsSubcategory?: boolean;
+    onCategoryCreated?: (category: any) => void;
+  };
+  openCategoryModal: (
+    initialType?: 'expense' | 'income',
+    initialParentId?: string,
+    initialName?: string,
+    initialIsSubcategory?: boolean,
+    onCategoryCreated?: (category: any) => void
+  ) => void;
+  closeCategoryModal: () => void;
   isImportModalOpen: boolean;
   openImportModal: () => void;
   closeImportModal: () => void;
@@ -228,6 +244,37 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setEditingTransaction(null);
   }, []);
 
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [categoryModalOptions, setCategoryModalOptions] = useState<{
+    initialType?: 'expense' | 'income';
+    initialParentId?: string;
+    initialName?: string;
+    initialIsSubcategory?: boolean;
+    onCategoryCreated?: (category: any) => void;
+  }>({});
+
+  const openCategoryModal = useCallback((
+    initialType: 'expense' | 'income' = 'expense',
+    initialParentId?: string,
+    initialName?: string,
+    initialIsSubcategory?: boolean,
+    onCategoryCreated?: (category: any) => void
+  ) => {
+    setCategoryModalOptions({
+      initialType,
+      initialParentId,
+      initialName,
+      initialIsSubcategory: initialIsSubcategory ?? Boolean(initialParentId),
+      onCategoryCreated,
+    });
+    setIsCategoryModalOpen(true);
+  }, []);
+
+  const closeCategoryModal = useCallback(() => {
+    setIsCategoryModalOpen(false);
+    setCategoryModalOptions({});
+  }, []);
+
   const openCommandPalette = useCallback(() => setIsCommandPaletteOpen(true), []);
   const closeCommandPalette = useCallback(() => setIsCommandPaletteOpen(false), []);
 
@@ -250,6 +297,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       if (e.key === 'Escape') {
         if (isCommandPaletteOpen) setIsCommandPaletteOpen(false);
+        if (isCategoryModalOpen) setIsCategoryModalOpen(false);
         if (isTransactionModalOpen) {
           setIsTransactionModalOpen(false);
           setEditingTransaction(null);
@@ -411,6 +459,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         isCommandPaletteOpen,
         openCommandPalette,
         closeCommandPalette,
+        isCategoryModalOpen,
+        categoryModalOptions,
+        openCategoryModal,
+        closeCategoryModal,
         isImportModalOpen,
         openImportModal,
         closeImportModal,

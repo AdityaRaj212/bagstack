@@ -836,6 +836,66 @@ describe('Finance Domain Business Logic Tests', () => {
     const deleted = service.getAccountById(acc.id, userId);
     expect(deleted).toBeNull();
   });
+
+  it('supports creating main categories, subcategories with parent, and subcategories defaulting to Others', () => {
+    // 1. Create a top-level main category
+    const mainCat = service.createCategory(userId, {
+      name: 'Pets & Animals',
+      type: 'expense',
+      icon: 'dog',
+      color: '#F59E0B',
+    });
+    expect(mainCat).toBeDefined();
+    expect(mainCat.name).toBe('Pets & Animals');
+    expect(mainCat.parent_id).toBeNull();
+    expect(mainCat.type).toBe('expense');
+
+    // 2. Create a subcategory under the main category
+    const subCat1 = service.createCategory(userId, {
+      name: 'Veterinary Care',
+      parentId: mainCat.id,
+      isSubcategory: true,
+      icon: 'heart-pulse',
+    });
+    expect(subCat1).toBeDefined();
+    expect(subCat1.name).toBe('Veterinary Care');
+    expect(subCat1.parent_id).toBe(mainCat.id);
+    expect(subCat1.type).toBe('expense');
+
+    // 3. Create a subcategory with NO parent category specified -> must automatically be placed under 'Others'
+    const orphanSubCat = service.createCategory(userId, {
+      name: 'Unspecified Miscellaneous Item',
+      type: 'expense',
+      isSubcategory: true,
+      parentId: '', // omitted / empty
+    });
+    expect(orphanSubCat).toBeDefined();
+    expect(orphanSubCat.name).toBe('Unspecified Miscellaneous Item');
+    expect(orphanSubCat.parent_id).not.toBeNull();
+
+    // Verify the parent category is 'Others'
+    const categoriesResult = service.getCategories(userId);
+    const othersParent = categoriesResult.categories.find(c => c.id === orphanSubCat.parent_id);
+    expect(othersParent).toBeDefined();
+    expect(othersParent.name.toLowerCase()).toContain('other');
+
+    // Verify category tree structure
+    const treeOthers = categoriesResult.tree.find(t => t.id === othersParent.id);
+    expect(treeOthers).toBeDefined();
+    expect(treeOthers?.subcategories.some((s: any) => s.name === 'Unspecified Miscellaneous Item')).toBe(true);
+
+    // 4. Update category
+    const updated = service.updateCategory(userId, subCat1.id, {
+      name: 'Vet & Hospital',
+      color: '#10B981',
+    }) as any;
+    expect(updated?.name).toBe('Vet & Hospital');
+    expect(updated?.color).toBe('#10B981');
+
+    // 5. Delete category
+    const delResult = service.deleteCategory(userId, subCat1.id);
+    expect(delResult.success).toBe(true);
+  });
 });
 
 
