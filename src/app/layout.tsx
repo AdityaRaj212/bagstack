@@ -7,6 +7,7 @@ import { TransactionModal } from '@/components/TransactionModal';
 import { CommandPalette } from '@/components/CommandPalette';
 import { ImportModal } from '@/components/ImportModal';
 import { AccountModal } from '@/components/AccountModal';
+import { GlobalCategoryModal } from '@/components/CategoryModal';
 import { ToastContainer } from '@/components/ToastContainer';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -66,6 +67,7 @@ export default function RootLayout({
           <CommandPalette />
           <ImportModal />
           <AccountModal />
+          <GlobalCategoryModal />
           <ToastContainer />
         </AppProvider>
         <Analytics />

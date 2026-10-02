@@ -398,8 +398,8 @@ describe('Finance Domain Business Logic Tests', () => {
     expect(updated?.current_balance).toBe(4950000);
   });
 
-  it('records loan & EMI payment, decreasing liquid cash and loan liabilities synchronously', () => {
-    // 1. Create a bank account with ₹1,00,000
+  it('records loan & EMI payment as a transfer from bank to credit card and updates balances', () => {
+    // 1. Create a bank account with ₹1,00,000 and a credit card account with ₹60,000 debt
     const bank = service.createAccount({
       userId,
       name: 'Axis Bank Checking',
@@ -407,10 +407,18 @@ describe('Finance Domain Business Logic Tests', () => {
       openingBalance: 10000000, // ₹1,00,000
     })!;
 
-    // 2. Create a purchase EMI for MacBook (0% No-Cost EMI: ₹60,000 over 6 months -> ₹10,000/mo)
+    const card = service.createAccount({
+      userId,
+      name: 'HDFC Regalia CC',
+      type: 'credit_card',
+      openingBalance: 6000000, // ₹60,000 debt
+      creditLimit: 20000000, // ₹2,00,000
+    })!;
+
+    // 2. Create a purchase EMI for MacBook on the credit card (0% No-Cost EMI: ₹60,000 over 6 months -> ₹10,000/mo)
     const emiId = service.createLoan({
       userId,
-      accountId: bank.id,
+      accountId: card.id,
       name: 'MacBook Air M3',
       principal: 6000000, // ₹60,000
       outstandingPrincipal: 6000000,
@@ -420,12 +428,7 @@ describe('Finance Domain Business Logic Tests', () => {
       type: 'emi',
     });
 
-    const metricsBefore = service.getDashboardMetrics(userId);
-    expect(metricsBefore.cashBalance).toBe(10000000); // ₹1,00,000
-    expect(metricsBefore.totalLiabilities).toBe(6000000); // ₹60,000
-    expect(metricsBefore.netWorth).toBe(10000000 - 6000000); // ₹40,000
-
-    // 3. Record EMI installment payment of ₹10,000
+    // 3. Record EMI installment payment of ₹10,000 from bank to CC
     const paymentResult = service.recordLoanPayment({
       userId,
       loanId: emiId,
@@ -435,17 +438,58 @@ describe('Finance Domain Business Logic Tests', () => {
     });
 
     expect(paymentResult.success).toBe(true);
+    expect(paymentResult.transferGroupId).toBeDefined();
     expect(paymentResult.newOutstandingPrincipal).toBe(5000000); // ₹50,000 remaining
 
-    // 4. Verify that bank balance (liquid cash) decreased by ₹10,000
+    // 4. Verify bank balance decreased by ₹10,000
     const bankAfter = service.getAccountById(bank.id, userId);
     expect(bankAfter?.current_balance).toBe(9000000); // ₹90,000
 
-    // 5. Verify that dashboard metrics reflect updated liquid cash and reduced liabilities
-    const metricsAfter = service.getDashboardMetrics(userId);
-    expect(metricsAfter.cashBalance).toBe(9000000); // ₹90,000 liquid cash
-    expect(metricsAfter.totalLiabilities).toBe(5000000); // ₹50,000 remaining liabilities
-    expect(metricsAfter.netWorth).toBe(9000000 - 5000000); // ₹40,000 (net worth preserved!)
+    // 5. Verify credit card debt decreased by ₹10,000 (from ₹60,000 to ₹50,000)
+    const cardAfter = service.getAccountById(card.id, userId);
+    expect(cardAfter?.current_balance).toBe(5000000); // ₹50,000
+
+    // 6. Verify transfer transaction tags include cc-repayment and loan-repayment
+    const tx = service.getTransactionById(paymentResult.transactionId, userId);
+    expect(tx?.type).toBe('transfer');
+    expect(tx?.tags).toContain('cc-repayment');
+    expect(tx?.tags).toContain('loan-repayment');
+    expect(tx?.tags).toContain('emi');
+
+    // 7. Verify loans list returns updated outstanding and paid status
+    const loans = service.getLoans(userId);
+    const emiLoan = loans.find(l => l.id === emiId);
+    expect(emiLoan?.outstanding_principal).toBe(5000000);
+    expect(emiLoan?.paidPrincipal).toBe(1000000);
+    expect(emiLoan?.amortization.schedule[0].isPaid).toBe(true);
+    expect(emiLoan?.amortization.schedule[1].isPaid).toBe(false);
+
+    // 8. Delete the repayment transaction and verify loan balance & accounts are restored
+    service.deleteTransaction(paymentResult.transactionId, userId);
+
+    const bankRestored = service.getAccountById(bank.id, userId);
+    expect(bankRestored?.current_balance).toBe(10000000); // restored to ₹1,00,000
+
+    const cardRestored = service.getAccountById(card.id, userId);
+    expect(cardRestored?.current_balance).toBe(6000000); // restored to ₹60,000 debt
+
+    const loansAfterDelete = service.getLoans(userId);
+    const emiLoanAfterDelete = loansAfterDelete.find(l => l.id === emiId);
+    expect(emiLoanAfterDelete?.outstanding_principal).toBe(6000000); // restored to ₹60,000!
+    expect(emiLoanAfterDelete?.paidPrincipal).toBe(0);
+    expect(emiLoanAfterDelete?.amortization.schedule[0].isPaid).toBe(false);
+
+    // 9. Restore the deleted transaction and verify loan balance & accounts re-apply
+    service.restoreTransaction(paymentResult.transferGroupId!, userId);
+
+    const bankReapplied = service.getAccountById(bank.id, userId);
+    expect(bankReapplied?.current_balance).toBe(9000000);
+
+    const loansAfterRestore = service.getLoans(userId);
+    const emiLoanAfterRestore = loansAfterRestore.find(l => l.id === emiId);
+    expect(emiLoanAfterRestore?.outstanding_principal).toBe(5000000);
+    expect(emiLoanAfterRestore?.paidPrincipal).toBe(1000000);
+    expect(emiLoanAfterRestore?.amortization.schedule[0].isPaid).toBe(true);
   });
 
   it('updates an existing expense transaction and recalculates account balances accurately', () => {
@@ -835,6 +879,66 @@ describe('Finance Domain Business Logic Tests', () => {
     // Verify account is gone
     const deleted = service.getAccountById(acc.id, userId);
     expect(deleted).toBeNull();
+  });
+
+  it('supports creating main categories, subcategories with parent, and subcategories defaulting to Others', () => {
+    // 1. Create a top-level main category
+    const mainCat = service.createCategory(userId, {
+      name: 'Pets & Animals',
+      type: 'expense',
+      icon: 'dog',
+      color: '#F59E0B',
+    });
+    expect(mainCat).toBeDefined();
+    expect(mainCat.name).toBe('Pets & Animals');
+    expect(mainCat.parent_id).toBeNull();
+    expect(mainCat.type).toBe('expense');
+
+    // 2. Create a subcategory under the main category
+    const subCat1 = service.createCategory(userId, {
+      name: 'Veterinary Care',
+      parentId: mainCat.id,
+      isSubcategory: true,
+      icon: 'heart-pulse',
+    });
+    expect(subCat1).toBeDefined();
+    expect(subCat1.name).toBe('Veterinary Care');
+    expect(subCat1.parent_id).toBe(mainCat.id);
+    expect(subCat1.type).toBe('expense');
+
+    // 3. Create a subcategory with NO parent category specified -> must automatically be placed under 'Others'
+    const orphanSubCat = service.createCategory(userId, {
+      name: 'Unspecified Miscellaneous Item',
+      type: 'expense',
+      isSubcategory: true,
+      parentId: '', // omitted / empty
+    });
+    expect(orphanSubCat).toBeDefined();
+    expect(orphanSubCat.name).toBe('Unspecified Miscellaneous Item');
+    expect(orphanSubCat.parent_id).not.toBeNull();
+
+    // Verify the parent category is 'Others'
+    const categoriesResult = service.getCategories(userId);
+    const othersParent = categoriesResult.categories.find(c => c.id === orphanSubCat.parent_id);
+    expect(othersParent).toBeDefined();
+    expect(othersParent.name.toLowerCase()).toContain('other');
+
+    // Verify category tree structure
+    const treeOthers = categoriesResult.tree.find(t => t.id === othersParent.id);
+    expect(treeOthers).toBeDefined();
+    expect(treeOthers?.subcategories.some((s: any) => s.name === 'Unspecified Miscellaneous Item')).toBe(true);
+
+    // 4. Update category
+    const updated = service.updateCategory(userId, subCat1.id, {
+      name: 'Vet & Hospital',
+      color: '#10B981',
+    }) as any;
+    expect(updated?.name).toBe('Vet & Hospital');
+    expect(updated?.color).toBe('#10B981');
+
+    // 5. Delete category
+    const delResult = service.deleteCategory(userId, subCat1.id);
+    expect(delResult.success).toBe(true);
   });
 });
 

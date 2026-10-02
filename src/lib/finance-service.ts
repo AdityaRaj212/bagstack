@@ -34,6 +34,7 @@ export interface CreateTransactionDTO {
   status?: 'pending' | 'cleared' | 'reconciled';
   splits?: Array<{ categoryId: string; amount: number; notes?: string }>;
   tags?: string[];
+  loanId?: string;
 }
 
 export class FinanceService {
@@ -452,6 +453,175 @@ export class FinanceService {
     return { success: true };
   }
 
+  getCategories(userId: string) {
+    const categories = this.db.prepare(`
+      SELECT * FROM categories 
+      WHERE (user_id = ? OR id LIKE 'cat-%') AND archived = 0
+      ORDER BY sort_order ASC, name ASC
+    `).all(userId) as any[];
+
+    const parents = categories.filter(c => !c.parent_id);
+    const tree = parents.map(p => ({
+      ...p,
+      subcategories: categories.filter(c => c.parent_id === p.id),
+    }));
+
+    return { categories, tree };
+  }
+
+  createCategory(userId: string, data: {
+    name: string;
+    type?: 'expense' | 'income';
+    parentId?: string | null;
+    isSubcategory?: boolean;
+    icon?: string;
+    color?: string;
+    sortOrder?: number;
+  }) {
+    const cleanName = data.name ? data.name.trim() : '';
+    if (!cleanName) {
+      throw new Error('Category name is required');
+    }
+
+    let parentId: string | null = data.parentId && data.parentId !== 'none' ? data.parentId.trim() : null;
+    let categoryType: 'expense' | 'income' = data.type || 'expense';
+    let categoryColor = data.color || '#6B7280';
+    let categoryIcon = data.icon || 'tag';
+
+    // If a parent ID was explicitly provided, verify parent exists & inherit its type/color if not given
+    if (parentId) {
+      const parent = this.db.prepare(`
+        SELECT * FROM categories 
+        WHERE id = ? AND (user_id = ? OR id LIKE 'cat-%') AND archived = 0
+      `).get(parentId, userId) as any;
+
+      if (!parent) {
+        throw new Error('Parent category not found');
+      }
+      categoryType = parent.type || categoryType;
+      if (!data.color) categoryColor = parent.color || categoryColor;
+    } else if (data.isSubcategory) {
+      // Subcategory requested but no parent specified -> Default to 'Others' parent category
+      let othersParent = this.db.prepare(`
+        SELECT * FROM categories 
+        WHERE (user_id = ? OR id LIKE 'cat-%') 
+          AND parent_id IS NULL 
+          AND LOWER(name) IN ('others', 'other', 'other expenses', 'other income') 
+          AND type = ?
+          AND archived = 0
+        ORDER BY CASE WHEN user_id = ? THEN 0 ELSE 1 END, sort_order ASC
+        LIMIT 1
+      `).get(userId, categoryType, userId) as any;
+
+      if (!othersParent) {
+        // Create an 'Others' parent category for the user
+        const othersId = `cat_${userId}_others_${categoryType}`;
+        const othersName = categoryType === 'income' ? 'Other Income' : 'Others';
+        this.db.prepare(`
+          INSERT INTO categories (id, user_id, parent_id, name, type, icon, color, sort_order)
+          VALUES (?, ?, NULL, ?, ?, 'more-horizontal', '#6B7280', 99)
+        `).run(othersId, userId, othersName, categoryType);
+
+        othersParent = { id: othersId, name: othersName, type: categoryType };
+      }
+
+      parentId = othersParent.id;
+      if (!data.color) categoryColor = othersParent.color || categoryColor;
+    }
+
+    // Check if category already exists under same parent
+    let existing: any = null;
+    if (parentId) {
+      existing = this.db.prepare(`
+        SELECT * FROM categories 
+        WHERE (user_id = ? OR id LIKE 'cat-%') 
+          AND parent_id = ? 
+          AND LOWER(name) = ?
+          AND archived = 0
+      `).get(userId, parentId, cleanName.toLowerCase());
+    } else {
+      existing = this.db.prepare(`
+        SELECT * FROM categories 
+        WHERE (user_id = ? OR id LIKE 'cat-%') 
+          AND parent_id IS NULL 
+          AND LOWER(name) = ? 
+          AND type = ?
+          AND archived = 0
+      `).get(userId, cleanName.toLowerCase(), categoryType);
+    }
+
+    if (existing) {
+      return existing;
+    }
+
+    const id = `cat_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const sortOrder = data.sortOrder ?? 50;
+
+    this.db.prepare(`
+      INSERT INTO categories (id, user_id, parent_id, name, type, icon, color, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      userId,
+      parentId,
+      cleanName,
+      categoryType,
+      categoryIcon,
+      categoryColor,
+      sortOrder
+    );
+
+    const created = this.db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as any;
+    return created;
+  }
+
+  updateCategory(userId: string, id: string, data: {
+    name?: string;
+    parentId?: string | null;
+    icon?: string;
+    color?: string;
+    sortOrder?: number;
+  }) {
+    const existing = this.db.prepare(`
+      SELECT * FROM categories WHERE id = ? AND (user_id = ? OR id LIKE 'cat-%')
+    `).get(id, userId) as any;
+
+    if (!existing) throw new Error('Category not found');
+
+    const newName = data.name !== undefined ? data.name.trim() : existing.name;
+    if (!newName) throw new Error('Category name cannot be empty');
+
+    const newParentId = data.parentId !== undefined ? (data.parentId === 'none' ? null : data.parentId) : existing.parent_id;
+    const newIcon = data.icon || existing.icon || 'tag';
+    const newColor = data.color || existing.color || '#6B7280';
+    const newSortOrder = data.sortOrder !== undefined ? data.sortOrder : existing.sort_order;
+
+    this.db.prepare(`
+      UPDATE categories
+      SET name = ?, parent_id = ?, icon = ?, color = ?, sort_order = ?
+      WHERE id = ? AND user_id = ?
+    `).run(newName, newParentId, newIcon, newColor, newSortOrder, id, userId);
+
+    return this.db.prepare('SELECT * FROM categories WHERE id = ?').get(id);
+  }
+
+  deleteCategory(userId: string, id: string) {
+    const existing = this.db.prepare(`
+      SELECT * FROM categories WHERE id = ? AND (user_id = ? OR id LIKE 'cat-%')
+    `).get(id, userId) as any;
+
+    if (!existing) throw new Error('Category not found');
+
+    // Reassign subcategories if this is a parent
+    this.db.prepare(`
+      UPDATE categories SET parent_id = NULL WHERE parent_id = ? AND user_id = ?
+    `).run(id, userId);
+
+    // Delete category
+    this.db.prepare('DELETE FROM categories WHERE id = ? AND user_id = ?').run(id, userId);
+    return { success: true };
+  }
+
   suggestCategory(userId: string, merchantName?: string, notes?: string, amount?: number): string | null {
     // 1. Check rules
     const rules = this.db.prepare(`
@@ -532,6 +702,7 @@ export class FinanceService {
       status = 'cleared',
       splits = [],
       tags = [],
+      loanId,
     } = dto;
 
     if (amount <= 0) {
@@ -570,8 +741,8 @@ export class FinanceService {
       this.db.prepare(`
         INSERT INTO transactions (
           id, user_id, account_id, type, amount, currency, date,
-          notes, status, transfer_group_id, destination_account_id
-        ) VALUES (?, ?, ?, 'transfer', ?, ?, ?, ?, ?, ?, ?)
+          notes, status, transfer_group_id, destination_account_id, loan_id
+        ) VALUES (?, ?, ?, 'transfer', ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         outTxId,
         userId,
@@ -582,15 +753,16 @@ export class FinanceService {
         notes || `Transfer to ${destAccount.name}`,
         status,
         transferGroupId,
-        destinationAccountId
+        destinationAccountId,
+        loanId || null
       );
 
       // 2. Incoming transfer leg
       this.db.prepare(`
         INSERT INTO transactions (
           id, user_id, account_id, type, amount, currency, date,
-          notes, status, transfer_group_id, transfer_peer_account_id
-        ) VALUES (?, ?, ?, 'transfer', ?, ?, ?, ?, ?, ?, ?)
+          notes, status, transfer_group_id, transfer_peer_account_id, loan_id
+        ) VALUES (?, ?, ?, 'transfer', ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         inTxId,
         userId,
@@ -601,7 +773,8 @@ export class FinanceService {
         notes || `Transfer from ${account.name}`,
         status,
         transferGroupId,
-        accountId
+        accountId,
+        loanId || null
       );
 
       // Save tags for transfer legs
@@ -639,8 +812,8 @@ export class FinanceService {
     this.db.prepare(`
       INSERT INTO transactions (
         id, user_id, account_id, type, amount, currency, date,
-        merchant_id, merchant_name, category_id, notes, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        merchant_id, merchant_name, category_id, notes, status, loan_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       txId,
       userId,
@@ -653,7 +826,8 @@ export class FinanceService {
       merchantName || null,
       categoryId || null,
       notes || null,
-      status
+      status,
+      loanId || null
     );
 
     // Save splits if provided
@@ -1045,30 +1219,76 @@ export class FinanceService {
     const tx = this.getTransactionById(id, userId);
     if (!tx) throw new Error('Transaction not found');
 
+    const loanIdsToRecalc = new Set<string>();
+    if (tx.loan_id) loanIdsToRecalc.add(tx.loan_id);
+
+    try {
+      const linkedLoanPayments = this.db.prepare(`
+        SELECT DISTINCT loan_id 
+        FROM loan_payments 
+        WHERE user_id = ? AND (transaction_id = ? OR (transfer_group_id IS NOT NULL AND transfer_group_id = ?))
+      `).all(userId, id, tx.transfer_group_id || '') as any[];
+      for (const lp of linkedLoanPayments) {
+        if (lp.loan_id) loanIdsToRecalc.add(lp.loan_id);
+      }
+    } catch {}
+
     if (tx.transfer_group_id) {
       // It's a transfer pair! Delete both legs
       if (permanent) {
         this.db.prepare('DELETE FROM transactions WHERE transfer_group_id = ?').run(tx.transfer_group_id);
+        try {
+          this.db.prepare('DELETE FROM loan_payments WHERE transfer_group_id = ?').run(tx.transfer_group_id);
+        } catch {}
       } else {
         this.db.prepare('UPDATE transactions SET is_deleted = 1 WHERE transfer_group_id = ?').run(tx.transfer_group_id);
       }
       if (tx.account_id) this.recalculateAccountBalance(tx.account_id);
       if (tx.destination_account_id) this.recalculateAccountBalance(tx.destination_account_id);
       if (tx.transfer_peer_account_id) this.recalculateAccountBalance(tx.transfer_peer_account_id);
+
+      for (const loanId of loanIdsToRecalc) {
+        this.recalculateLoanBalance(loanId, userId);
+      }
+
       return { success: true, undoId: tx.transfer_group_id, isTransfer: true };
     }
 
     if (permanent) {
       this.db.prepare('DELETE FROM transactions WHERE id = ? AND user_id = ?').run(id, userId);
+      try {
+        this.db.prepare('DELETE FROM loan_payments WHERE transaction_id = ?').run(id);
+      } catch {}
     } else {
       this.db.prepare('UPDATE transactions SET is_deleted = 1 WHERE id = ? AND user_id = ?').run(id, userId);
     }
 
     this.recalculateAccountBalance(tx.account_id);
+
+    for (const loanId of loanIdsToRecalc) {
+      this.recalculateLoanBalance(loanId, userId);
+    }
+
     return { success: true, undoId: id, isTransfer: false };
   }
 
   restoreTransaction(idOrGroupId: string, userId: string) {
+    const loanIdsToRecalc = new Set<string>();
+    try {
+      const linkedTxs = this.db.prepare(`
+        SELECT loan_id FROM transactions WHERE user_id = ? AND (id = ? OR transfer_group_id = ?)
+      `).all(userId, idOrGroupId, idOrGroupId) as any[];
+      for (const t of linkedTxs) {
+        if (t.loan_id) loanIdsToRecalc.add(t.loan_id);
+      }
+      const linkedLps = this.db.prepare(`
+        SELECT loan_id FROM loan_payments WHERE user_id = ? AND (transaction_id = ? OR transfer_group_id = ?)
+      `).all(userId, idOrGroupId, idOrGroupId) as any[];
+      for (const lp of linkedLps) {
+        if (lp.loan_id) loanIdsToRecalc.add(lp.loan_id);
+      }
+    } catch {}
+
     this.db.prepare(`
       UPDATE transactions SET is_deleted = 0 
       WHERE user_id = ? AND (id = ? OR transfer_group_id = ?)
@@ -1081,6 +1301,10 @@ export class FinanceService {
 
     for (const a of accounts) {
       this.recalculateAccountBalance(a.account_id);
+    }
+
+    for (const loanId of loanIdsToRecalc) {
+      this.recalculateLoanBalance(loanId, userId);
     }
 
     return { restored: true };
@@ -1778,6 +2002,29 @@ export class FinanceService {
       ORDER BY l.created_at DESC
     `).all(userId) as any[];
 
+    // Get active loan payments counts
+    const paymentCountsMap = new Map<string, number>();
+    try {
+      const pCounts = this.db.prepare(`
+        SELECT lp.loan_id, COUNT(DISTINCT lp.id) as count
+        FROM loan_payments lp
+        LEFT JOIN transactions t_single ON (lp.transaction_id IS NOT NULL AND t_single.id = lp.transaction_id)
+        LEFT JOIN transactions t_group ON (lp.transfer_group_id IS NOT NULL AND t_group.transfer_group_id = lp.transfer_group_id)
+        WHERE lp.user_id = ?
+          AND (
+            (lp.transaction_id IS NOT NULL AND (t_single.is_deleted = 0 OR t_single.is_deleted IS NULL))
+            OR
+            (lp.transfer_group_id IS NOT NULL AND (t_group.is_deleted = 0 OR t_group.is_deleted IS NULL))
+            OR
+            (lp.transaction_id IS NULL AND lp.transfer_group_id IS NULL)
+          )
+        GROUP BY lp.loan_id
+      `).all(userId) as any[];
+      for (const pc of pCounts) {
+        paymentCountsMap.set(pc.loan_id, pc.count);
+      }
+    } catch {}
+
     return loans.map(loan => {
       const paidPrincipal = loan.principal - loan.outstanding_principal;
       const progressPercent = loan.principal > 0
@@ -1790,13 +2037,27 @@ export class FinanceService {
         loan.start_date
       );
 
+      const paidCount = paymentCountsMap.get(loan.id) ?? (
+        loan.principal > 0
+          ? Math.min(loan.tenure_months, Math.round((paidPrincipal / loan.principal) * loan.tenure_months))
+          : 0
+      );
+
+      const scheduleWithStatus = amortization.schedule.map((row: any) => ({
+        ...row,
+        isPaid: row.monthNumber <= paidCount,
+      }));
       return {
         ...loan,
         type: loan.type || 'loan',
         notes: loan.notes || '',
         paidPrincipal,
         progressPercent,
-        amortization,
+        paidCount,
+        amortization: {
+          ...amortization,
+          schedule: scheduleWithStatus,
+        },
       };
     });
   }
@@ -1820,9 +2081,9 @@ export class FinanceService {
     const runInsert = () => {
       this.db.prepare(`
         INSERT INTO loans (
-          id, user_id, account_id, name, principal, outstanding_principal,
+          id, user_id, account_id, name, principal, outstanding_principal, initial_outstanding_principal,
           interest_rate, emi_amount, tenure_months, start_date, emi_day, type, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         id,
         data.userId,
@@ -1830,6 +2091,7 @@ export class FinanceService {
         data.name,
         data.principal,
         data.outstandingPrincipal,
+        data.outstandingPrincipal || data.principal,
         data.interestRate,
         amort.monthlyEmi,
         data.tenureMonths,
@@ -1846,6 +2108,7 @@ export class FinanceService {
       if (err?.message?.includes('no column named') || err?.message?.includes('table loans')) {
         try { this.db.exec(`ALTER TABLE loans ADD COLUMN principal INTEGER DEFAULT 0`); } catch {}
         try { this.db.exec(`ALTER TABLE loans ADD COLUMN outstanding_principal INTEGER DEFAULT 0`); } catch {}
+        try { this.db.exec(`ALTER TABLE loans ADD COLUMN initial_outstanding_principal INTEGER DEFAULT 0`); } catch {}
         try { this.db.exec(`ALTER TABLE loans ADD COLUMN tenure_months INTEGER DEFAULT 12`); } catch {}
         try { this.db.exec(`ALTER TABLE loans ADD COLUMN emi_day INTEGER DEFAULT 5`); } catch {}
         try { this.db.exec(`ALTER TABLE loans ADD COLUMN type TEXT DEFAULT 'loan'`); } catch {}
@@ -1858,6 +2121,51 @@ export class FinanceService {
     }
 
     return id;
+  }
+
+  recalculateLoanBalance(loanId: string, userId: string) {
+    const loan = this.db.prepare('SELECT * FROM loans WHERE id = ? AND user_id = ?').get(loanId, userId) as any;
+    if (!loan) return;
+
+    let totalPrincipalPaid = 0;
+    try {
+      const payments = this.db.prepare(`
+        SELECT lp.* 
+        FROM loan_payments lp
+        LEFT JOIN transactions t_single ON (lp.transaction_id IS NOT NULL AND t_single.id = lp.transaction_id)
+        LEFT JOIN transactions t_group ON (lp.transfer_group_id IS NOT NULL AND t_group.transfer_group_id = lp.transfer_group_id)
+        WHERE lp.loan_id = ? 
+          AND lp.user_id = ?
+          AND (
+            (lp.transaction_id IS NOT NULL AND (t_single.is_deleted = 0 OR t_single.is_deleted IS NULL))
+            OR
+            (lp.transfer_group_id IS NOT NULL AND (t_group.is_deleted = 0 OR t_group.is_deleted IS NULL))
+            OR
+            (lp.transaction_id IS NULL AND lp.transfer_group_id IS NULL)
+          )
+        GROUP BY lp.id
+      `).all(loanId, userId) as any[];
+
+      for (const p of payments) {
+        totalPrincipalPaid += (p.principal_paid || 0);
+      }
+    } catch {
+      // Fallback if loan_payments table doesn't exist yet
+    }
+
+    const basePrincipal = (loan.initial_outstanding_principal && loan.initial_outstanding_principal > 0)
+      ? loan.initial_outstanding_principal
+      : loan.principal;
+
+    const newOutstanding = Math.max(0, basePrincipal - totalPrincipalPaid);
+
+    this.db.prepare(`
+      UPDATE loans 
+      SET outstanding_principal = ? 
+      WHERE id = ? AND user_id = ?
+    `).run(newOutstanding, loanId, userId);
+
+    return newOutstanding;
   }
 
   recordLoanPayment(params: {
@@ -1879,39 +2187,85 @@ export class FinanceService {
       principalComponent = loan.outstanding_principal;
     }
 
-    // Find a relevant category for EMI payments
-    let emiCat = this.db.prepare("SELECT id FROM categories WHERE user_id = ? AND (name LIKE '%loan%' OR name LIKE '%emi%' OR name LIKE '%debt%') LIMIT 1").get(params.userId) as any;
-    if (!emiCat) {
-      emiCat = this.db.prepare("SELECT id FROM categories WHERE user_id = ? AND type = 'expense' LIMIT 1").get(params.userId) as any;
-    }
-
     const isEmi = loan.type === 'emi';
     const txName = isEmi ? `EMI: ${loan.name}` : `Loan EMI: ${loan.name}`;
     const paymentDate = params.date || new Date().toISOString().substring(0, 10);
+    const notes = `Installment payment for ${isEmi ? 'Purchase EMI' : 'Loan'} "${loan.name}" (Principal: ₹${Math.round(principalComponent / 100)}, Interest: ₹${Math.round(interestComponent / 100)})`;
 
-    // 1. Record expense in account transactions (reduces account balance and liquid cash)
-    const txId = this.createTransaction({
-      userId: params.userId,
-      accountId: params.accountId,
-      type: 'expense',
-      amount: paymentAmount,
-      date: paymentDate,
-      merchantName: txName,
-      categoryId: emiCat?.id,
-      notes: `Installment payment for ${isEmi ? 'Purchase EMI' : 'Loan'} "${loan.name}" (Principal: ₹${Math.round(principalComponent / 100)}, Interest: ₹${Math.round(interestComponent / 100)})`,
-    });
+    let txId = '';
+    let transferGroupId: string | null = null;
 
-    // 2. Reduce outstanding principal on loan (reduces liabilities)
-    const newOutstanding = Math.max(0, loan.outstanding_principal - principalComponent);
-    this.db.prepare(`
-      UPDATE loans
-      SET outstanding_principal = ?
-      WHERE id = ? AND user_id = ?
-    `).run(newOutstanding, params.loanId, params.userId);
+    const linkedAccount = loan.account_id ? this.getAccountById(loan.account_id, params.userId) : null;
+    const isTransfer = Boolean(linkedAccount && linkedAccount.id !== params.accountId);
+
+    if (isTransfer) {
+      const isCc = linkedAccount?.type === 'credit_card';
+      const tags = ['loan-repayment', 'emi'];
+      if (isCc) tags.push('cc-repayment');
+
+      const transferResult = this.createTransaction({
+        userId: params.userId,
+        accountId: params.accountId, // Source account (e.g. Bank)
+        destinationAccountId: loan.account_id, // Target account (e.g. Credit Card / Loan)
+        type: 'transfer',
+        amount: paymentAmount,
+        date: paymentDate,
+        notes,
+        tags,
+        loanId: params.loanId,
+      });
+
+      transferGroupId = transferResult.transferGroupId;
+      txId = transferResult.id;
+    } else {
+      // Find a relevant category for EMI payments
+      let emiCat = this.db.prepare("SELECT id FROM categories WHERE user_id = ? AND (name LIKE '%loan%' OR name LIKE '%emi%' OR name LIKE '%debt%') LIMIT 1").get(params.userId) as any;
+      if (!emiCat) {
+        emiCat = this.db.prepare("SELECT id FROM categories WHERE user_id = ? AND type = 'expense' LIMIT 1").get(params.userId) as any;
+      }
+
+      txId = this.createTransaction({
+        userId: params.userId,
+        accountId: params.accountId,
+        type: 'expense',
+        amount: paymentAmount,
+        date: paymentDate,
+        merchantName: txName,
+        categoryId: emiCat?.id,
+        notes,
+        tags: ['loan-repayment', 'emi'],
+        loanId: params.loanId,
+      });
+    }
+
+    // Record into loan_payments table
+    const paymentRecordId = `lp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    try {
+      this.db.prepare(`
+        INSERT INTO loan_payments (
+          id, loan_id, user_id, transaction_id, transfer_group_id,
+          amount, principal_paid, interest_paid, payment_date
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        paymentRecordId,
+        params.loanId,
+        params.userId,
+        txId,
+        transferGroupId,
+        paymentAmount,
+        principalComponent,
+        interestComponent,
+        paymentDate
+      );
+    } catch {}
+
+    // Recalculate loan balance
+    const newOutstanding = this.recalculateLoanBalance(params.loanId, params.userId) ?? Math.max(0, loan.outstanding_principal - principalComponent);
 
     return {
       success: true,
       transactionId: txId,
+      transferGroupId,
       principalPaid: principalComponent,
       interestPaid: interestComponent,
       newOutstandingPrincipal: newOutstanding,
@@ -2050,7 +2404,7 @@ export class FinanceService {
         AND t.type = 'expense'
         AND t.is_deleted = 0
         AND t.date LIKE ?
-      GROUP BY COALESCE(c.id, 'uncategorized')
+      GROUP BY COALESCE(c.id, 'uncategorized'), c.name, c.icon, c.color
       ORDER BY total DESC
     `).all(userId, `${month}%`) as any[];
 
@@ -2084,7 +2438,7 @@ export class FinanceService {
         AND t.type = 'expense'
         AND t.is_deleted = 0
         AND t.date LIKE ?
-      GROUP BY tg.id
+      GROUP BY tg.id, tg.name, tg.color
       ORDER BY total DESC
     `).all(userId, `${month}%`) as any[];
 
@@ -2213,7 +2567,9 @@ export class FinanceService {
 
     const dayMap: Record<number, number> = {};
     for (const r of rows) {
-      dayMap[r.day] = r.total;
+      if (r.day && r.day >= 1 && r.day <= daysInMonth) {
+        dayMap[r.day] = r.total;
+      }
     }
 
     let runningCumulative = 0;

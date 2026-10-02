@@ -2,23 +2,25 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/context/AppContext';
-import { X, Tag, Store, Trash2, Plus, Search, Edit2, AlertTriangle, Check } from 'lucide-react';
+import { X, Tag, Store, Trash2, Plus, Search, Edit2, AlertTriangle, Check, Folder, Layers } from 'lucide-react';
 
 interface PayeeTagManagerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialTab?: 'payees' | 'tags';
+  initialTab?: 'categories' | 'payees' | 'tags';
   onUpdate?: () => void;
 }
 
 export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
   isOpen,
   onClose,
-  initialTab = 'payees',
+  initialTab = 'categories',
   onUpdate,
 }) => {
-  const { showToast } = useApp();
-  const [activeTab, setActiveTab] = useState<'payees' | 'tags'>(initialTab);
+  const { showToast, openCategoryModal } = useApp();
+  const [activeTab, setActiveTab] = useState<'categories' | 'payees' | 'tags'>(initialTab);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categoryTree, setCategoryTree] = useState<any[]>([]);
   const [payees, setPayees] = useState<any[]>([]);
   const [tags, setTags] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,14 +35,17 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
 
   const loadData = useCallback(async () => {
     try {
-      const [merchRes, tagsRes] = await Promise.all([
+      const [merchRes, tagsRes, catRes] = await Promise.all([
         fetch('/api/merchants').then(r => r.json()),
         fetch('/api/tags').then(r => r.json()),
+        fetch('/api/categories').then(r => r.json()),
       ]);
       setPayees(merchRes.merchants || []);
       setTags(tagsRes.tags || []);
+      setCategories(catRes.categories || []);
+      setCategoryTree(catRes.tree || []);
     } catch {
-      showToast('Failed to load payees or tags', 'error');
+      showToast('Failed to load data', 'error');
     }
   }, [showToast]);
 
@@ -79,6 +84,19 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
       }
     } catch {
       showToast('Failed to delete tag', 'error');
+    }
+  };
+
+  const handleDeleteCategory = async (id: string, name: string) => {
+    try {
+      const res = await fetch(`/api/categories?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast(`Category "${name}" removed`);
+        loadData();
+        onUpdate?.();
+      }
+    } catch {
+      showToast('Failed to delete category', 'error');
     }
   };
 
@@ -124,26 +142,26 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
 
   const handleCreateTag = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTagName.trim()) return;
+    const cleanName = newTagName.trim().replace(/^#/, '');
+    if (!cleanName) return;
 
-    setLoading(true);
     try {
       const res = await fetch('/api/tags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newTagName.trim(), color: newTagColor }),
+        body: JSON.stringify({ name: cleanName, color: newTagColor }),
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(`Tag "#${data.tag.name}" created`);
+        showToast(`Tag "#${cleanName}" created`);
         setNewTagName('');
         loadData();
         onUpdate?.();
+      } else {
+        showToast(data.error || 'Failed to create tag', 'error');
       }
     } catch {
       showToast('Failed to create tag', 'error');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -152,41 +170,80 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
   );
 
   const filteredTags = tags.filter(t =>
-    t.name.toLowerCase().includes(searchQuery.toLowerCase())
+    t.name.toLowerCase().includes(searchQuery.toLowerCase().replace(/^#/, ''))
   );
 
+  const filteredCategoryTree = categoryTree.filter(cat => {
+    const matchesParent = cat.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSub = cat.subcategories?.some((s: any) =>
+      s.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    return matchesParent || matchesSub;
+  });
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div
+      className="modal-backdrop"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        backdropFilter: 'blur(4px)',
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+      }}
+      onClick={onClose}
+    >
       <div
-        className="modal-content"
+        className="card animate-fade-in"
+        style={{
+          width: '100%',
+          maxWidth: '560px',
+          maxHeight: '85vh',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: 'var(--card-bg)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+          overflow: 'hidden',
+          padding: '1.25rem',
+        }}
         onClick={e => e.stopPropagation()}
-        style={{ maxWidth: '500px', width: '100%', padding: '1.5rem' }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div
               style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: 'var(--radius-md)',
-                backgroundColor: 'var(--brand-light)',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(79, 70, 229, 0.12)',
                 color: 'var(--brand-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              {activeTab === 'payees' ? <Store size={18} /> : <Tag size={18} />}
+              {activeTab === 'categories' ? <Folder size={18} /> : activeTab === 'payees' ? <Store size={18} /> : <Tag size={18} />}
             </div>
             <div>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 600 }}>Manage Payees & Tags</h2>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Clean up or delete suggestions from your autocomplete lists
-              </div>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                Manage Categories, Payees & Tags
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                Organize your financial classification data
+              </p>
             </div>
           </div>
-          <button className="btn-icon" onClick={onClose} aria-label="Close modal">
+          <button
+            onClick={onClose}
+            className="btn-icon"
+            style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
             <X size={18} />
           </button>
         </div>
@@ -204,20 +261,41 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
         >
           <button
             type="button"
+            onClick={() => setActiveTab('categories')}
+            style={{
+              flex: 1,
+              padding: '0.45rem',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '0.825rem',
+              fontWeight: activeTab === 'categories' ? 600 : 500,
+              backgroundColor: activeTab === 'categories' ? 'var(--bg-surface)' : 'transparent',
+              color: activeTab === 'categories' ? 'var(--text-primary)' : 'var(--text-secondary)',
+              boxShadow: activeTab === 'categories' ? 'var(--shadow-sm)' : 'none',
+              transition: 'all var(--transition-fast)',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Categories ({categories.length})
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab('payees')}
             style={{
               flex: 1,
               padding: '0.45rem',
               borderRadius: 'var(--radius-sm)',
-              fontSize: '0.85rem',
+              fontSize: '0.825rem',
               fontWeight: activeTab === 'payees' ? 600 : 500,
               backgroundColor: activeTab === 'payees' ? 'var(--bg-surface)' : 'transparent',
               color: activeTab === 'payees' ? 'var(--text-primary)' : 'var(--text-secondary)',
               boxShadow: activeTab === 'payees' ? 'var(--shadow-sm)' : 'none',
               transition: 'all var(--transition-fast)',
+              border: 'none',
+              cursor: 'pointer',
             }}
           >
-            Payees / Merchants ({payees.length})
+            Payees ({payees.length})
           </button>
           <button
             type="button"
@@ -226,33 +304,152 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
               flex: 1,
               padding: '0.45rem',
               borderRadius: 'var(--radius-sm)',
-              fontSize: '0.85rem',
+              fontSize: '0.825rem',
               fontWeight: activeTab === 'tags' ? 600 : 500,
               backgroundColor: activeTab === 'tags' ? 'var(--bg-surface)' : 'transparent',
               color: activeTab === 'tags' ? 'var(--text-primary)' : 'var(--text-secondary)',
               boxShadow: activeTab === 'tags' ? 'var(--shadow-sm)' : 'none',
               transition: 'all var(--transition-fast)',
+              border: 'none',
+              cursor: 'pointer',
             }}
           >
             Tags ({tags.length})
           </button>
         </div>
 
-        {/* Search */}
-        <div style={{ position: 'relative', marginBottom: '1rem' }}>
-          <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input
-            type="text"
-            className="form-input"
-            style={{ paddingLeft: '2.2rem', fontSize: '0.825rem' }}
-            placeholder={`Search ${activeTab}...`}
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
+        {/* Search & Actions Bar */}
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              className="form-input"
+              style={{ paddingLeft: '2.2rem', fontSize: '0.825rem', width: '100%' }}
+              placeholder={`Search ${activeTab}...`}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
+          {activeTab === 'categories' && (
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => openCategoryModal('expense', undefined, '', false, () => loadData())}
+              style={{ fontSize: '0.8125rem', padding: '0.45rem 0.75rem', whiteSpace: 'nowrap' }}
+            >
+              <Plus size={14} /> Add Category
+            </button>
+          )}
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'payees' ? (
+        {activeTab === 'categories' ? (
+          <div style={{ maxHeight: '340px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {filteredCategoryTree.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                {searchQuery ? 'No categories matching search' : 'No categories found'}
+              </div>
+            ) : (
+              filteredCategoryTree.map(parent => (
+                <div
+                  key={parent.id}
+                  style={{
+                    backgroundColor: 'var(--bg-subtle)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border-default)',
+                    padding: '0.65rem 0.85rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: parent.subcategories?.length ? '0.5rem' : 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span
+                        style={{
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '50%',
+                          backgroundColor: parent.color || '#6B7280',
+                        }}
+                      />
+                      <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
+                        {parent.name}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.6875rem',
+                          padding: '1px 6px',
+                          borderRadius: 'var(--radius-sm)',
+                          backgroundColor: parent.type === 'income' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                          color: parent.type === 'income' ? '#10B981' : '#EF4444',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {parent.type}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={() => openCategoryModal(parent.type, parent.id, '', true, () => loadData())}
+                        title={`Add subcategory under ${parent.name}`}
+                        style={{ fontSize: '0.725rem', color: 'var(--brand-primary)', padding: '2px 6px', height: 'auto' }}
+                      >
+                        + Sub
+                      </button>
+                      {!parent.id.startsWith('cat-') && (
+                        <button
+                          className="btn-icon"
+                          style={{ width: '26px', height: '26px', color: 'var(--color-expense)' }}
+                          onClick={() => handleDeleteCategory(parent.id, parent.name)}
+                          title="Delete category"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Subcategories list */}
+                  {parent.subcategories && parent.subcategories.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.35rem', paddingLeft: '1rem' }}>
+                      {parent.subcategories.map((sub: any) => (
+                        <span
+                          key={sub.id}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '2px 8px',
+                            fontSize: '0.75rem',
+                            borderRadius: 'var(--radius-sm)',
+                            backgroundColor: 'var(--bg-surface)',
+                            border: '1px solid var(--border-subtle)',
+                            color: 'var(--text-secondary)',
+                          }}
+                        >
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: sub.color || parent.color || '#6B7280' }} />
+                          {sub.name}
+                          {!sub.id.startsWith('cat-') && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCategory(sub.id, sub.name)}
+                              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0 2px' }}
+                              title="Delete subcategory"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        ) : activeTab === 'payees' ? (
           <div>
             <div style={{ maxHeight: '280px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               {filteredPayees.length === 0 ? (
@@ -300,35 +497,38 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
                 type="text"
                 className="form-input"
                 style={{ flex: 1, fontSize: '0.825rem' }}
-                placeholder="New tag name (e.g. vacation)"
+                placeholder="New tag name (e.g. vacation, taxes)..."
                 value={newTagName}
                 onChange={e => setNewTagName(e.target.value)}
               />
-              <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-                {tagColors.map(c => (
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {tagColors.slice(0, 5).map(c => (
                   <button
                     key={c}
                     type="button"
                     onClick={() => setNewTagColor(c)}
                     style={{
-                      width: '18px',
-                      height: '18px',
+                      width: '20px',
+                      height: '20px',
                       borderRadius: '50%',
                       backgroundColor: c,
-                      border: newTagColor === c ? '2px solid #ffffff' : 'none',
+                      border: newTagColor === c ? '2px solid var(--text-primary)' : 'none',
                       cursor: 'pointer',
-                      padding: 0,
-                      outline: newTagColor === c ? `2px solid ${c}` : 'none',
                     }}
                   />
                 ))}
               </div>
-              <button type="submit" className="btn-primary" disabled={loading || !newTagName.trim()} style={{ fontSize: '0.75rem', padding: '0.5rem 0.75rem' }}>
-                <Plus size={13} /> Add
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={!newTagName.trim()}
+                style={{ fontSize: '0.825rem', padding: '0.45rem 0.75rem' }}
+              >
+                <Plus size={14} /> Add Tag
               </button>
             </form>
 
-            <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               {filteredTags.length === 0 ? (
                 <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                   {searchQuery ? 'No tags matching search' : 'No tags created yet'}
@@ -336,122 +536,60 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
               ) : (
                 filteredTags.map(t => {
                   const isEditing = editingTagId === t.id;
-
                   if (isEditing) {
-                    const cleanOld = t.name;
-                    const cleanNew = editTagName.trim().replace(/^#/, '');
-                    const isRenaming = cleanNew && cleanNew.toLowerCase() !== cleanOld.toLowerCase();
-
                     return (
                       <div
                         key={t.id}
                         style={{
-                          padding: '0.75rem',
-                          backgroundColor: 'var(--bg-surface)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.55rem 0.75rem',
+                          backgroundColor: 'rgba(79, 70, 229, 0.08)',
                           borderRadius: 'var(--radius-md)',
                           border: '1px solid var(--brand-primary)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '0.6rem',
-                          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: editTagColor }}>#</span>
-                          <input
-                            type="text"
-                            className="form-input"
-                            value={editTagName}
-                            onChange={e => setEditTagName(e.target.value)}
-                            placeholder="Tag name"
-                            style={{ flex: 1, fontSize: '0.825rem', padding: '0.35rem 0.6rem' }}
-                            autoFocus
-                            onKeyDown={e => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                handleUpdateTag(t.id, t.name);
-                              } else if (e.key === 'Escape') {
-                                setEditingTagId(null);
-                              }
-                            }}
-                          />
+                        <input
+                          type="text"
+                          className="form-input"
+                          style={{ flex: 1, fontSize: '0.825rem', padding: '0.3rem 0.5rem' }}
+                          value={editTagName}
+                          onChange={e => setEditTagName(e.target.value)}
+                          autoFocus
+                        />
+                        <div style={{ display: 'flex', gap: '3px' }}>
+                          {tagColors.map(c => (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => setEditTagColor(c)}
+                              style={{
+                                width: '16px',
+                                height: '16px',
+                                borderRadius: '50%',
+                                backgroundColor: c,
+                                border: editTagColor === c ? '2px solid var(--text-primary)' : 'none',
+                                cursor: 'pointer',
+                              }}
+                            />
+                          ))}
                         </div>
-
-                        {/* Color Selector */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Tag Color:</span>
-                          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                            {tagColors.map(c => (
-                              <button
-                                key={c}
-                                type="button"
-                                onClick={() => setEditTagColor(c)}
-                                style={{
-                                  width: '20px',
-                                  height: '20px',
-                                  borderRadius: '50%',
-                                  backgroundColor: c,
-                                  border: editTagColor === c ? '2px solid #ffffff' : 'none',
-                                  cursor: 'pointer',
-                                  padding: 0,
-                                  outline: editTagColor === c ? `2px solid ${c}` : 'none',
-                                }}
-                              />
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Warning Box on Rename */}
-                        {isRenaming && (
-                          <div
-                            style={{
-                              padding: '0.55rem 0.75rem',
-                              backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                              border: '1px solid rgba(245, 158, 11, 0.35)',
-                              borderRadius: 'var(--radius-sm)',
-                              fontSize: '0.75rem',
-                              color: '#F59E0B',
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              gap: '0.5rem',
-                              lineHeight: '1.4',
-                            }}
-                          >
-                            <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: '2px' }} />
-                            <div>
-                              <strong>Warning:</strong> Renaming this tag will update all{' '}
-                              <strong>{t.transaction_count || 0}</strong> previous transaction(s) tagged with{' '}
-                              <strong>#{t.name}</strong> to <strong>#{cleanNew}</strong>.
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Save / Cancel buttons */}
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.2rem' }}>
-                          <button
-                            type="button"
-                            className="btn-secondary"
-                            onClick={() => setEditingTagId(null)}
-                            style={{ fontSize: '0.75rem', padding: '0.35rem 0.7rem' }}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            className="btn-primary"
-                            onClick={() => handleUpdateTag(t.id, t.name)}
-                            disabled={loading || !editTagName.trim()}
-                            style={{
-                              fontSize: '0.75rem',
-                              padding: '0.35rem 0.75rem',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.35rem',
-                            }}
-                          >
-                            <Check size={13} /> Save Changes
-                          </button>
-                        </div>
+                        <button
+                          className="btn-icon"
+                          style={{ width: '28px', height: '28px', color: 'var(--color-income)' }}
+                          onClick={() => handleUpdateTag(t.id, t.name)}
+                          disabled={loading}
+                        >
+                          <Check size={14} />
+                        </button>
+                        <button
+                          className="btn-icon"
+                          style={{ width: '28px', height: '28px', color: 'var(--text-muted)' }}
+                          onClick={() => setEditingTagId(null)}
+                        >
+                          <X size={14} />
+                        </button>
                       </div>
                     );
                   }
@@ -463,28 +601,27 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '0.5rem 0.75rem',
+                        padding: '0.55rem 0.75rem',
                         backgroundColor: 'var(--bg-subtle)',
                         borderRadius: 'var(--radius-md)',
                         border: '1px solid var(--border-default)',
-                        transition: 'border-color 0.15s ease',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span
                           style={{
-                            width: '10px',
-                            height: '10px',
+                            width: '8px',
+                            height: '8px',
                             borderRadius: '50%',
                             backgroundColor: t.color || '#3B82F6',
                           }}
                         />
                         <span style={{ fontWeight: 500, fontSize: '0.85rem' }}>#{t.name}</span>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                          ({t.transaction_count || 0})
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                          ({t.transaction_count || 0} txs)
                         </span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <div style={{ display: 'flex', gap: '4px' }}>
                         <button
                           className="btn-icon"
                           style={{ width: '28px', height: '28px', color: 'var(--text-secondary)' }}

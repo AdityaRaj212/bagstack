@@ -54,6 +54,7 @@ export const TransactionModal = () => {
     showToast,
     triggerRefresh,
     editingTransaction,
+    openCategoryModal,
   } = useApp();
 
   const [type, setType] = useState<'expense' | 'income' | 'transfer'>(transactionModalType);
@@ -1198,15 +1199,40 @@ export const TransactionModal = () => {
               {/* Searchable Category Combobox */}
               {!showSplits && (
                 <div className="form-group" style={{ marginBottom: '1rem', position: 'relative' }} ref={categoryRef}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.375rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
                     <label className="form-label" style={{ marginBottom: 0 }}>CATEGORY</label>
-                    <button
-                      type="button"
-                      onClick={() => setShowSplits(true)}
-                      style={{ fontSize: '0.75rem', color: 'var(--brand-primary)', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }}
-                    >
-                      + Split Transaction
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          openCategoryModal(
+                            type === 'income' ? 'income' : 'expense',
+                            undefined,
+                            categorySearch.trim(),
+                            false,
+                            newCat => {
+                              fetch('/api/categories')
+                                .then(r => r.json())
+                                .then(d => {
+                                  if (d.tree) setCategoryTree(d.tree);
+                                  if (newCat?.id) setCategoryId(newCat.id);
+                                });
+                            }
+                          );
+                        }}
+                        style={{ fontSize: '0.75rem', color: 'var(--brand-primary)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                      >
+                        + Add Category
+                      </button>
+                      <span style={{ color: 'var(--border-color)' }}>•</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowSplits(true)}
+                        style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                      >
+                        + Split
+                      </button>
+                    </div>
                   </div>
 
                   <div style={{ position: 'relative' }}>
@@ -1456,6 +1482,58 @@ export const TransactionModal = () => {
                             );
                           });
                         })()}
+
+                        {/* Add Category Action button at bottom of dropdown */}
+                        <div
+                          style={{
+                            marginTop: '0.35rem',
+                            paddingTop: '0.35rem',
+                            borderTop: '1px solid var(--border-color)',
+                          }}
+                        >
+                          <button
+                            type="button"
+                            className="btn-ghost"
+                            onMouseDown={e => {
+                              e.preventDefault();
+                              setCategoryDropdownOpen(false);
+                              openCategoryModal(
+                                type === 'income' ? 'income' : 'expense',
+                                undefined,
+                                categorySearch.trim(),
+                                false,
+                                newCat => {
+                                  fetch('/api/categories')
+                                    .then(r => r.json())
+                                    .then(d => {
+                                      if (d.tree) setCategoryTree(d.tree);
+                                      if (newCat?.id) setCategoryId(newCat.id);
+                                    });
+                                }
+                              );
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '0.45rem 0.6rem',
+                              fontSize: '0.8125rem',
+                              color: 'var(--brand-primary)',
+                              fontWeight: 600,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.375rem',
+                              borderRadius: 'var(--radius-sm)',
+                              backgroundColor: 'rgba(79, 70, 229, 0.08)',
+                              cursor: 'pointer',
+                              border: 'none',
+                            }}
+                          >
+                            <Plus size={14} />
+                            {categorySearch.trim()
+                              ? `Create "${categorySearch.trim()}" as Category...`
+                              : '+ Add New Category / Subcategory'}
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

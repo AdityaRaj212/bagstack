@@ -31,6 +31,7 @@ export const CommandPalette = () => {
     openTransactionModal,
     openImportModal,
     openAccountModal,
+    openCategoryModal,
     theme,
     setTheme,
     showToast,
@@ -98,6 +99,16 @@ export const CommandPalette = () => {
       action: () => {
         closeCommandPalette();
         openTransactionModal('income');
+      },
+    },
+    {
+      id: 'add-category',
+      label: 'Add Category / Subcategory',
+      shortcut: 'C',
+      icon: PlusCircle,
+      action: () => {
+        closeCommandPalette();
+        openCategoryModal();
       },
     },
     {

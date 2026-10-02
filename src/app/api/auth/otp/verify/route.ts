@@ -34,12 +34,14 @@ export async function POST(req: Request) {
       user: result.user,
     });
 
-    const isProd = process.env.NODE_ENV === 'production';
+    const host = req.headers.get('host') || '';
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+    const isSecure = process.env.NODE_ENV === 'production' && !isLocal;
 
     // Set secure HTTP-only session cookie for 30 days
     response.cookies.set('apex_session_token', result.token, {
       httpOnly: true,
-      secure: isProd,
+      secure: isSecure,
       sameSite: 'lax',
       path: '/',
       maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -48,7 +50,7 @@ export async function POST(req: Request) {
     // Also set finance_user_id for profile routing
     response.cookies.set('finance_user_id', result.user.id, {
       httpOnly: true,
-      secure: isProd,
+      secure: isSecure,
       sameSite: 'lax',
       path: '/',
       maxAge: 30 * 24 * 60 * 60,
