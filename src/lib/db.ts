@@ -481,24 +481,6 @@ export function initSchema(db: DatabaseSync) {
   try {
     db.exec(`UPDATE users SET owner_email = email WHERE owner_email IS NULL OR owner_email = ''`);
     db.exec(`CREATE INDEX IF NOT EXISTS idx_users_owner_email ON users(owner_email)`);
-
-    // Ensure cc-repayment tag exists for users who have credit cards
-    db.exec(`
-      INSERT OR IGNORE INTO tags (id, user_id, name, color)
-      SELECT DISTINCT 'tag_' || a.user_id || '_ccrepayment', a.user_id, 'cc-repayment', '#3B82F6'
-      FROM accounts a
-      WHERE a.type = 'credit_card';
-    `);
-
-    // Backfill cc-repayment tag link on credit card transfers
-    db.exec(`
-      INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id)
-      SELECT t.id, tg.id
-      FROM transactions t
-      JOIN accounts a ON a.id = COALESCE(t.destination_account_id, t.transfer_peer_account_id)
-      JOIN tags tg ON tg.user_id = t.user_id AND LOWER(tg.name) = 'cc-repayment'
-      WHERE t.type = 'transfer' AND a.type = 'credit_card';
-    `);
   } catch {
     // Ignore
   }

@@ -604,37 +604,13 @@ export class FinanceService {
         accountId
       );
 
-      // Collect tags: user-provided tags + tags extracted from notes
-      const finalTags: string[] = Array.isArray(tags) ? [...tags] : [];
-
-      if (notes) {
-        const matches = (notes.match(/#[a-zA-Z0-9_\-]+/g) || []).map((t: string) => t.replace(/^#/, ''));
-        finalTags.push(...matches);
-      }
-
-      // Auto-detect Credit Card repayment (destAccount or account is credit card, or notes indicate cc repayment)
-      const isCcRepayment =
-        destAccount.type === 'credit_card' ||
-        account.type === 'credit_card' ||
-        /cc[-_\s]?repay|credit\s*card\s*repay|credit\s*card\s*bill|cc\s*bill|card\s*payment/i.test(notes || '');
-
-      if (isCcRepayment) {
-        const hasCcTag = finalTags.some(t => {
-          const c = t.trim().replace(/^#/, '').toLowerCase();
-          return c === 'cc-repayment' || c === 'cc_repayment' || c === 'ccrepayment';
-        });
-        if (!hasCcTag) {
-          finalTags.push('cc-repayment');
-        }
-      }
-
       // Save tags for transfer legs
-      if (finalTags.length > 0) {
+      if (tags.length > 0) {
         const linkInsert = this.db.prepare(`
           INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)
         `);
 
-        for (const tag of finalTags) {
+        for (const tag of tags) {
           const cleanTag = tag.trim().replace(/^#/, '');
           if (!cleanTag) continue;
           const tagObj = this.createTag(userId, cleanTag);
@@ -692,19 +668,13 @@ export class FinanceService {
       }
     }
 
-    // Save tags (user provided + extracted from notes)
-    const finalTags: string[] = Array.isArray(tags) ? [...tags] : [];
-    if (notes) {
-      const matches = (notes.match(/#[a-zA-Z0-9_\-]+/g) || []).map((t: string) => t.replace(/^#/, ''));
-      finalTags.push(...matches);
-    }
-
-    if (finalTags.length > 0) {
+    // Save tags
+    if (tags.length > 0) {
       const linkInsert = this.db.prepare(`
         INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)
       `);
 
-      for (const tag of finalTags) {
+      for (const tag of tags) {
         const cleanTag = tag.trim().replace(/^#/, '');
         if (!cleanTag) continue;
         const tagObj = this.createTag(userId, cleanTag);
@@ -817,53 +787,22 @@ export class FinanceService {
         `).run(newDestAccountId, newAmount, newDate, newNotes, newAccountId, newStatus, inLeg.id);
       }
 
-      // Update tags for transfer legs
-      let tagsToApply = data.tags !== undefined ? [...data.tags] : undefined;
-      if (tagsToApply !== undefined && newNotes) {
-        const matches = (newNotes.match(/#[a-zA-Z0-9_\-]+/g) || []).map((t: string) => t.replace(/^#/, ''));
-        tagsToApply.push(...matches);
-      }
-
-      const destAcc = this.getAccountById(newDestAccountId, userId);
-      const srcAcc = this.getAccountById(newAccountId, userId);
-      const isCcRepayment =
-        (destAcc && destAcc.type === 'credit_card') ||
-        (srcAcc && srcAcc.type === 'credit_card') ||
-        /cc[-_\s]?repay|credit\s*card\s*repay|credit\s*card\s*bill|cc\s*bill|card\s*payment/i.test(newNotes || '');
-
-      if (tagsToApply !== undefined && isCcRepayment) {
-        const hasCcTag = tagsToApply.some(t => {
-          const c = t.trim().replace(/^#/, '').toLowerCase();
-          return c === 'cc-repayment' || c === 'cc_repayment' || c === 'ccrepayment';
-        });
-        if (!hasCcTag) {
-          tagsToApply.push('cc-repayment');
-        }
-      }
-
-      const txIds = [outLeg?.id, inLeg?.id].filter(Boolean);
-      if (tagsToApply !== undefined) {
+      // Update tags if provided for transfer legs
+      if (data.tags !== undefined) {
+        const txIds = [outLeg?.id, inLeg?.id].filter(Boolean);
         for (const tid of txIds) {
           this.db.prepare('DELETE FROM transaction_tags WHERE transaction_id = ?').run(tid);
-          if (tagsToApply.length > 0) {
+          if (data.tags.length > 0) {
             const linkInsert = this.db.prepare(`
               INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)
             `);
-            for (const tag of tagsToApply) {
+            for (const tag of data.tags) {
               const cleanTag = tag.trim().replace(/^#/, '');
               if (!cleanTag) continue;
               const tagObj = this.createTag(userId, cleanTag);
               linkInsert.run(tid, tagObj.id);
             }
           }
-        }
-      } else if (isCcRepayment) {
-        const tagObj = this.createTag(userId, 'cc-repayment');
-        const linkInsert = this.db.prepare(`
-          INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)
-        `);
-        for (const tid of txIds) {
-          linkInsert.run(tid, tagObj.id);
         }
       }
 
@@ -917,18 +856,12 @@ export class FinanceService {
 
     // Update tags if provided
     if (data.tags !== undefined) {
-      const expenseTags = [...data.tags];
-      if (newNotes) {
-        const matches = (newNotes.match(/#[a-zA-Z0-9_\-]+/g) || []).map((t: string) => t.replace(/^#/, ''));
-        expenseTags.push(...matches);
-      }
-
       this.db.prepare('DELETE FROM transaction_tags WHERE transaction_id = ?').run(id);
-      if (expenseTags.length > 0) {
+      if (data.tags.length > 0) {
         const linkInsert = this.db.prepare(`
           INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)
         `);
-        for (const tag of expenseTags) {
+        for (const tag of data.tags) {
           const cleanTag = tag.trim().replace(/^#/, '');
           if (!cleanTag) continue;
           const tagObj = this.createTag(userId, cleanTag);
@@ -1263,7 +1196,7 @@ export class FinanceService {
         principalComponent = remainingPrincipal;
         emi = principalComponent + interestComponent;
       }
-      remainingPrincipal = Math.max(0, remainingPrincipal - principalComponent);
+      remainingPrincipal -= principalComponent;
       totalInterest += interestComponent;
 
       const dateObj = new Date(year, month - 1 + i, 1);
@@ -1279,22 +1212,13 @@ export class FinanceService {
       });
     }
 
-    const totalRepayment = principal + totalInterest;
-
-    // Remaining balance after each installment, subtracted from Principal + Net Interest
-    let cumulativePaid = 0;
-    for (const entry of schedule) {
-      cumulativePaid += entry.emi;
-      (entry as any).remainingBalance = Math.max(0, totalRepayment - cumulativePaid);
-    }
-
     return {
       principal,
       annualInterestRate,
       tenureMonths,
       monthlyEmi: emi,
       totalInterest,
-      totalRepayment,
+      totalRepayment: principal + totalInterest,
       schedule,
     };
   }
@@ -1855,6 +1779,10 @@ export class FinanceService {
     `).all(userId) as any[];
 
     return loans.map(loan => {
+      const paidPrincipal = loan.principal - loan.outstanding_principal;
+      const progressPercent = loan.principal > 0
+        ? Math.round((paidPrincipal / loan.principal) * 100)
+        : 0;
       const amortization = this.calculateLoanAmortization(
         loan.principal,
         loan.interest_rate,
@@ -1862,24 +1790,10 @@ export class FinanceService {
         loan.start_date
       );
 
-      const totalPayable = amortization.totalRepayment; // Principal + Net Interest
-      const remainingRatio = loan.principal > 0 ? (loan.outstanding_principal / loan.principal) : 0;
-      // Remaining total balance (principal + remaining interest)
-      const remainingBalance = Math.round(totalPayable * remainingRatio);
-      const totalPaid = Math.max(0, totalPayable - remainingBalance);
-      const paidPrincipal = loan.principal - loan.outstanding_principal;
-      const progressPercent = totalPayable > 0
-        ? Math.min(100, Math.round((totalPaid / totalPayable) * 100))
-        : 0;
-
       return {
         ...loan,
         type: loan.type || 'loan',
         notes: loan.notes || '',
-        totalPayable,
-        totalInterest: amortization.totalInterest,
-        totalPaid,
-        remainingBalance,
         paidPrincipal,
         progressPercent,
         amortization,
@@ -2136,7 +2050,7 @@ export class FinanceService {
         AND t.type = 'expense'
         AND t.is_deleted = 0
         AND t.date LIKE ?
-      GROUP BY COALESCE(c.id, 'uncategorized'), c.name, c.icon, c.color
+      GROUP BY COALESCE(c.id, 'uncategorized')
       ORDER BY total DESC
     `).all(userId, `${month}%`) as any[];
 
@@ -2149,6 +2063,17 @@ export class FinanceService {
   getSpendingByTag(userId: string, monthStr?: string) {
     const month = monthStr || new Date().toISOString().substring(0, 7);
 
+    // Total expense for the month across all transactions
+    const totalRow = this.db.prepare(`
+      SELECT COALESCE(SUM(amount), 0) as total
+      FROM transactions
+      WHERE user_id = ?
+        AND type = 'expense'
+        AND is_deleted = 0
+        AND date LIKE ?
+    `).get(userId, `${month}%`) as any;
+    const totalExpense = totalRow?.total || 0;
+
     // Tagged transactions
     const taggedRows = this.db.prepare(`
       SELECT tg.id, tg.name, tg.color, SUM(t.amount) as total, COUNT(t.id) as count
@@ -2159,16 +2084,38 @@ export class FinanceService {
         AND t.type = 'expense'
         AND t.is_deleted = 0
         AND t.date LIKE ?
-      GROUP BY tg.id, tg.name, tg.color
+      GROUP BY tg.id
       ORDER BY total DESC
     `).all(userId, `${month}%`) as any[];
 
-    // Total of tagged expenses only
-    const totalTaggedExpense = taggedRows.reduce((sum: number, r: any) => sum + r.total, 0);
+    // Untagged transactions (expense transactions with no tags in transaction_tags)
+    const untaggedRow = this.db.prepare(`
+      SELECT COALESCE(SUM(t.amount), 0) as total, COUNT(t.id) as count
+      FROM transactions t
+      WHERE t.user_id = ?
+        AND t.type = 'expense'
+        AND t.is_deleted = 0
+        AND t.date LIKE ?
+        AND NOT EXISTS (
+          SELECT 1 FROM transaction_tags tt WHERE tt.transaction_id = t.id
+        )
+    `).get(userId, `${month}%`) as any;
 
-    return taggedRows.map((r: any) => ({
+    const allRows = [...taggedRows];
+    if (untaggedRow && untaggedRow.total > 0) {
+      allRows.push({
+        id: 'untagged',
+        name: 'Untagged',
+        color: '#94A3B8',
+        total: untaggedRow.total,
+        count: untaggedRow.count,
+      });
+      allRows.sort((a: any, b: any) => b.total - a.total);
+    }
+
+    return allRows.map((r: any) => ({
       ...r,
-      percentage: totalTaggedExpense > 0 ? Math.round((r.total / totalTaggedExpense) * 100) : 0,
+      percentage: totalExpense > 0 ? Math.round((r.total / totalExpense) * 100) : 0,
     }));
   }
 
@@ -2266,9 +2213,7 @@ export class FinanceService {
 
     const dayMap: Record<number, number> = {};
     for (const r of rows) {
-      if (r.day && r.day >= 1 && r.day <= daysInMonth) {
-        dayMap[r.day] = r.total;
-      }
+      dayMap[r.day] = r.total;
     }
 
     let runningCumulative = 0;

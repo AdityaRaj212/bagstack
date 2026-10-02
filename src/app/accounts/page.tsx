@@ -442,7 +442,7 @@ export default function AccountsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <button
                         className="btn-ghost"
-                        onClick={() => openTransactionModal('transfer', card.id)}
+                        onClick={() => openTransactionModal('transfer', undefined)}
                         title="Pay credit card bill"
                         style={{ fontSize: '0.75rem', color: 'var(--brand-primary)', fontWeight: 600 }}
                       >

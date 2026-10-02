@@ -596,47 +596,6 @@ describe('Finance Domain Business Logic Tests', () => {
     }
   });
 
-  it('automatically attaches cc-repayment tag to credit card transfers without explicit tags', () => {
-    const sbi = service.createAccount({
-      userId,
-      name: 'SBI Bank',
-      type: 'savings',
-      openingBalance: 10000000,
-    })!;
-
-    const card = service.createAccount({
-      userId,
-      name: 'Axis Bank Credit Card',
-      type: 'credit_card',
-      openingBalance: 0,
-      creditLimit: 5000000,
-    })!;
-
-    // Create transfer to credit card with NO explicit tags passed
-    const transfer = service.createTransaction({
-      userId,
-      accountId: sbi.id,
-      destinationAccountId: card.id,
-      type: 'transfer',
-      amount: 1500000,
-      date: '2026-03-20',
-      notes: 'Monthly Bill payment #march-bill',
-    });
-
-    expect(transfer.type).toBe('transfer');
-
-    // Check that both legs got auto-attached 'cc-repayment' AND '#march-bill' from notes
-    const txList = service.getTransactions(userId, { accountId: card.id });
-    expect(txList.length).toBe(1);
-    expect(txList[0].tags).toContain('cc-repayment');
-    expect(txList[0].tags).toContain('march-bill');
-
-    const sbiTxList = service.getTransactions(userId, { accountId: sbi.id });
-    expect(sbiTxList.length).toBe(1);
-    expect(sbiTxList[0].tags).toContain('cc-repayment');
-    expect(sbiTxList[0].tags).toContain('march-bill');
-  });
-
   it('supports updating tag color, renaming, and merging duplicates safely', () => {
     const bank = service.createAccount({
       userId,
@@ -876,80 +835,6 @@ describe('Finance Domain Business Logic Tests', () => {
     // Verify account is gone
     const deleted = service.getAccountById(acc.id, userId);
     expect(deleted).toBeNull();
-  });
-
-  it('correctly aggregates spending by category, tag, and daily burn for reports', () => {
-    const acc = service.createAccount({
-      userId,
-      name: 'HDFC Bank',
-      type: 'savings',
-      openingBalance: 10000000,
-    })!;
-
-    const cat = db.prepare('SELECT id, name FROM categories WHERE user_id = ? LIMIT 1').get(userId) as any;
-
-    // 1. Transaction with category and tag
-    service.createTransaction({
-      userId,
-      accountId: acc.id,
-      type: 'expense',
-      amount: 60000, // ₹600
-      date: '2026-03-05',
-      categoryId: cat.id,
-      tags: ['groceries'],
-    });
-
-    // 2. Transaction with another tag
-    service.createTransaction({
-      userId,
-      accountId: acc.id,
-      type: 'expense',
-      amount: 40000, // ₹400
-      date: '2026-03-12',
-      categoryId: cat.id,
-      tags: ['entertainment'],
-    });
-
-    // 3. Uncategorized and untagged transaction
-    service.createTransaction({
-      userId,
-      accountId: acc.id,
-      type: 'expense',
-      amount: 20000, // ₹200
-      date: '2026-03-20',
-    });
-
-    // Total expense = 600 + 400 + 200 = 1200 (120000 paise)
-
-    // Test getSpendingByCategory
-    const byCategory = service.getSpendingByCategory(userId, '2026-03');
-    expect(byCategory.length).toBe(2); // Known category + Uncategorized
-    const knownCat = byCategory.find(c => c.id === cat.id);
-    expect(knownCat?.total).toBe(100000); // 1000.00
-    expect(knownCat?.percentage).toBe(83); // 100000 / 120000 = 83.33% -> 83%
-
-    const uncat = byCategory.find(c => c.id === 'uncategorized');
-    expect(uncat?.total).toBe(20000);
-    expect(uncat?.percentage).toBe(17); // 20000 / 120000 = 16.66% -> 17%
-
-    // Test getSpendingByTag
-    const byTag = service.getSpendingByTag(userId, '2026-03');
-    expect(byTag.length).toBe(2);
-    const groceriesTag = byTag.find(t => t.name === 'groceries');
-    expect(groceriesTag?.total).toBe(60000);
-    expect(groceriesTag?.percentage).toBe(60); // 60000 / (60000 + 40000) = 60% of tagged
-
-    // Test getDailySpending
-    const daily = service.getDailySpending(userId, '2026-03');
-    expect(daily.days.length).toBe(31);
-    expect(daily.totalSpent).toBe(120000);
-    const day5 = daily.days.find(d => d.day === 5);
-    expect(day5?.dailySpent).toBe(60000);
-    expect(day5?.cumulativeSpent).toBe(60000);
-
-    const day12 = daily.days.find(d => d.day === 12);
-    expect(day12?.dailySpent).toBe(40000);
-    expect(day12?.cumulativeSpent).toBe(100000);
   });
 });
 

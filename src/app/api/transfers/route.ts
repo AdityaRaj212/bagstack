@@ -25,7 +25,6 @@ export async function POST(req: Request) {
       date: body.date,
       destinationAccountId: body.toAccountId,
       notes: body.notes,
-      tags: body.tags,
     });
 
     return NextResponse.json({ transfer: result }, { status: 201 });
