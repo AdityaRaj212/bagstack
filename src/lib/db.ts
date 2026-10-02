@@ -3,8 +3,47 @@ import path from 'node:path';
 import fs from 'node:fs';
 
 let globalDb: any = null;
+let globalDbUrl: string | null = null;
 let syncTimer: any = null;
 let lastSyncTime = 0;
+
+let isHealing = false;
+function handleWalConflict() {
+  if (isHealing) return;
+  isHealing = true;
+  try {
+    console.warn('[TURSO] Healing local replica state from WalConflict...');
+    if (globalDb) {
+      try {
+        if (typeof globalDb.close === 'function') {
+          globalDb.close();
+        }
+      } catch { }
+      globalDb = null;
+      globalDbUrl = null;
+    }
+    if (syncTimer) {
+      clearInterval(syncTimer);
+      syncTimer = null;
+    }
+
+    const isVercel = Boolean(process.env.VERCEL);
+    const dataDir = isVercel ? '/tmp' : path.join(process.cwd(), 'data');
+    const resolvedPath = path.join(dataDir, 'finance.db');
+
+    for (const ext of ['', '-info', '-wal', '-shm']) {
+      try { fs.unlinkSync(resolvedPath + ext); } catch { }
+    }
+
+    // Re-initialize clean replica
+    getDb();
+    console.log('[TURSO] Self-healing completed successfully.');
+  } catch (err) {
+    console.error('[TURSO] Self-healing failed:', err);
+  } finally {
+    isHealing = false;
+  }
+}
 
 export function syncTurso(force = false) {
   if (globalDb && typeof globalDb.sync === 'function') {
@@ -14,8 +53,12 @@ export function syncTurso(force = false) {
       try {
         globalDb.sync();
         lastSyncTime = Date.now();
-      } catch (e) {
+      } catch (e: any) {
         console.warn('[TURSO SYNC ERROR]', e);
+        const msg = e?.message || '';
+        if (msg.includes('WalConflict') || msg.includes('InvalidLocalState')) {
+          handleWalConflict();
+        }
       }
     }
   }
@@ -31,9 +74,21 @@ function attachAutoSync(db: any) {
       if (isWrite && typeof stmt.run === 'function') {
         const originalRun = stmt.run.bind(stmt);
         stmt.run = function (...args: any[]) {
-          const result = originalRun(...args);
-          syncTurso(true); // Push changes to Turso cloud immediately on write!
-          return result;
+          try {
+            const result = originalRun(...args);
+            syncTurso(true); // Push changes to Turso cloud immediately on write!
+            return result;
+          } catch (runErr: any) {
+            const msg = runErr?.message || '';
+            if (msg.includes('WalConflict') || msg.includes('InvalidLocalState')) {
+              console.warn('[TURSO] WalConflict detected on write, self-healing replica and retrying...');
+              handleWalConflict();
+              if (globalDb) {
+                return globalDb.prepare(sql).run(...args);
+              }
+            }
+            throw runErr;
+          }
         };
       }
       return stmt;
@@ -53,10 +108,36 @@ function attachAutoSync(db: any) {
   }
 }
 
+const tursoUrl = process.env.TURSO_DATABASE_URL || null;
+const tursoToken = process.env.TURSO_AUTH_TOKEN || null;
+
 export function getDb(dbPath?: string): any {
-  if (globalDb && !dbPath) {
-    syncTurso(false); // Quick pull (80ms) if last sync was > 1.5s ago
+  // Reuse only if the cached connection belongs to the
+  // currently configured database.
+  if (
+    globalDb &&
+    !dbPath &&
+    globalDbUrl === tursoUrl
+  ) {
+    syncTurso(false);
     return globalDb;
+  }
+
+  // Environment/database changed, so discard old connection.
+  if (globalDb && !dbPath && globalDbUrl !== tursoUrl) {
+    try {
+      if (typeof globalDb.close === 'function') {
+        globalDb.close();
+      }
+    } catch { }
+
+    globalDb = null;
+    globalDbUrl = null;
+
+    if (syncTimer) {
+      clearInterval(syncTimer);
+      syncTimer = null;
+    }
   }
 
   let resolvedPath = dbPath;
@@ -73,36 +154,45 @@ export function getDb(dbPath?: string): any {
     resolvedPath = path.join(dataDir, 'finance.db');
   }
 
-  const tursoUrl = process.env.TURSO_DATABASE_URL;
-  const tursoToken = process.env.TURSO_AUTH_TOKEN;
-
   let db: any;
   if (tursoUrl && tursoToken && !dbPath) {
     try {
       // Use native Libsql with cloud sync to Turso
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const LibsqlDatabase = require('libsql');
+
+      let instance: any = null;
+      const createAndSyncDb = () => {
+        instance = new LibsqlDatabase(resolvedPath, { syncUrl: tursoUrl, authToken: tursoToken });
+        instance.sync();
+        return instance;
+      };
+
       try {
-        db = new LibsqlDatabase(resolvedPath, { syncUrl: tursoUrl, authToken: tursoToken });
+        db = createAndSyncDb();
       } catch (openErr: any) {
-        if (openErr?.message?.includes('InvalidLocalState') || openErr?.message?.includes('metadata')) {
-          console.warn('[TURSO] Self-healing local replica state...');
+        if (instance) {
+          try { instance.close(); } catch { }
+          instance = null;
+        }
+        const errMsg = openErr?.message || '';
+        if (
+          errMsg.includes('InvalidLocalState') ||
+          errMsg.includes('metadata') ||
+          errMsg.includes('WalConflict')
+        ) {
+          console.warn('[TURSO] Self-healing local replica state due to error:', errMsg);
           for (const ext of ['', '-info', '-wal', '-shm']) {
-            try { fs.unlinkSync(resolvedPath + ext); } catch {}
+            try { fs.unlinkSync(resolvedPath + ext); } catch { }
           }
-          db = new LibsqlDatabase(resolvedPath, { syncUrl: tursoUrl, authToken: tursoToken });
+          db = createAndSyncDb();
         } else {
           throw openErr;
         }
       }
-      console.log('[TURSO] Connected to Turso cloud SQLite at:', tursoUrl);
-      try {
-        db.sync();
-        lastSyncTime = Date.now();
-        console.log('[TURSO] Successfully synchronized with Turso cloud.');
-      } catch (syncErr) {
-        console.warn('[TURSO] Initial sync warning:', syncErr);
-      }
+
+      lastSyncTime = Date.now();
+      console.log('[TURSO] Connected and synchronized with Turso cloud at:', tursoUrl);
 
       // Automatically sync writes to Turso cloud
       attachAutoSync(db);
@@ -121,11 +211,11 @@ export function getDb(dbPath?: string): any {
   } else {
     db = new DatabaseSync(resolvedPath);
   }
-  
+
   // Pragmas for performance and integrity
   try {
     db.exec('PRAGMA foreign_keys = ON;');
-  } catch {}
+  } catch { }
   try {
     db.exec('PRAGMA journal_mode = WAL;');
   } catch {
@@ -136,6 +226,7 @@ export function getDb(dbPath?: string): any {
 
   if (!dbPath) {
     globalDb = db;
+    globalDbUrl = tursoUrl;
   }
   return db;
 }
@@ -550,152 +641,152 @@ export function seedDefaultCategories(db: DatabaseSync, userId: string) {
     sort_order: number;
     subcategories?: Array<{ id: string; name: string; icon: string }>;
   }> = [
-    {
-      id: 'cat-food',
-      name: 'Food & Dining',
-      type: 'expense',
-      icon: 'utensils',
-      color: '#EF4444',
-      sort_order: 1,
-      subcategories: [
-        { id: 'cat-food-groceries', name: 'Groceries', icon: 'shopping-cart' },
-        { id: 'cat-food-restaurants', name: 'Restaurants', icon: 'coffee' },
-        { id: 'cat-food-delivery', name: 'Food Delivery', icon: 'bike' },
-        { id: 'cat-food-coffee', name: 'Coffee & Snacks', icon: 'cup-soda' },
-      ],
-    },
-    {
-      id: 'cat-transport',
-      name: 'Transportation',
-      type: 'expense',
-      icon: 'car',
-      color: '#F59E0B',
-      sort_order: 2,
-      subcategories: [
-        { id: 'cat-trans-fuel', name: 'Fuel', icon: 'fuel' },
-        { id: 'cat-trans-cab', name: 'Cab & Auto', icon: 'car-taxi' },
-        { id: 'cat-trans-public', name: 'Public Transit', icon: 'train' },
-        { id: 'cat-trans-maint', name: 'Vehicle Maintenance', icon: 'wrench' },
-      ],
-    },
-    {
-      id: 'cat-housing',
-      name: 'Housing & Utilities',
-      type: 'expense',
-      icon: 'home',
-      color: '#3B82F6',
-      sort_order: 3,
-      subcategories: [
-        { id: 'cat-house-rent', name: 'Rent', icon: 'key' },
-        { id: 'cat-house-elec', name: 'Electricity & Gas', icon: 'zap' },
-        { id: 'cat-house-net', name: 'Internet & Mobile', icon: 'wifi' },
-        { id: 'cat-house-maint', name: 'Maintenance', icon: 'tool' },
-      ],
-    },
-    {
-      id: 'cat-shopping',
-      name: 'Shopping & Electronics',
-      type: 'expense',
-      icon: 'shopping-bag',
-      color: '#EC4899',
-      sort_order: 4,
-      subcategories: [
-        { id: 'cat-shop-clothes', name: 'Clothing', icon: 'shirt' },
-        { id: 'cat-shop-gadgets', name: 'Electronics', icon: 'laptop' },
-        { id: 'cat-shop-home', name: 'Home Essentials', icon: 'package' },
-      ],
-    },
-    {
-      id: 'cat-entertainment',
-      name: 'Entertainment & Leisure',
-      type: 'expense',
-      icon: 'film',
-      color: '#8B5CF6',
-      sort_order: 5,
-      subcategories: [
-        { id: 'cat-ent-streaming', name: 'Streaming Services', icon: 'tv' },
-        { id: 'cat-ent-movies', name: 'Movies & Events', icon: 'ticket' },
-        { id: 'cat-ent-games', name: 'Games & Apps', icon: 'gamepad' },
-      ],
-    },
-    {
-      id: 'cat-health',
-      name: 'Health & Wellness',
-      type: 'expense',
-      icon: 'heart-pulse',
-      color: '#10B981',
-      sort_order: 6,
-      subcategories: [
-        { id: 'cat-hlth-meds', name: 'Medicines & Pharmacy', icon: 'pill' },
-        { id: 'cat-hlth-doctor', name: 'Doctor & Hospital', icon: 'stethoscope' },
-        { id: 'cat-hlth-fitness', name: 'Gym & Fitness', icon: 'activity' },
-      ],
-    },
-    {
-      id: 'cat-finance',
-      name: 'Financial Expenses',
-      type: 'expense',
-      icon: 'credit-card',
-      color: '#64748B',
-      sort_order: 7,
-      subcategories: [
-        { id: 'cat-fin-emi', name: 'Loan EMI / Interest', icon: 'percent' },
-        { id: 'cat-fin-charges', name: 'Bank Charges & Fees', icon: 'receipt' },
-        { id: 'cat-fin-insurance', name: 'Insurance Premium', icon: 'shield' },
-        { id: 'cat-fin-tax', name: 'Taxes', icon: 'file-text' },
-      ],
-    },
-    {
-      id: 'cat-savings',
-      name: 'Savings & Goals',
-      type: 'expense',
-      icon: 'piggy-bank',
-      color: '#06B6D4',
-      sort_order: 8,
-      subcategories: [
-        { id: 'cat-sav-goal', name: 'Savings Goal Contribution', icon: 'target' },
-        { id: 'cat-sav-invest', name: 'Investments & Mutual Funds', icon: 'trending-up' },
-        { id: 'cat-sav-emergency', name: 'Emergency Fund', icon: 'shield-check' },
-      ],
-    },
-    {
-      id: 'cat-income-salary',
-      name: 'Salary & Professional',
-      type: 'income',
-      icon: 'briefcase',
-      color: '#10B981',
-      sort_order: 8,
-      subcategories: [
-        { id: 'cat-inc-fulltime', name: 'Full-time Salary', icon: 'wallet' },
-        { id: 'cat-inc-bonus', name: 'Bonus & Incentives', icon: 'award' },
-        { id: 'cat-inc-freelance', name: 'Freelance & Consulting', icon: 'laptop' },
-      ],
-    },
-    {
-      id: 'cat-income-investment',
-      name: 'Investments & Returns',
-      type: 'income',
-      icon: 'trending-up',
-      color: '#06B6D4',
-      sort_order: 9,
-      subcategories: [
-        { id: 'cat-inc-dividend', name: 'Dividends & Capital Gains', icon: 'coins' },
-        { id: 'cat-inc-interest', name: 'Interest Income', icon: 'piggy-bank' },
-      ],
-    },
-    {
-      id: 'cat-income-other',
-      name: 'Other Income',
-      type: 'income',
-      icon: 'plus-circle',
-      color: '#14B8A6',
-      sort_order: 10,
-      subcategories: [
-        { id: 'cat-inc-refund', name: 'Refunds & Reimbursements', icon: 'rotate-ccw' },
-        { id: 'cat-inc-gifts', name: 'Gifts & Grants', icon: 'gift' },
-      ],
-    },
-  ];
+      {
+        id: 'cat-food',
+        name: 'Food & Dining',
+        type: 'expense',
+        icon: 'utensils',
+        color: '#EF4444',
+        sort_order: 1,
+        subcategories: [
+          { id: 'cat-food-groceries', name: 'Groceries', icon: 'shopping-cart' },
+          { id: 'cat-food-restaurants', name: 'Restaurants', icon: 'coffee' },
+          { id: 'cat-food-delivery', name: 'Food Delivery', icon: 'bike' },
+          { id: 'cat-food-coffee', name: 'Coffee & Snacks', icon: 'cup-soda' },
+        ],
+      },
+      {
+        id: 'cat-transport',
+        name: 'Transportation',
+        type: 'expense',
+        icon: 'car',
+        color: '#F59E0B',
+        sort_order: 2,
+        subcategories: [
+          { id: 'cat-trans-fuel', name: 'Fuel', icon: 'fuel' },
+          { id: 'cat-trans-cab', name: 'Cab & Auto', icon: 'car-taxi' },
+          { id: 'cat-trans-public', name: 'Public Transit', icon: 'train' },
+          { id: 'cat-trans-maint', name: 'Vehicle Maintenance', icon: 'wrench' },
+        ],
+      },
+      {
+        id: 'cat-housing',
+        name: 'Housing & Utilities',
+        type: 'expense',
+        icon: 'home',
+        color: '#3B82F6',
+        sort_order: 3,
+        subcategories: [
+          { id: 'cat-house-rent', name: 'Rent', icon: 'key' },
+          { id: 'cat-house-elec', name: 'Electricity & Gas', icon: 'zap' },
+          { id: 'cat-house-net', name: 'Internet & Mobile', icon: 'wifi' },
+          { id: 'cat-house-maint', name: 'Maintenance', icon: 'tool' },
+        ],
+      },
+      {
+        id: 'cat-shopping',
+        name: 'Shopping & Electronics',
+        type: 'expense',
+        icon: 'shopping-bag',
+        color: '#EC4899',
+        sort_order: 4,
+        subcategories: [
+          { id: 'cat-shop-clothes', name: 'Clothing', icon: 'shirt' },
+          { id: 'cat-shop-gadgets', name: 'Electronics', icon: 'laptop' },
+          { id: 'cat-shop-home', name: 'Home Essentials', icon: 'package' },
+        ],
+      },
+      {
+        id: 'cat-entertainment',
+        name: 'Entertainment & Leisure',
+        type: 'expense',
+        icon: 'film',
+        color: '#8B5CF6',
+        sort_order: 5,
+        subcategories: [
+          { id: 'cat-ent-streaming', name: 'Streaming Services', icon: 'tv' },
+          { id: 'cat-ent-movies', name: 'Movies & Events', icon: 'ticket' },
+          { id: 'cat-ent-games', name: 'Games & Apps', icon: 'gamepad' },
+        ],
+      },
+      {
+        id: 'cat-health',
+        name: 'Health & Wellness',
+        type: 'expense',
+        icon: 'heart-pulse',
+        color: '#10B981',
+        sort_order: 6,
+        subcategories: [
+          { id: 'cat-hlth-meds', name: 'Medicines & Pharmacy', icon: 'pill' },
+          { id: 'cat-hlth-doctor', name: 'Doctor & Hospital', icon: 'stethoscope' },
+          { id: 'cat-hlth-fitness', name: 'Gym & Fitness', icon: 'activity' },
+        ],
+      },
+      {
+        id: 'cat-finance',
+        name: 'Financial Expenses',
+        type: 'expense',
+        icon: 'credit-card',
+        color: '#64748B',
+        sort_order: 7,
+        subcategories: [
+          { id: 'cat-fin-emi', name: 'Loan EMI / Interest', icon: 'percent' },
+          { id: 'cat-fin-charges', name: 'Bank Charges & Fees', icon: 'receipt' },
+          { id: 'cat-fin-insurance', name: 'Insurance Premium', icon: 'shield' },
+          { id: 'cat-fin-tax', name: 'Taxes', icon: 'file-text' },
+        ],
+      },
+      {
+        id: 'cat-savings',
+        name: 'Savings & Goals',
+        type: 'expense',
+        icon: 'piggy-bank',
+        color: '#06B6D4',
+        sort_order: 8,
+        subcategories: [
+          { id: 'cat-sav-goal', name: 'Savings Goal Contribution', icon: 'target' },
+          { id: 'cat-sav-invest', name: 'Investments & Mutual Funds', icon: 'trending-up' },
+          { id: 'cat-sav-emergency', name: 'Emergency Fund', icon: 'shield-check' },
+        ],
+      },
+      {
+        id: 'cat-income-salary',
+        name: 'Salary & Professional',
+        type: 'income',
+        icon: 'briefcase',
+        color: '#10B981',
+        sort_order: 8,
+        subcategories: [
+          { id: 'cat-inc-fulltime', name: 'Full-time Salary', icon: 'wallet' },
+          { id: 'cat-inc-bonus', name: 'Bonus & Incentives', icon: 'award' },
+          { id: 'cat-inc-freelance', name: 'Freelance & Consulting', icon: 'laptop' },
+        ],
+      },
+      {
+        id: 'cat-income-investment',
+        name: 'Investments & Returns',
+        type: 'income',
+        icon: 'trending-up',
+        color: '#06B6D4',
+        sort_order: 9,
+        subcategories: [
+          { id: 'cat-inc-dividend', name: 'Dividends & Capital Gains', icon: 'coins' },
+          { id: 'cat-inc-interest', name: 'Interest Income', icon: 'piggy-bank' },
+        ],
+      },
+      {
+        id: 'cat-income-other',
+        name: 'Other Income',
+        type: 'income',
+        icon: 'plus-circle',
+        color: '#14B8A6',
+        sort_order: 10,
+        subcategories: [
+          { id: 'cat-inc-refund', name: 'Refunds & Reimbursements', icon: 'rotate-ccw' },
+          { id: 'cat-inc-gifts', name: 'Gifts & Grants', icon: 'gift' },
+        ],
+      },
+    ];
 
   const insertStmt = db.prepare(`
     INSERT OR IGNORE INTO categories (id, user_id, parent_id, name, type, icon, color, sort_order)
