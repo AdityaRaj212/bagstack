@@ -536,7 +536,7 @@ export default function ReportsPage({
   const savingsRate = totalMonthIncome > 0 ? Math.round(((totalMonthIncome - totalMonthSpend) / totalMonthIncome) * 100) : 0;
 
   // Active analytics data based on view mode
-  const totalTaggedSpend = useMemo(() => spendingByTag.reduce((acc: number, t: any) => acc + (t.total || 0), 0), [spendingByTag]);
+  const totalTaggedSpend = spendingByTag.reduce((acc: number, t: any) => acc + (t.total || 0), 0);
   const activeAnalytics = analyticsView === 'category' ? spendingByCategory : spendingByTag;
   const activeAnalyticsTotal = analyticsView === 'category' ? totalMonthSpend : totalTaggedSpend;
   const analyticsLabel = analyticsView === 'category' ? 'Category' : 'Tag';
