@@ -1,0 +1,25 @@
+{
+  "id": "r03-grocery",
+  "description": "Grocery receipt with GST",
+  "kind": "receipt",
+  "format": "receipt-ocr-text",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "NATURES BASKET HSR LAYOUT\n27th Main, HSR Layout, Bengaluru\nGSTIN: 29ABCDE9697F1Z5\nBill No: 9644    Date: 09/06/2026    Time: 16:31\n----------------------------------------\nBasmati Rice 5kg x1               899.00\nOlive Oil 1L x1                   795.00\nGreek Yogurt x3                   360.00\nAvocado x4                        396.00\n----------------------------------------\nSub Total                       2,450.00\nCGST 2.5%                          61.25\nSGST 2.5%                          61.25\nGrand Total                     2,572.50\nPaid via UPI\nThank you! Visit again",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-06-09",
+        "amount": 257250,
+        "direction": "debit",
+        "merchant": "NATURES BASKET HSR LAYOUT",
+        "balanceAfter": null,
+        "category": "Groceries",
+        "shouldPost": true
+      }
+    ]
+  }
+}

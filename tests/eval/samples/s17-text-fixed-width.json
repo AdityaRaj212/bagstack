@@ -1,0 +1,124 @@
+{
+  "id": "s17-text-fixed-width",
+  "description": "text-fixed-width statement, 12 rows, 2026-04",
+  "kind": "statement",
+  "format": "text-fixed-width",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "KOTAK MAHINDRA BANK - SAVINGS ACCOUNT STATEMENT\nAccount Holder: A. R. SYNTHETIC          Account No: XXXXXXXX4821\nStatement Period: 01/04/2026 to 30/04/2026\nOpening Balance: 27,894.83\n\nDate        Description                                    Withdrawals      Deposits         Balance\n----------------------------------------------------------------------------------------------------\n02/04/2026  NEFT-SALARY ACME TECHNOLOGIES-47572032                       1,14,316.52     1,42,211.35\n04/04/2026  UPI/147236326802/SWIGGY/Payment                     582.73                   1,41,628.62\n06/04/2026  UPI/460506104049/AIRTEL POSTPAID/Payment            884.53                   1,40,744.09\n07/04/2026  UPI/789075264800/SWIGGY/Payment                   1,161.57                   1,39,582.52\n11/04/2026  UPI/270999784744/UBER INDIA/Payment                 184.60                   1,39,397.92\n17/04/2026  UPI/978271924331/HOUSE RENT NOBROKER/Payme       39,406.96                     99,990.96\n18/04/2026  UPI/321319790044/RAMESH KUMAR/Payment             4,493.13                     95,497.83\n22/04/2026  UPI/840500039514/HOUSE RENT NOBROKER/Payme       31,743.99                     63,753.84\n24/04/2026  UPI/857368849101/UBER INDIA/Payment                  91.25                     63,662.59\n25/04/2026  INT.PD INTEREST CREDIT                                          1,685.67       65,348.26\n27/04/2026  UPI/958565311622/DMART/Payment                      436.57                     64,911.69\n28/04/2026  UPI/181711671641/CROMA RETAIL/Payment            16,375.22                     48,536.47\n----------------------------------------------------------------------------------------------------\nClosing Balance: 48,536.47\nThis is a computer generated statement and does not require a signature.",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": 2789483,
+    "closing": 4853647,
+    "rows": [
+      {
+        "date": "2026-04-02",
+        "amount": 11431652,
+        "direction": "credit",
+        "merchant": "NEFT-SALARY ACME TECHNOLOGIES-47572032",
+        "balanceAfter": 14221135,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-04",
+        "amount": 58273,
+        "direction": "debit",
+        "merchant": "UPI/147236326802/SWIGGY/Payment",
+        "balanceAfter": 14162862,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-06",
+        "amount": 88453,
+        "direction": "debit",
+        "merchant": "UPI/460506104049/AIRTEL POSTPAID/Payment",
+        "balanceAfter": 14074409,
+        "category": "Internet & Mobile",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-07",
+        "amount": 116157,
+        "direction": "debit",
+        "merchant": "UPI/789075264800/SWIGGY/Payment",
+        "balanceAfter": 13958252,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-11",
+        "amount": 18460,
+        "direction": "debit",
+        "merchant": "UPI/270999784744/UBER INDIA/Payment",
+        "balanceAfter": 13939792,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-17",
+        "amount": 3940696,
+        "direction": "debit",
+        "merchant": "UPI/978271924331/HOUSE RENT NOBROKER/Payme",
+        "balanceAfter": 9999096,
+        "category": "Rent",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-18",
+        "amount": 449313,
+        "direction": "debit",
+        "merchant": "UPI/321319790044/RAMESH KUMAR/Payment",
+        "balanceAfter": 9549783,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-22",
+        "amount": 3174399,
+        "direction": "debit",
+        "merchant": "UPI/840500039514/HOUSE RENT NOBROKER/Payme",
+        "balanceAfter": 6375384,
+        "category": "Rent",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-24",
+        "amount": 9125,
+        "direction": "debit",
+        "merchant": "UPI/857368849101/UBER INDIA/Payment",
+        "balanceAfter": 6366259,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-25",
+        "amount": 168567,
+        "direction": "credit",
+        "merchant": "INT.PD INTEREST CREDIT",
+        "balanceAfter": 6534826,
+        "category": "Interest Income",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-27",
+        "amount": 43657,
+        "direction": "debit",
+        "merchant": "UPI/958565311622/DMART/Payment",
+        "balanceAfter": 6491169,
+        "category": "Groceries",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-28",
+        "amount": 1637522,
+        "direction": "debit",
+        "merchant": "UPI/181711671641/CROMA RETAIL/Payment",
+        "balanceAfter": 4853647,
+        "category": "Electronics",
+        "shouldPost": true
+      }
+    ]
+  }
+}

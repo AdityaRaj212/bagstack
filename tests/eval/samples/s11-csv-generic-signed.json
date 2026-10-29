@@ -1,0 +1,88 @@
+{
+  "id": "s11-csv-generic-signed",
+  "description": "csv-generic-signed statement, 8 rows, 2026-05",
+  "kind": "statement",
+  "format": "csv-generic-signed",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "Date,Description,Amount\n2026-05-01,NEFT CR-SALARY ACME TECHNOLOGIES,114494.25\n2026-05-10,CROMA RETAIL 240527,-7387.56\n2026-05-14,AIRTEL POSTPAID 145352,-1078.70\n2026-05-20,DMART 658795,-1213.89\n2026-05-22,AIRTEL POSTPAID 977013,-1007.34\n2026-05-24,BESCOM ELECTRICITY 765530,-2939.89\n2026-05-25,SWIGGY 887753,-877.82\n2026-05-28,OLA CABS 909516,-447.31",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-05-01",
+        "amount": 11449425,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": null,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-10",
+        "amount": 738756,
+        "direction": "debit",
+        "merchant": "CROMA RETAIL 240527",
+        "balanceAfter": null,
+        "category": "Electronics",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-14",
+        "amount": 107870,
+        "direction": "debit",
+        "merchant": "AIRTEL POSTPAID 145352",
+        "balanceAfter": null,
+        "category": "Internet & Mobile",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-20",
+        "amount": 121389,
+        "direction": "debit",
+        "merchant": "DMART 658795",
+        "balanceAfter": null,
+        "category": "Groceries",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-22",
+        "amount": 100734,
+        "direction": "debit",
+        "merchant": "AIRTEL POSTPAID 977013",
+        "balanceAfter": null,
+        "category": "Internet & Mobile",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-24",
+        "amount": 293989,
+        "direction": "debit",
+        "merchant": "BESCOM ELECTRICITY 765530",
+        "balanceAfter": null,
+        "category": "Electricity & Gas",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-25",
+        "amount": 87782,
+        "direction": "debit",
+        "merchant": "SWIGGY 887753",
+        "balanceAfter": null,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-28",
+        "amount": 44731,
+        "direction": "debit",
+        "merchant": "OLA CABS 909516",
+        "balanceAfter": null,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      }
+    ]
+  }
+}

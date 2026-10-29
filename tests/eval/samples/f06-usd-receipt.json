@@ -1,0 +1,25 @@
+{
+  "id": "f06-usd-receipt",
+  "description": "USD receipt imported into an INR account",
+  "kind": "receipt",
+  "format": "receipt-ocr-text",
+  "accountCurrency": "INR",
+  "flaw": "currency_mismatch",
+  "input": "JOES DINER MANHATTAN\n214 W 23rd St, New York, NY\nTel: (212) 555-0142\nBill No: 4749    Date: 06/05/2026    Time: 17:13\n----------------------------------------\nPancake Stack x2                  $29.00\nCoffee x2                          $7.50\n----------------------------------------\nSub Total                         $36.50\nSales Tax 8.875%                   $3.24\nGrand Total                       $39.74\nPaid: VISA ****4821\nThank you! Visit again",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-06-05",
+        "amount": 3974,
+        "direction": "debit",
+        "merchant": "JOES DINER MANHATTAN",
+        "balanceAfter": null,
+        "category": "Restaurants",
+        "shouldPost": false
+      }
+    ]
+  }
+}

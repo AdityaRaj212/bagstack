@@ -1,0 +1,601 @@
+{
+  "today": "2026-06-15",
+  "opening": {
+    "savings": 25000000,
+    "wallet": 500000
+  },
+  "transactions": [
+    {
+      "date": "2026-02-01",
+      "account": "savings",
+      "type": "income",
+      "amount": 12000000,
+      "merchant": "Acme Technologies Salary",
+      "categoryId": "cat-inc-fulltime"
+    },
+    {
+      "date": "2026-02-03",
+      "account": "savings",
+      "type": "expense",
+      "amount": 3200000,
+      "merchant": "Landlord Rent",
+      "categoryId": "cat-house-rent"
+    },
+    {
+      "date": "2026-02-03",
+      "account": "wallet",
+      "type": "expense",
+      "amount": 68932,
+      "merchant": "Swiggy",
+      "categoryId": "cat-food-delivery"
+    },
+    {
+      "date": "2026-02-12",
+      "account": "savings",
+      "type": "expense",
+      "amount": 64900,
+      "merchant": "Netflix",
+      "categoryId": "cat-ent-streaming"
+    },
+    {
+      "date": "2026-02-21",
+      "account": "savings",
+      "type": "expense",
+      "amount": 64900,
+      "merchant": "Netflix",
+      "categoryId": "cat-ent-streaming"
+    },
+    {
+      "date": "2026-02-15",
+      "account": "savings",
+      "type": "expense",
+      "amount": 247183,
+      "merchant": "Myntra",
+      "categoryId": "cat-shop-clothes"
+    },
+    {
+      "date": "2026-02-16",
+      "account": "savings",
+      "type": "expense",
+      "amount": 295369,
+      "merchant": "Truffles",
+      "categoryId": "cat-food-restaurants"
+    },
+    {
+      "date": "2026-02-25",
+      "account": "savings",
+      "type": "expense",
+      "amount": 37183,
+      "merchant": "Starbucks",
+      "categoryId": "cat-food-coffee"
+    },
+    {
+      "date": "2026-02-09",
+      "account": "savings",
+      "type": "expense",
+      "amount": 323800,
+      "merchant": "BigBasket",
+      "categoryId": "cat-food-groceries"
+    },
+    {
+      "date": "2026-02-26",
+      "account": "savings",
+      "type": "expense",
+      "amount": 56541,
+      "merchant": "Zomato",
+      "categoryId": "cat-food-delivery"
+    },
+    {
+      "date": "2026-02-28",
+      "account": "savings",
+      "type": "expense",
+      "amount": 167393,
+      "merchant": "Apollo Pharmacy",
+      "categoryId": "cat-hlth-meds"
+    },
+    {
+      "date": "2026-02-03",
+      "account": "savings",
+      "type": "expense",
+      "amount": 664075,
+      "merchant": "Croma",
+      "categoryId": "cat-shop-gadgets"
+    },
+    {
+      "date": "2026-02-02",
+      "account": "savings",
+      "type": "expense",
+      "amount": 303603,
+      "merchant": "HPCL Petrol",
+      "categoryId": "cat-trans-fuel"
+    },
+    {
+      "date": "2026-02-13",
+      "account": "savings",
+      "type": "expense",
+      "amount": 76236,
+      "merchant": "Uber",
+      "categoryId": "cat-trans-cab"
+    },
+    {
+      "date": "2026-02-20",
+      "account": "savings",
+      "type": "expense",
+      "amount": 150000,
+      "merchant": "Cult Fit",
+      "categoryId": "cat-hlth-fitness"
+    },
+    {
+      "date": "2026-02-05",
+      "account": "wallet",
+      "type": "expense",
+      "amount": 183176,
+      "merchant": "BigBasket",
+      "categoryId": "cat-food-groceries"
+    },
+    {
+      "date": "2026-03-01",
+      "account": "savings",
+      "type": "income",
+      "amount": 12000000,
+      "merchant": "Acme Technologies Salary",
+      "categoryId": "cat-inc-fulltime"
+    },
+    {
+      "date": "2026-03-03",
+      "account": "savings",
+      "type": "expense",
+      "amount": 3200000,
+      "merchant": "Landlord Rent",
+      "categoryId": "cat-house-rent"
+    },
+    {
+      "date": "2026-03-19",
+      "account": "savings",
+      "type": "expense",
+      "amount": 32181,
+      "merchant": "Starbucks",
+      "categoryId": "cat-food-coffee"
+    },
+    {
+      "date": "2026-03-26",
+      "account": "savings",
+      "type": "expense",
+      "amount": 152253,
+      "merchant": "Apollo Pharmacy",
+      "categoryId": "cat-hlth-meds"
+    },
+    {
+      "date": "2026-03-26",
+      "account": "savings",
+      "type": "expense",
+      "amount": 104789,
+      "merchant": "Apollo Pharmacy",
+      "categoryId": "cat-hlth-meds"
+    },
+    {
+      "date": "2026-03-26",
+      "account": "wallet",
+      "type": "expense",
+      "amount": 154074,
+      "merchant": "Apollo Pharmacy",
+      "categoryId": "cat-hlth-meds"
+    },
+    {
+      "date": "2026-03-28",
+      "account": "wallet",
+      "type": "expense",
+      "amount": 99371,
+      "merchant": "PVR Cinemas",
+      "categoryId": "cat-ent-movies"
+    },
+    {
+      "date": "2026-03-02",
+      "account": "savings",
+      "type": "expense",
+      "amount": 626473,
+      "merchant": "Croma",
+      "categoryId": "cat-shop-gadgets"
+    },
+    {
+      "date": "2026-03-16",
+      "account": "savings",
+      "type": "expense",
+      "amount": 150000,
+      "merchant": "Cult Fit",
+      "categoryId": "cat-hlth-fitness"
+    },
+    {
+      "date": "2026-03-24",
+      "account": "savings",
+      "type": "expense",
+      "amount": 64900,
+      "merchant": "Netflix",
+      "categoryId": "cat-ent-streaming"
+    },
+    {
+      "date": "2026-03-16",
+      "account": "savings",
+      "type": "expense",
+      "amount": 150000,
+      "merchant": "Cult Fit",
+      "categoryId": "cat-hlth-fitness"
+    },
+    {
+      "date": "2026-03-02",
+      "account": "wallet",
+      "type": "expense",
+      "amount": 78336,
+      "merchant": "Swiggy",
+      "categoryId": "cat-food-delivery"
+    },
+    {
+      "date": "2026-03-02",
+      "account": "savings",
+      "type": "expense",
+      "amount": 115184,
+      "merchant": "Apollo Pharmacy",
+      "categoryId": "cat-hlth-meds"
+    },
+    {
+      "date": "2026-03-28",
+      "account": "savings",
+      "type": "expense",
+      "amount": 150000,
+      "merchant": "Cult Fit",
+      "categoryId": "cat-hlth-fitness"
+    },
+    {
+      "date": "2026-03-23",
+      "account": "savings",
+      "type": "expense",
+      "amount": 152823,
+      "merchant": "Apollo Pharmacy",
+      "categoryId": "cat-hlth-meds"
+    },
+    {
+      "date": "2026-03-28",
+      "account": "savings",
+      "type": "expense",
+      "amount": 261405,
+      "merchant": "BigBasket",
+      "categoryId": "cat-food-groceries"
+    },
+    {
+      "date": "2026-04-01",
+      "account": "savings",
+      "type": "income",
+      "amount": 12000000,
+      "merchant": "Acme Technologies Salary",
+      "categoryId": "cat-inc-fulltime"
+    },
+    {
+      "date": "2026-04-03",
+      "account": "savings",
+      "type": "expense",
+      "amount": 3200000,
+      "merchant": "Landlord Rent",
+      "categoryId": "cat-house-rent"
+    },
+    {
+      "date": "2026-04-12",
+      "account": "savings",
+      "type": "expense",
+      "amount": 340334,
+      "merchant": "BigBasket",
+      "categoryId": "cat-food-groceries"
+    },
+    {
+      "date": "2026-04-21",
+      "account": "savings",
+      "type": "expense",
+      "amount": 1487316,
+      "merchant": "Croma",
+      "categoryId": "cat-shop-gadgets"
+    },
+    {
+      "date": "2026-04-21",
+      "account": "wallet",
+      "type": "expense",
+      "amount": 94030,
+      "merchant": "PVR Cinemas",
+      "categoryId": "cat-ent-movies"
+    },
+    {
+      "date": "2026-04-17",
+      "account": "savings",
+      "type": "expense",
+      "amount": 72696,
+      "merchant": "Starbucks",
+      "categoryId": "cat-food-coffee"
+    },
+    {
+      "date": "2026-04-16",
+      "account": "savings",
+      "type": "expense",
+      "amount": 56282,
+      "merchant": "Starbucks",
+      "categoryId": "cat-food-coffee"
+    },
+    {
+      "date": "2026-04-08",
+      "account": "savings",
+      "type": "expense",
+      "amount": 232804,
+      "merchant": "BigBasket",
+      "categoryId": "cat-food-groceries"
+    },
+    {
+      "date": "2026-04-02",
+      "account": "savings",
+      "type": "expense",
+      "amount": 87713,
+      "merchant": "BigBasket",
+      "categoryId": "cat-food-groceries"
+    },
+    {
+      "date": "2026-04-25",
+      "account": "wallet",
+      "type": "expense",
+      "amount": 21727,
+      "merchant": "Zomato",
+      "categoryId": "cat-food-delivery"
+    },
+    {
+      "date": "2026-04-12",
+      "account": "savings",
+      "type": "expense",
+      "amount": 314347,
+      "merchant": "BigBasket",
+      "categoryId": "cat-food-groceries"
+    },
+    {
+      "date": "2026-04-11",
+      "account": "savings",
+      "type": "expense",
+      "amount": 59752,
+      "merchant": "Uber",
+      "categoryId": "cat-trans-cab"
+    },
+    {
+      "date": "2026-04-16",
+      "account": "savings",
+      "type": "expense",
+      "amount": 264866,
+      "merchant": "Myntra",
+      "categoryId": "cat-shop-clothes"
+    },
+    {
+      "date": "2026-04-09",
+      "account": "savings",
+      "type": "expense",
+      "amount": 119884,
+      "merchant": "PVR Cinemas",
+      "categoryId": "cat-ent-movies"
+    },
+    {
+      "date": "2026-04-08",
+      "account": "wallet",
+      "type": "expense",
+      "amount": 69298,
+      "merchant": "Zomato",
+      "categoryId": "cat-food-delivery"
+    },
+    {
+      "date": "2026-04-13",
+      "account": "savings",
+      "type": "expense",
+      "amount": 468131,
+      "merchant": "Myntra",
+      "categoryId": "cat-shop-clothes"
+    },
+    {
+      "date": "2026-05-01",
+      "account": "savings",
+      "type": "income",
+      "amount": 12000000,
+      "merchant": "Acme Technologies Salary",
+      "categoryId": "cat-inc-fulltime"
+    },
+    {
+      "date": "2026-05-03",
+      "account": "savings",
+      "type": "expense",
+      "amount": 3200000,
+      "merchant": "Landlord Rent",
+      "categoryId": "cat-house-rent"
+    },
+    {
+      "date": "2026-05-11",
+      "account": "savings",
+      "type": "expense",
+      "amount": 264365,
+      "merchant": "Truffles",
+      "categoryId": "cat-food-restaurants"
+    },
+    {
+      "date": "2026-05-28",
+      "account": "savings",
+      "type": "expense",
+      "amount": 237263,
+      "merchant": "HPCL Petrol",
+      "categoryId": "cat-trans-fuel"
+    },
+    {
+      "date": "2026-05-16",
+      "account": "savings",
+      "type": "expense",
+      "amount": 71894,
+      "merchant": "Uber",
+      "categoryId": "cat-trans-cab"
+    },
+    {
+      "date": "2026-05-28",
+      "account": "wallet",
+      "type": "expense",
+      "amount": 94607,
+      "merchant": "PVR Cinemas",
+      "categoryId": "cat-ent-movies"
+    },
+    {
+      "date": "2026-05-20",
+      "account": "wallet",
+      "type": "expense",
+      "amount": 260131,
+      "merchant": "HPCL Petrol",
+      "categoryId": "cat-trans-fuel"
+    },
+    {
+      "date": "2026-05-06",
+      "account": "savings",
+      "type": "expense",
+      "amount": 82528,
+      "merchant": "Apollo Pharmacy",
+      "categoryId": "cat-hlth-meds"
+    },
+    {
+      "date": "2026-05-25",
+      "account": "savings",
+      "type": "expense",
+      "amount": 76584,
+      "merchant": "PVR Cinemas",
+      "categoryId": "cat-ent-movies"
+    },
+    {
+      "date": "2026-05-20",
+      "account": "savings",
+      "type": "expense",
+      "amount": 77808,
+      "merchant": "Zomato",
+      "categoryId": "cat-food-delivery"
+    },
+    {
+      "date": "2026-05-09",
+      "account": "savings",
+      "type": "expense",
+      "amount": 60425,
+      "merchant": "Uber",
+      "categoryId": "cat-trans-cab"
+    },
+    {
+      "date": "2026-05-23",
+      "account": "wallet",
+      "type": "expense",
+      "amount": 99900,
+      "merchant": "Airtel",
+      "categoryId": "cat-house-net"
+    },
+    {
+      "date": "2026-05-28",
+      "account": "savings",
+      "type": "expense",
+      "amount": 56922,
+      "merchant": "Starbucks",
+      "categoryId": "cat-food-coffee"
+    },
+    {
+      "date": "2026-05-21",
+      "account": "savings",
+      "type": "expense",
+      "amount": 274746,
+      "merchant": "HPCL Petrol",
+      "categoryId": "cat-trans-fuel"
+    },
+    {
+      "date": "2026-05-18",
+      "account": "savings",
+      "type": "expense",
+      "amount": 150000,
+      "merchant": "Cult Fit",
+      "categoryId": "cat-hlth-fitness"
+    },
+    {
+      "date": "2026-05-15",
+      "account": "savings",
+      "type": "expense",
+      "amount": 1139301,
+      "merchant": "Croma",
+      "categoryId": "cat-shop-gadgets"
+    },
+    {
+      "date": "2026-06-01",
+      "account": "savings",
+      "type": "income",
+      "amount": 12000000,
+      "merchant": "Acme Technologies Salary",
+      "categoryId": "cat-inc-fulltime"
+    },
+    {
+      "date": "2026-06-03",
+      "account": "savings",
+      "type": "expense",
+      "amount": 3200000,
+      "merchant": "Landlord Rent",
+      "categoryId": "cat-house-rent"
+    },
+    {
+      "date": "2026-06-09",
+      "account": "savings",
+      "type": "expense",
+      "amount": 55522,
+      "merchant": "Namma Metro",
+      "categoryId": "cat-trans-public"
+    },
+    {
+      "date": "2026-06-03",
+      "account": "savings",
+      "type": "expense",
+      "amount": 171644,
+      "merchant": "BESCOM",
+      "categoryId": "cat-house-elec"
+    },
+    {
+      "date": "2026-06-07",
+      "account": "wallet",
+      "type": "expense",
+      "amount": 64900,
+      "merchant": "Netflix",
+      "categoryId": "cat-ent-streaming"
+    },
+    {
+      "date": "2026-06-13",
+      "account": "savings",
+      "type": "expense",
+      "amount": 64900,
+      "merchant": "Netflix",
+      "categoryId": "cat-ent-streaming"
+    },
+    {
+      "date": "2026-06-10",
+      "account": "savings",
+      "type": "expense",
+      "amount": 99900,
+      "merchant": "Airtel",
+      "categoryId": "cat-house-net"
+    },
+    {
+      "date": "2026-06-14",
+      "account": "wallet",
+      "type": "expense",
+      "amount": 99900,
+      "merchant": "Airtel",
+      "categoryId": "cat-house-net"
+    },
+    {
+      "date": "2026-06-11",
+      "account": "savings",
+      "type": "expense",
+      "amount": 106407,
+      "merchant": "BigBasket",
+      "categoryId": "cat-food-groceries"
+    },
+    {
+      "date": "2026-06-05",
+      "account": "savings",
+      "type": "expense",
+      "amount": 99900,
+      "merchant": "Airtel",
+      "categoryId": "cat-house-net"
+    }
+  ]
+}

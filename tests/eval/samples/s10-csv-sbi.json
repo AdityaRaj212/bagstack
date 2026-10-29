@@ -1,0 +1,151 @@
+{
+  "id": "s10-csv-sbi",
+  "description": "csv-sbi statement, 15 rows, 2025-12",
+  "kind": "statement",
+  "format": "csv-sbi",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "Txn Date,Value Date,Description,Ref No./Cheque No.,Debit,Credit,Balance\n01 Dec 2025,01 Dec 2025,NEFT CR-SALARY ACME TECHNOLOGIES,TRF15601,,\"1,12,692.08\",\"2,02,341.28\"\n05 Dec 2025,05 Dec 2025,BY TRANSFER-UPI/DR/699267/PVR CINEMAS,TRF56447,401.22,,\"2,01,940.06\"\n06 Dec 2025,06 Dec 2025,BY TRANSFER-UPI/DR/786869/ZOMATO,TRF53811,825.86,,\"2,01,114.20\"\n08 Dec 2025,08 Dec 2025,BY TRANSFER-UPI/DR/148381/CROMA RETAIL,TRF71370,\"20,536.78\",,\"1,80,577.42\"\n10 Dec 2025,10 Dec 2025,BY TRANSFER-UPI/DR/533482/CULT FIT,TRF59964,\"2,096.86\",,\"1,78,480.56\"\n11 Dec 2025,11 Dec 2025,BY TRANSFER-UPI/DR/505487/PVR CINEMAS,TRF64910,944.23,,\"1,77,536.33\"\n13 Dec 2025,13 Dec 2025,BY TRANSFER-UPI/DR/737454/CULT FIT,TRF86673,\"1,031.59\",,\"1,76,504.74\"\n14 Dec 2025,14 Dec 2025,BY TRANSFER-UPI/DR/264908/SWIGGY,TRF69786,884.92,,\"1,75,619.82\"\n15 Dec 2025,15 Dec 2025,BY TRANSFER-UPI/DR/938009/AIRTEL POSTPAID,TRF98579,\"1,079.62\",,\"1,74,540.20\"\n18 Dec 2025,18 Dec 2025,BY TRANSFER-UPI/DR/912358/OLA CABS,TRF98152,463.23,,\"1,74,076.97\"\n19 Dec 2025,19 Dec 2025,BY TRANSFER-UPI/DR/610694/NETFLIX,TRF97041,219.51,,\"1,73,857.46\"\n22 Dec 2025,22 Dec 2025,BY TRANSFER-UPI/DR/521510/PVR CINEMAS,TRF83048,902.52,,\"1,72,954.94\"\n24 Dec 2025,24 Dec 2025,BY TRANSFER-UPI/DR/743363/HDFC ERGO INSURANCE,TRF96168,\"4,380.64\",,\"1,68,574.30\"\n25 Dec 2025,25 Dec 2025,BY TRANSFER-UPI/DR/849810/CULT FIT,TRF83013,\"2,890.17\",,\"1,65,684.13\"\n28 Dec 2025,28 Dec 2025,BY TRANSFER-UPI/DR/919446/NETFLIX,TRF24338,202.71,,\"1,65,481.42\"",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2025-12-01",
+        "amount": 11269208,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 20234128,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-12-05",
+        "amount": 40122,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/699267/PVR CINEMAS",
+        "balanceAfter": 20194006,
+        "category": "Movies & Events",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-12-06",
+        "amount": 82586,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/786869/ZOMATO",
+        "balanceAfter": 20111420,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-12-08",
+        "amount": 2053678,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/148381/CROMA RETAIL",
+        "balanceAfter": 18057742,
+        "category": "Electronics",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-12-10",
+        "amount": 209686,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/533482/CULT FIT",
+        "balanceAfter": 17848056,
+        "category": "Gym & Fitness",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-12-11",
+        "amount": 94423,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/505487/PVR CINEMAS",
+        "balanceAfter": 17753633,
+        "category": "Movies & Events",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-12-13",
+        "amount": 103159,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/737454/CULT FIT",
+        "balanceAfter": 17650474,
+        "category": "Gym & Fitness",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-12-14",
+        "amount": 88492,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/264908/SWIGGY",
+        "balanceAfter": 17561982,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-12-15",
+        "amount": 107962,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/938009/AIRTEL POSTPAID",
+        "balanceAfter": 17454020,
+        "category": "Internet & Mobile",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-12-18",
+        "amount": 46323,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/912358/OLA CABS",
+        "balanceAfter": 17407697,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-12-19",
+        "amount": 21951,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/610694/NETFLIX",
+        "balanceAfter": 17385746,
+        "category": "Streaming Services",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-12-22",
+        "amount": 90252,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/521510/PVR CINEMAS",
+        "balanceAfter": 17295494,
+        "category": "Movies & Events",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-12-24",
+        "amount": 438064,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/743363/HDFC ERGO INSURANCE",
+        "balanceAfter": 16857430,
+        "category": "Insurance Premium",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-12-25",
+        "amount": 289017,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/849810/CULT FIT",
+        "balanceAfter": 16568413,
+        "category": "Gym & Fitness",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-12-28",
+        "amount": 20271,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/919446/NETFLIX",
+        "balanceAfter": 16548142,
+        "category": "Streaming Services",
+        "shouldPost": true
+      }
+    ]
+  }
+}

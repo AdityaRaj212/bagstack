@@ -1,0 +1,124 @@
+{
+  "id": "s04-csv-hdfc",
+  "description": "csv-hdfc statement, 12 rows, 2026-02",
+  "kind": "statement",
+  "format": "csv-hdfc",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "Date,Narration,Chq./Ref.No.,Value Dt,Withdrawal Amt.,Deposit Amt.,Closing Balance\n02/02/26,NEFT CR-SALARY ACME TECHNOLOGIES,3963982,02/02/26,,141395.98,210045.02\n04/02/26,UPI-RAMESH KUMAR-505092515423,8602028,04/02/26,4525.28,,205519.74\n05/02/26,UPI-DMART-826833277242,2364351,05/02/26,2503.73,,203016.01\n06/02/26,UPI-UBER INDIA-591095914482,4291750,06/02/26,386.13,,202629.88\n09/02/26,UPI-PRIYA SHARMA-873533959151,1179730,09/02/26,,7887.99,210517.87\n11/02/26,UPI-RAMESH KUMAR-148190165380,1769521,11/02/26,3846.30,,206671.57\n13/02/26,UPI-ZOMATO-555888342298,6828909,13/02/26,276.97,,206394.60\n14/02/26,UPI-CROMA RETAIL-992310951021,7537279,14/02/26,19378.79,,187015.81\n17/02/26,SMS ALERT CHARGES QTR,9603476,17/02/26,27.63,,186988.18\n20/02/26,UPI-RAMESH KUMAR-415974054136,8915182,20/02/26,3197.25,,183790.93\n23/02/26,UPI-NETFLIX-712889975961,5196229,23/02/26,594.27,,183196.66\n26/02/26,UPI-BMRCL METRO RECHARGE-663346842117,7367298,26/02/26,950.03,,182246.63",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-02-02",
+        "amount": 14139598,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 21004502,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-04",
+        "amount": 452528,
+        "direction": "debit",
+        "merchant": "UPI-RAMESH KUMAR-505092515423",
+        "balanceAfter": 20551974,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-05",
+        "amount": 250373,
+        "direction": "debit",
+        "merchant": "UPI-DMART-826833277242",
+        "balanceAfter": 20301601,
+        "category": "Groceries",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-06",
+        "amount": 38613,
+        "direction": "debit",
+        "merchant": "UPI-UBER INDIA-591095914482",
+        "balanceAfter": 20262988,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-09",
+        "amount": 788799,
+        "direction": "credit",
+        "merchant": "UPI-PRIYA SHARMA-873533959151",
+        "balanceAfter": 21051787,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-11",
+        "amount": 384630,
+        "direction": "debit",
+        "merchant": "UPI-RAMESH KUMAR-148190165380",
+        "balanceAfter": 20667157,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-13",
+        "amount": 27697,
+        "direction": "debit",
+        "merchant": "UPI-ZOMATO-555888342298",
+        "balanceAfter": 20639460,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-14",
+        "amount": 1937879,
+        "direction": "debit",
+        "merchant": "UPI-CROMA RETAIL-992310951021",
+        "balanceAfter": 18701581,
+        "category": "Electronics",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-17",
+        "amount": 2763,
+        "direction": "debit",
+        "merchant": "SMS ALERT CHARGES QTR",
+        "balanceAfter": 18698818,
+        "category": "Bank Charges & Fees",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-20",
+        "amount": 319725,
+        "direction": "debit",
+        "merchant": "UPI-RAMESH KUMAR-415974054136",
+        "balanceAfter": 18379093,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-23",
+        "amount": 59427,
+        "direction": "debit",
+        "merchant": "UPI-NETFLIX-712889975961",
+        "balanceAfter": 18319666,
+        "category": "Streaming Services",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-26",
+        "amount": 95003,
+        "direction": "debit",
+        "merchant": "UPI-BMRCL METRO RECHARGE-663346842117",
+        "balanceAfter": 18224663,
+        "category": "Public Transit",
+        "shouldPost": true
+      }
+    ]
+  }
+}

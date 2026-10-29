@@ -1,0 +1,97 @@
+{
+  "id": "s05-csv-icici",
+  "description": "csv-icici statement, 9 rows, 2026-05",
+  "kind": "statement",
+  "format": "csv-icici",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "S No.,Value Date,Transaction Date,Cheque Number,Transaction Remarks,Withdrawal Amount (INR ),Deposit Amount (INR ),Balance (INR )\n1,02/05/2026,02/05/2026,-,NEFT-SALARY ACME TECHNOLOGIES-69972120,0.00,\"97,735.13\",\"127,895.80\"\n2,04/05/2026,04/05/2026,-,UPI/522125122277/PVR CINEMAS/Payment,904.43,0.00,\"126,991.37\"\n3,08/05/2026,08/05/2026,-,UPI/398729598242/NETFLIX/Payment,390.27,0.00,\"126,601.10\"\n4,09/05/2026,09/05/2026,-,UPI/554137503751/HPCL PETROL PUMP/Payment,\"1,442.93\",0.00,\"125,158.17\"\n5,13/05/2026,13/05/2026,-,UPI/593161478196/OLA CABS/Payment,408.95,0.00,\"124,749.22\"\n6,16/05/2026,16/05/2026,-,UPI/221342818369/CROMA RETAIL/Payment,\"11,773.95\",0.00,\"112,975.27\"\n7,21/05/2026,21/05/2026,-,UPI/948916208231/SWIGGY/Payment,331.14,0.00,\"112,644.13\"\n8,22/05/2026,22/05/2026,-,UPI/487358882860/ZOMATO/Payment,803.00,0.00,\"111,841.13\"\n9,23/05/2026,23/05/2026,-,UPI/839503775304/PVR CINEMAS/Payment,473.49,0.00,\"111,367.64\"",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-05-02",
+        "amount": 9773513,
+        "direction": "credit",
+        "merchant": "NEFT-SALARY ACME TECHNOLOGIES-69972120",
+        "balanceAfter": 12789580,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-04",
+        "amount": 90443,
+        "direction": "debit",
+        "merchant": "UPI/522125122277/PVR CINEMAS/Payment",
+        "balanceAfter": 12699137,
+        "category": "Movies & Events",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-08",
+        "amount": 39027,
+        "direction": "debit",
+        "merchant": "UPI/398729598242/NETFLIX/Payment",
+        "balanceAfter": 12660110,
+        "category": "Streaming Services",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-09",
+        "amount": 144293,
+        "direction": "debit",
+        "merchant": "UPI/554137503751/HPCL PETROL PUMP/Payment",
+        "balanceAfter": 12515817,
+        "category": "Fuel",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-13",
+        "amount": 40895,
+        "direction": "debit",
+        "merchant": "UPI/593161478196/OLA CABS/Payment",
+        "balanceAfter": 12474922,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-16",
+        "amount": 1177395,
+        "direction": "debit",
+        "merchant": "UPI/221342818369/CROMA RETAIL/Payment",
+        "balanceAfter": 11297527,
+        "category": "Electronics",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-21",
+        "amount": 33114,
+        "direction": "debit",
+        "merchant": "UPI/948916208231/SWIGGY/Payment",
+        "balanceAfter": 11264413,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-22",
+        "amount": 80300,
+        "direction": "debit",
+        "merchant": "UPI/487358882860/ZOMATO/Payment",
+        "balanceAfter": 11184113,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-23",
+        "amount": 47349,
+        "direction": "debit",
+        "merchant": "UPI/839503775304/PVR CINEMAS/Payment",
+        "balanceAfter": 11136764,
+        "category": "Movies & Events",
+        "shouldPost": true
+      }
+    ]
+  }
+}

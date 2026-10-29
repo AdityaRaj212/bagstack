@@ -1,0 +1,25 @@
+{
+  "id": "r01-restaurant",
+  "description": "Cafe receipt with GST",
+  "kind": "receipt",
+  "format": "receipt-ocr-text",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "CAFE MOCHA INDIRANAGAR\n12th Main, Indiranagar, Bengaluru\nGSTIN: 29ABCDE4529F1Z5\nBill No: 6099    Date: 02/06/2026    Time: 20:24\n----------------------------------------\nCappuccino x2                     360.00\nVeg Club Sandwich x1              260.00\nBrownie x1                        145.00\n----------------------------------------\nSub Total                         765.00\nCGST 2.5%                          19.13\nSGST 2.5%                          19.13\nGrand Total                       803.26\nPaid via UPI\nThank you! Visit again",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-06-02",
+        "amount": 80326,
+        "direction": "debit",
+        "merchant": "CAFE MOCHA INDIRANAGAR",
+        "balanceAfter": null,
+        "category": "Coffee & Snacks",
+        "shouldPost": true
+      }
+    ]
+  }
+}

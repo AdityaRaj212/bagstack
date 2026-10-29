@@ -1,0 +1,115 @@
+{
+  "id": "s08-csv-sbi",
+  "description": "csv-sbi statement, 11 rows, 2026-05",
+  "kind": "statement",
+  "format": "csv-sbi",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "Txn Date,Value Date,Description,Ref No./Cheque No.,Debit,Credit,Balance\n01 May 2026,01 May 2026,NEFT CR-SALARY ACME TECHNOLOGIES,TRF22429,,\"91,485.94\",\"1,18,315.22\"\n03 May 2026,03 May 2026,BY TRANSFER-UPI/DR/350859/UBER INDIA,TRF17424,454.94,,\"1,17,860.28\"\n04 May 2026,04 May 2026,BY TRANSFER-UPI/DR/567144/OLA CABS,TRF79529,526.68,,\"1,17,333.60\"\n08 May 2026,08 May 2026,BY TRANSFER-UPI/DR/198170/PVR CINEMAS,TRF48846,\"1,089.91\",,\"1,16,243.69\"\n10 May 2026,10 May 2026,BY TRANSFER-UPI/DR/926753/ZERODHA SIP,TRF88333,\"18,781.82\",,\"97,461.87\"\n11 May 2026,11 May 2026,BY TRANSFER-UPI/DR/129841/BIGBASKET,TRF81290,829.29,,\"96,632.58\"\n18 May 2026,18 May 2026,BY TRANSFER-UPI/DR/306935/BMRCL METRO RECHARGE,TRF54417,392.12,,\"96,240.46\"\n20 May 2026,20 May 2026,BY TRANSFER-UPI/CR/856004/PRIYA SHARMA,TRF95642,,\"9,136.79\",\"1,05,377.25\"\n24 May 2026,24 May 2026,BY TRANSFER-UPI/DR/128873/BMRCL METRO RECHARGE,TRF25787,719.32,,\"1,04,657.93\"\n25 May 2026,25 May 2026,BY TRANSFER-UPI/DR/438291/HDFC ERGO INSURANCE,TRF23094,\"14,878.56\",,\"89,779.37\"\n26 May 2026,26 May 2026,BY TRANSFER-UPI/DR/554567/UBER INDIA,TRF59690,686.97,,\"89,092.40\"",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-05-01",
+        "amount": 9148594,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 11831522,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-03",
+        "amount": 45494,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/350859/UBER INDIA",
+        "balanceAfter": 11786028,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-04",
+        "amount": 52668,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/567144/OLA CABS",
+        "balanceAfter": 11733360,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-08",
+        "amount": 108991,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/198170/PVR CINEMAS",
+        "balanceAfter": 11624369,
+        "category": "Movies & Events",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-10",
+        "amount": 1878182,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/926753/ZERODHA SIP",
+        "balanceAfter": 9746187,
+        "category": "Investments & Mutual Funds",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-11",
+        "amount": 82929,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/129841/BIGBASKET",
+        "balanceAfter": 9663258,
+        "category": "Groceries",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-18",
+        "amount": 39212,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/306935/BMRCL METRO RECHARGE",
+        "balanceAfter": 9624046,
+        "category": "Public Transit",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-20",
+        "amount": 913679,
+        "direction": "credit",
+        "merchant": "BY TRANSFER-UPI/CR/856004/PRIYA SHARMA",
+        "balanceAfter": 10537725,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-24",
+        "amount": 71932,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/128873/BMRCL METRO RECHARGE",
+        "balanceAfter": 10465793,
+        "category": "Public Transit",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-25",
+        "amount": 1487856,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/438291/HDFC ERGO INSURANCE",
+        "balanceAfter": 8977937,
+        "category": "Insurance Premium",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-26",
+        "amount": 68697,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/554567/UBER INDIA",
+        "balanceAfter": 8909240,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      }
+    ]
+  }
+}

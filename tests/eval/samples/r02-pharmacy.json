@@ -1,0 +1,25 @@
+{
+  "id": "r02-pharmacy",
+  "description": "Pharmacy receipt, no GST lines",
+  "kind": "receipt",
+  "format": "receipt-ocr-text",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "APOLLO PHARMACY KORAMANGALA\n80 Feet Road, Koramangala, Bengaluru\nGSTIN: 29ABCDE4301F1Z5\nBill No: 5812    Date: 27/05/2026    Time: 10:17\n----------------------------------------\nParacetamol 650 Strip x3           96.00\nVitamin D3 Sachet x4              246.00\nHand Sanitizer 500ml x1           249.00\n----------------------------------------\nSub Total                         591.00\nGrand Total                       591.00\nPaid via UPI\nThank you! Visit again",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-05-27",
+        "amount": 59100,
+        "direction": "debit",
+        "merchant": "APOLLO PHARMACY KORAMANGALA",
+        "balanceAfter": null,
+        "category": "Medicines & Pharmacy",
+        "shouldPost": true
+      }
+    ]
+  }
+}

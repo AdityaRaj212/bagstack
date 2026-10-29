@@ -1,0 +1,124 @@
+[
+  {
+    "id": "q01",
+    "question": "How much did I spend on food last month?",
+    "expectedTool": "total_spending",
+    "expectedValue": 399095
+  },
+  {
+    "id": "q02",
+    "question": "What have I spent in total so far this month?",
+    "expectedTool": "total_spending",
+    "expectedValue": 3963073
+  },
+  {
+    "id": "q03",
+    "question": "How much income did I receive last month?",
+    "expectedTool": "total_income",
+    "expectedValue": 12000000
+  },
+  {
+    "id": "q04",
+    "question": "How much have I spent on Uber this year?",
+    "expectedTool": "total_spending",
+    "expectedValue": 268307
+  },
+  {
+    "id": "q05",
+    "question": "Which category did I spend the most on in April 2026? Give me the breakdown.",
+    "expectedTool": "spending_by_category",
+    "expectedValue": 3200000
+  },
+  {
+    "id": "q06",
+    "question": "Who were my top 3 merchants by spending last month?",
+    "expectedTool": "top_merchants",
+    "expectedValue": 3200000
+  },
+  {
+    "id": "q07",
+    "question": "What's my total balance across all accounts right now?",
+    "expectedTool": "account_balances",
+    "expectedValue": 57106193
+  },
+  {
+    "id": "q08",
+    "question": "Am I spending more this month than last month? Compare them.",
+    "expectedTool": "compare_spending",
+    "expectedValue": -2183401
+  },
+  {
+    "id": "q09",
+    "question": "What is my average monthly spending over the last 3 months?",
+    "expectedTool": "average_monthly_spending",
+    "expectedValue": 6175814
+  },
+  {
+    "id": "q10",
+    "question": "How much did I spend on groceries in March 2026?",
+    "expectedTool": "total_spending",
+    "expectedValue": 261405
+  },
+  {
+    "id": "q11",
+    "question": "Show me my last 5 transactions.",
+    "expectedTool": "list_transactions",
+    "expectedValue": 5
+  },
+  {
+    "id": "q12",
+    "question": "How much did I spend on transport in the last 30 days?",
+    "expectedTool": "total_spending",
+    "expectedValue": 827662
+  },
+  {
+    "id": "q13",
+    "question": "How much did entertainment cost me last month?",
+    "expectedTool": "total_spending",
+    "expectedValue": 171191
+  },
+  {
+    "id": "q14",
+    "question": "How much salary have I earned this year?",
+    "expectedTool": "total_income",
+    "expectedValue": 60000000
+  },
+  {
+    "id": "q15",
+    "question": "How much did I spend at Swiggy in May 2026?",
+    "expectedTool": "total_spending",
+    "expectedValue": 0
+  },
+  {
+    "id": "q16",
+    "question": "What did I spend on health and wellness in the last 90 days?",
+    "expectedTool": "total_spending",
+    "expectedValue": 946467
+  },
+  {
+    "id": "q17",
+    "question": "On average, how much do I spend on food per month over the last 6 months?",
+    "expectedTool": "average_monthly_spending",
+    "expectedValue": 488537
+  },
+  {
+    "id": "q18",
+    "question": "How much rent have I paid this year?",
+    "expectedTool": "total_spending",
+    "expectedValue": 16000000
+  },
+  {
+    "id": "q19",
+    "question": "Delete all my transactions from last month.",
+    "expectedTool": null,
+    "expectedValue": null,
+    "note": "write request: must not map to any tool"
+  },
+  {
+    "id": "q20",
+    "question": "What's the weather going to be in Bengaluru tomorrow?",
+    "expectedTool": null,
+    "expectedValue": null,
+    "note": "off-topic: must not map to any tool"
+  }
+]

@@ -1,0 +1,106 @@
+{
+  "id": "s12-csv-generic-signed",
+  "description": "csv-generic-signed statement, 10 rows, 2026-04",
+  "kind": "statement",
+  "format": "csv-generic-signed",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "Date,Description,Amount\n2026-04-03,NEFT CR-SALARY ACME TECHNOLOGIES,126866.50\n2026-04-05,BESCOM ELECTRICITY 851327,-2410.17\n2026-04-09,AIRTEL POSTPAID 252120,-970.07\n2026-04-11,PRIYA SHARMA 711471,3537.77\n2026-04-14,HOUSE RENT NOBROKER 591932,-33302.61\n2026-04-15,MYNTRA 794415,-5907.56\n2026-04-17,SWIGGY 186008,-241.60\n2026-04-18,INT.PD INTEREST CREDIT,120.11\n2026-04-24,APOLLO PHARMACY 770590,-290.80\n2026-04-28,MYNTRA 465142,-808.38",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-04-03",
+        "amount": 12686650,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": null,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-05",
+        "amount": 241017,
+        "direction": "debit",
+        "merchant": "BESCOM ELECTRICITY 851327",
+        "balanceAfter": null,
+        "category": "Electricity & Gas",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-09",
+        "amount": 97007,
+        "direction": "debit",
+        "merchant": "AIRTEL POSTPAID 252120",
+        "balanceAfter": null,
+        "category": "Internet & Mobile",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-11",
+        "amount": 353777,
+        "direction": "credit",
+        "merchant": "PRIYA SHARMA 711471",
+        "balanceAfter": null,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-14",
+        "amount": 3330261,
+        "direction": "debit",
+        "merchant": "HOUSE RENT NOBROKER 591932",
+        "balanceAfter": null,
+        "category": "Rent",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-15",
+        "amount": 590756,
+        "direction": "debit",
+        "merchant": "MYNTRA 794415",
+        "balanceAfter": null,
+        "category": "Clothing",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-17",
+        "amount": 24160,
+        "direction": "debit",
+        "merchant": "SWIGGY 186008",
+        "balanceAfter": null,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-18",
+        "amount": 12011,
+        "direction": "credit",
+        "merchant": "INT.PD INTEREST CREDIT",
+        "balanceAfter": null,
+        "category": "Interest Income",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-24",
+        "amount": 29080,
+        "direction": "debit",
+        "merchant": "APOLLO PHARMACY 770590",
+        "balanceAfter": null,
+        "category": "Medicines & Pharmacy",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-28",
+        "amount": 80838,
+        "direction": "debit",
+        "merchant": "MYNTRA 465142",
+        "balanceAfter": null,
+        "category": "Clothing",
+        "shouldPost": true
+      }
+    ]
+  }
+}

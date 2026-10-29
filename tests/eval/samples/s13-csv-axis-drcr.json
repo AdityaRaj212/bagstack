@@ -1,0 +1,97 @@
+{
+  "id": "s13-csv-axis-drcr",
+  "description": "csv-axis-drcr statement, 9 rows, 2026-05",
+  "kind": "statement",
+  "format": "csv-axis-drcr",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "Tran Date,CHQNO,PARTICULARS,AMOUNT,DR/CR,BAL\n02-05-2026,,NEFT CR-SALARY ACME TECHNOLOGIES,123230.26,CR,201050.03\n06-05-2026,,CULT FIT 221651,1388.21,DR,199661.82\n10-05-2026,,HOUSE RENT NOBROKER 353743,37780.78,DR,161881.04\n12-05-2026,,REFUND AMAZON SELLER 487921,3790.26,CR,165671.30\n17-05-2026,,CULT FIT 699562,1675.45,DR,163995.85\n18-05-2026,,PRIYA SHARMA 723856,13476.72,CR,177472.57\n19-05-2026,,BMRCL METRO RECHARGE 557631,927.38,DR,176545.19\n21-05-2026,,INT.PD INTEREST CREDIT,511.94,CR,177057.13\n24-05-2026,,HPCL PETROL PUMP 555188,3947.99,DR,173109.14",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-05-02",
+        "amount": 12323026,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 20105003,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-06",
+        "amount": 138821,
+        "direction": "debit",
+        "merchant": "CULT FIT 221651",
+        "balanceAfter": 19966182,
+        "category": "Gym & Fitness",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-10",
+        "amount": 3778078,
+        "direction": "debit",
+        "merchant": "HOUSE RENT NOBROKER 353743",
+        "balanceAfter": 16188104,
+        "category": "Rent",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-12",
+        "amount": 379026,
+        "direction": "credit",
+        "merchant": "REFUND AMAZON SELLER 487921",
+        "balanceAfter": 16567130,
+        "category": "Refunds & Reimbursements",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-17",
+        "amount": 167545,
+        "direction": "debit",
+        "merchant": "CULT FIT 699562",
+        "balanceAfter": 16399585,
+        "category": "Gym & Fitness",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-18",
+        "amount": 1347672,
+        "direction": "credit",
+        "merchant": "PRIYA SHARMA 723856",
+        "balanceAfter": 17747257,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-19",
+        "amount": 92738,
+        "direction": "debit",
+        "merchant": "BMRCL METRO RECHARGE 557631",
+        "balanceAfter": 17654519,
+        "category": "Public Transit",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-21",
+        "amount": 51194,
+        "direction": "credit",
+        "merchant": "INT.PD INTEREST CREDIT",
+        "balanceAfter": 17705713,
+        "category": "Interest Income",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-24",
+        "amount": 394799,
+        "direction": "debit",
+        "merchant": "HPCL PETROL PUMP 555188",
+        "balanceAfter": 17310914,
+        "category": "Fuel",
+        "shouldPost": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "id": "f04-identical-twin-rows",
+  "description": "Two genuine identical rows on the same day",
+  "kind": "statement",
+  "format": "text-drcr-suffix",
+  "accountCurrency": "INR",
+  "flaw": "duplicate_in_batch",
+  "input": "YES BANK LTD\nStatement of Account for the period 01-May-2026 to 31-May-2026\nOpening Balance         87,182.96 Cr\n\n05-May-2026  NEFT CR-SALARY ACME TECHNOLOGIES                   97,883.41 Cr     1,85,066.37 Cr\n06-May-2026  INT.PD INTEREST CREDIT                                792.40 Cr     1,85,858.77 Cr\n10-May-2026  ZOMATO 654528                                         180.05 Dr     1,85,678.72 Cr\n16-May-2026  STARBUCKS 482113                                      345.00 Dr     1,85,333.72 Cr\n16-May-2026  STARBUCKS 482113                                      345.00 Dr     1,84,988.72 Cr\n21-May-2026  RAMESH KUMAR 168804                                 1,400.91 Dr     1,83,587.81 Cr\n24-May-2026  SWIGGY 318633                                         377.96 Dr     1,83,209.85 Cr\n26-May-2026  REFUND AMAZON SELLER 456825                         3,628.20 Cr     1,86,838.05 Cr\n27-May-2026  PVR CINEMAS 555036                                    766.17 Dr     1,86,071.88 Cr\n\nClosing Balance         1,86,071.88 Cr",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": 8718296,
+    "closing": 18607188,
+    "rows": [
+      {
+        "date": "2026-05-05",
+        "amount": 9788341,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 18506637,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-06",
+        "amount": 79240,
+        "direction": "credit",
+        "merchant": "INT.PD INTEREST CREDIT",
+        "balanceAfter": 18585877,
+        "category": "Interest Income",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-10",
+        "amount": 18005,
+        "direction": "debit",
+        "merchant": "ZOMATO 654528",
+        "balanceAfter": 18567872,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-16",
+        "amount": 34500,
+        "direction": "debit",
+        "merchant": "STARBUCKS 482113",
+        "balanceAfter": 18533372,
+        "category": "Coffee & Snacks",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-16",
+        "amount": 34500,
+        "direction": "debit",
+        "merchant": "STARBUCKS 482113",
+        "balanceAfter": 18498872,
+        "category": "Coffee & Snacks",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-21",
+        "amount": 140091,
+        "direction": "debit",
+        "merchant": "RAMESH KUMAR 168804",
+        "balanceAfter": 18358781,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-24",
+        "amount": 37796,
+        "direction": "debit",
+        "merchant": "SWIGGY 318633",
+        "balanceAfter": 18320985,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-26",
+        "amount": 362820,
+        "direction": "credit",
+        "merchant": "REFUND AMAZON SELLER 456825",
+        "balanceAfter": 18683805,
+        "category": "Refunds & Reimbursements",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-27",
+        "amount": 76617,
+        "direction": "debit",
+        "merchant": "PVR CINEMAS 555036",
+        "balanceAfter": 18607188,
+        "category": "Movies & Events",
+        "shouldPost": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "id": "f02-future-dated-row",
+  "description": "Last row is dated in the future",
+  "kind": "statement",
+  "format": "csv-hdfc",
+  "accountCurrency": "INR",
+  "flaw": "date_future",
+  "input": "Date,Narration,Chq./Ref.No.,Value Dt,Withdrawal Amt.,Deposit Amt.,Closing Balance\n01/05/26,NEFT CR-SALARY ACME TECHNOLOGIES,9799853,01/05/26,,100427.18,159647.60\n03/05/26,UPI-NETFLIX-357425438729,3183868,03/05/26,258.04,,159389.56\n05/05/26,UPI-MYNTRA-760009355517,8159392,05/05/26,4961.86,,154427.70\n08/05/26,UPI-PRIYA SHARMA-872474536672,1630897,08/05/26,,7910.89,162338.59\n15/05/26,INT.PD INTEREST CREDIT,3700331,15/05/26,,1301.98,163640.57\n23/05/26,UPI-AIRTEL POSTPAID-153714117011,5645084,23/05/26,655.16,,162985.41\n24/05/26,UPI-PVR CINEMAS-349963252455,6714545,24/05/26,1127.72,,161857.69\n29/06/26,UPI-PRIYA SHARMA-750776906264,9997900,29/06/26,,14562.46,176420.15",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-05-01",
+        "amount": 10042718,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 15964760,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-03",
+        "amount": 25804,
+        "direction": "debit",
+        "merchant": "UPI-NETFLIX-357425438729",
+        "balanceAfter": 15938956,
+        "category": "Streaming Services",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-05",
+        "amount": 496186,
+        "direction": "debit",
+        "merchant": "UPI-MYNTRA-760009355517",
+        "balanceAfter": 15442770,
+        "category": "Clothing",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-08",
+        "amount": 791089,
+        "direction": "credit",
+        "merchant": "UPI-PRIYA SHARMA-872474536672",
+        "balanceAfter": 16233859,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-15",
+        "amount": 130198,
+        "direction": "credit",
+        "merchant": "INT.PD INTEREST CREDIT",
+        "balanceAfter": 16364057,
+        "category": "Interest Income",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-23",
+        "amount": 65516,
+        "direction": "debit",
+        "merchant": "UPI-AIRTEL POSTPAID-153714117011",
+        "balanceAfter": 16298541,
+        "category": "Internet & Mobile",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-24",
+        "amount": 112772,
+        "direction": "debit",
+        "merchant": "UPI-PVR CINEMAS-349963252455",
+        "balanceAfter": 16185769,
+        "category": "Movies & Events",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-06-29",
+        "amount": 1456246,
+        "direction": "credit",
+        "merchant": "UPI-PRIYA SHARMA-750776906264",
+        "balanceAfter": 17642015,
+        "category": null,
+        "shouldPost": false
+      }
+    ]
+  }
+}

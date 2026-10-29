@@ -1,0 +1,25 @@
+{
+  "id": "r05-electronics",
+  "description": "Electronics receipt with GST",
+  "kind": "receipt",
+  "format": "receipt-ocr-text",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "CROMA RETAIL PHOENIX MALL\nWhitefield Main Road, Bengaluru\nGSTIN: 29ABCDE3589F1Z5\nBill No: 9967    Date: 18/05/2026    Time: 17:14\n----------------------------------------\nUSB-C Charger 65W x1            2,499.00\nHDMI Cable 2m x2                1,198.00\n----------------------------------------\nSub Total                       3,697.00\nCGST 2.5%                          92.43\nSGST 2.5%                          92.43\nGrand Total                     3,881.86\nPaid via UPI\nThank you! Visit again",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-05-18",
+        "amount": 388186,
+        "direction": "debit",
+        "merchant": "CROMA RETAIL PHOENIX MALL",
+        "balanceAfter": null,
+        "category": "Electronics",
+        "shouldPost": true
+      }
+    ]
+  }
+}

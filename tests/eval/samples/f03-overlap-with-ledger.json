@@ -1,0 +1,125 @@
+{
+  "id": "f03-overlap-with-ledger",
+  "description": "Three rows already exist in the ledger from an earlier import",
+  "kind": "statement",
+  "format": "csv-icici",
+  "accountCurrency": "INR",
+  "flaw": "duplicate_in_ledger",
+  "input": "S No.,Value Date,Transaction Date,Cheque Number,Transaction Remarks,Withdrawal Amount (INR ),Deposit Amount (INR ),Balance (INR )\n1,02/05/2026,02/05/2026,-,NEFT-SALARY ACME TECHNOLOGIES-28887415,0.00,\"133,049.67\",\"206,298.05\"\n2,06/05/2026,06/05/2026,-,UPI/801095763663/CROMA RETAIL/Payment,\"6,700.00\",0.00,\"199,598.05\"\n3,11/05/2026,11/05/2026,-,UPI/231736852717/HPCL PETROL PUMP/Payment,\"1,062.27\",0.00,\"198,535.78\"\n4,16/05/2026,16/05/2026,-,UPI/972611411591/STARBUCKS/Payment,863.18,0.00,\"197,672.60\"\n5,17/05/2026,17/05/2026,-,UPI/908357593440/BMRCL METRO RECHARGE/Payment,464.18,0.00,\"197,208.42\"\n6,21/05/2026,21/05/2026,-,UPI/398785697692/HDFC ERGO INSURANCE/Payment,\"5,996.28\",0.00,\"191,212.14\"\n7,23/05/2026,23/05/2026,-,UPI/908632389106/STARBUCKS/Payment,627.59,0.00,\"190,584.55\"\n8,25/05/2026,25/05/2026,-,UPI/853905697120/HOUSE RENT NOBROKER/Payment,\"39,659.30\",0.00,\"150,925.25\"\n9,26/05/2026,26/05/2026,-,UPI/320659127598/HOUSE RENT NOBROKER/Payment,\"37,416.92\",0.00,\"113,508.33\"\n10,28/05/2026,28/05/2026,-,UPI/304267951752/OLA CABS/Payment,335.40,0.00,\"113,172.93\"",
+  "ledgerSeed": [
+    {
+      "date": "2026-05-06",
+      "amount": 670000,
+      "direction": "debit",
+      "merchant": "UPI/801095763663/CROMA RETAIL/Payment"
+    },
+    {
+      "date": "2026-05-17",
+      "amount": 46418,
+      "direction": "debit",
+      "merchant": "UPI/908357593440/BMRCL METRO RECHARGE/Payment"
+    },
+    {
+      "date": "2026-05-25",
+      "amount": 3965930,
+      "direction": "debit",
+      "merchant": "UPI/853905697120/HOUSE RENT NOBROKER/Payment"
+    }
+  ],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-05-02",
+        "amount": 13304967,
+        "direction": "credit",
+        "merchant": "NEFT-SALARY ACME TECHNOLOGIES-28887415",
+        "balanceAfter": 20629805,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-06",
+        "amount": 670000,
+        "direction": "debit",
+        "merchant": "UPI/801095763663/CROMA RETAIL/Payment",
+        "balanceAfter": 19959805,
+        "category": "Electronics",
+        "shouldPost": false
+      },
+      {
+        "date": "2026-05-11",
+        "amount": 106227,
+        "direction": "debit",
+        "merchant": "UPI/231736852717/HPCL PETROL PUMP/Payment",
+        "balanceAfter": 19853578,
+        "category": "Fuel",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-16",
+        "amount": 86318,
+        "direction": "debit",
+        "merchant": "UPI/972611411591/STARBUCKS/Payment",
+        "balanceAfter": 19767260,
+        "category": "Coffee & Snacks",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-17",
+        "amount": 46418,
+        "direction": "debit",
+        "merchant": "UPI/908357593440/BMRCL METRO RECHARGE/Payment",
+        "balanceAfter": 19720842,
+        "category": "Public Transit",
+        "shouldPost": false
+      },
+      {
+        "date": "2026-05-21",
+        "amount": 599628,
+        "direction": "debit",
+        "merchant": "UPI/398785697692/HDFC ERGO INSURANCE/Payment",
+        "balanceAfter": 19121214,
+        "category": "Insurance Premium",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-23",
+        "amount": 62759,
+        "direction": "debit",
+        "merchant": "UPI/908632389106/STARBUCKS/Payment",
+        "balanceAfter": 19058455,
+        "category": "Coffee & Snacks",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-25",
+        "amount": 3965930,
+        "direction": "debit",
+        "merchant": "UPI/853905697120/HOUSE RENT NOBROKER/Payment",
+        "balanceAfter": 15092525,
+        "category": "Rent",
+        "shouldPost": false
+      },
+      {
+        "date": "2026-05-26",
+        "amount": 3741692,
+        "direction": "debit",
+        "merchant": "UPI/320659127598/HOUSE RENT NOBROKER/Payment",
+        "balanceAfter": 11350833,
+        "category": "Rent",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-28",
+        "amount": 33540,
+        "direction": "debit",
+        "merchant": "UPI/304267951752/OLA CABS/Payment",
+        "balanceAfter": 11317293,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      }
+    ]
+  }
+}

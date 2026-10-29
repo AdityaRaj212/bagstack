@@ -1,0 +1,79 @@
+{
+  "id": "s03-csv-hdfc",
+  "description": "csv-hdfc statement, 7 rows, 2026-03",
+  "kind": "statement",
+  "format": "csv-hdfc",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "Date,Narration,Chq./Ref.No.,Value Dt,Withdrawal Amt.,Deposit Amt.,Closing Balance\n01/03/26,NEFT CR-SALARY ACME TECHNOLOGIES,3118663,01/03/26,,99358.20,153605.17\n02/03/26,UPI-CULT FIT-247479546070,3928290,02/03/26,2976.13,,150629.04\n06/03/26,UPI-STARBUCKS-363253336818,3689022,06/03/26,614.63,,150014.41\n08/03/26,UPI-AIRTEL POSTPAID-476519996183,3885090,08/03/26,846.53,,149167.88\n09/03/26,UPI-HOUSE RENT NOBROKER-402508719894,7023661,09/03/26,28759.87,,120408.01\n10/03/26,INT.PD INTEREST CREDIT,2988021,10/03/26,,669.89,121077.90\n20/03/26,UPI-MYNTRA-630368149583,2523741,20/03/26,3913.81,,117164.09",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-03-01",
+        "amount": 9935820,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 15360517,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-02",
+        "amount": 297613,
+        "direction": "debit",
+        "merchant": "UPI-CULT FIT-247479546070",
+        "balanceAfter": 15062904,
+        "category": "Gym & Fitness",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-06",
+        "amount": 61463,
+        "direction": "debit",
+        "merchant": "UPI-STARBUCKS-363253336818",
+        "balanceAfter": 15001441,
+        "category": "Coffee & Snacks",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-08",
+        "amount": 84653,
+        "direction": "debit",
+        "merchant": "UPI-AIRTEL POSTPAID-476519996183",
+        "balanceAfter": 14916788,
+        "category": "Internet & Mobile",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-09",
+        "amount": 2875987,
+        "direction": "debit",
+        "merchant": "UPI-HOUSE RENT NOBROKER-402508719894",
+        "balanceAfter": 12040801,
+        "category": "Rent",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-10",
+        "amount": 66989,
+        "direction": "credit",
+        "merchant": "INT.PD INTEREST CREDIT",
+        "balanceAfter": 12107790,
+        "category": "Interest Income",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-20",
+        "amount": 391381,
+        "direction": "debit",
+        "merchant": "UPI-MYNTRA-630368149583",
+        "balanceAfter": 11716409,
+        "category": "Clothing",
+        "shouldPost": true
+      }
+    ]
+  }
+}

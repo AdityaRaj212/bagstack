@@ -1,0 +1,115 @@
+{
+  "id": "s20-text-drcr-suffix",
+  "description": "text-drcr-suffix statement, 11 rows, 2026-04",
+  "kind": "statement",
+  "format": "text-drcr-suffix",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "YES BANK LTD\nStatement of Account for the period 01-Apr-2026 to 30-Apr-2026\nOpening Balance         54,761.67 Cr\n\n02-Apr-2026  NEFT CR-SALARY ACME TECHNOLOGIES                 1,02,537.14 Cr     1,57,298.81 Cr\n08-Apr-2026  UPI-SWIGGY-239885669201                               903.37 Dr     1,56,395.44 Cr\n09-Apr-2026  UPI-OLA CABS-817757995799                             103.73 Dr     1,56,291.71 Cr\n10-Apr-2026  UPI-BIGBASKET-594579792814                          3,460.00 Dr     1,52,831.71 Cr\n11-Apr-2026  UPI-NETFLIX-678494276595                              349.89 Dr     1,52,481.82 Cr\n13-Apr-2026  UPI-CULT FIT-803649466787                           1,600.56 Dr     1,50,881.26 Cr\n14-Apr-2026  UPI-RAMESH KUMAR-699456789041                       3,828.70 Dr     1,47,052.56 Cr\n21-Apr-2026  UPI-PVR CINEMAS-638527748337                          809.40 Dr     1,46,243.16 Cr\n23-Apr-2026  UPI-PRIYA SHARMA-469923652545                       5,182.21 Cr     1,51,425.37 Cr\n25-Apr-2026  UPI-BESCOM ELECTRICITY-711578286695                 1,588.50 Dr     1,49,836.87 Cr\n27-Apr-2026  UPI-BMRCL METRO RECHARGE-680074571073                 351.75 Dr     1,49,485.12 Cr\n\nClosing Balance         1,49,485.12 Cr",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": 5476167,
+    "closing": 14948512,
+    "rows": [
+      {
+        "date": "2026-04-02",
+        "amount": 10253714,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 15729881,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-08",
+        "amount": 90337,
+        "direction": "debit",
+        "merchant": "UPI-SWIGGY-239885669201",
+        "balanceAfter": 15639544,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-09",
+        "amount": 10373,
+        "direction": "debit",
+        "merchant": "UPI-OLA CABS-817757995799",
+        "balanceAfter": 15629171,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-10",
+        "amount": 346000,
+        "direction": "debit",
+        "merchant": "UPI-BIGBASKET-594579792814",
+        "balanceAfter": 15283171,
+        "category": "Groceries",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-11",
+        "amount": 34989,
+        "direction": "debit",
+        "merchant": "UPI-NETFLIX-678494276595",
+        "balanceAfter": 15248182,
+        "category": "Streaming Services",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-13",
+        "amount": 160056,
+        "direction": "debit",
+        "merchant": "UPI-CULT FIT-803649466787",
+        "balanceAfter": 15088126,
+        "category": "Gym & Fitness",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-14",
+        "amount": 382870,
+        "direction": "debit",
+        "merchant": "UPI-RAMESH KUMAR-699456789041",
+        "balanceAfter": 14705256,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-21",
+        "amount": 80940,
+        "direction": "debit",
+        "merchant": "UPI-PVR CINEMAS-638527748337",
+        "balanceAfter": 14624316,
+        "category": "Movies & Events",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-23",
+        "amount": 518221,
+        "direction": "credit",
+        "merchant": "UPI-PRIYA SHARMA-469923652545",
+        "balanceAfter": 15142537,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-25",
+        "amount": 158850,
+        "direction": "debit",
+        "merchant": "UPI-BESCOM ELECTRICITY-711578286695",
+        "balanceAfter": 14983687,
+        "category": "Electricity & Gas",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-27",
+        "amount": 35175,
+        "direction": "debit",
+        "merchant": "UPI-BMRCL METRO RECHARGE-680074571073",
+        "balanceAfter": 14948512,
+        "category": "Public Transit",
+        "shouldPost": true
+      }
+    ]
+  }
+}

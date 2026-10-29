@@ -13,6 +13,10 @@
 - **Email-Scoped Workspaces**: One master verified email account with unlimited compartmentalized profiles (e.g., Personal, Business, Side-Hustle).
 - **First-Class Transfers**: Move money between accounts without artificially inflating income or expense metrics.
 
+### 🤖 AI Statement Import & Natural-Language Questions
+- Import bank statements (CSV, text, PDF) and receipt photos. Every row the model extracts passes schema, integer-amount, date, source-grounding, running-balance and reconciliation checks before you can post it.
+- Ask questions in plain English. The model can only pick from typed, read-only, profile-scoped queries. See [AI Assistant](#ai-assistant-the-llm-proposes-deterministic-code-decides).
+
 ### 💰 Deterministic Financial Math
 - **Zero Floating-Point Drift**: All currency calculations are executed strictly in integer minor units (paise/cents). No `0.1 + 0.2 = 0.30000000000000004` rounding bugs.
 - **Deterministic Insights**: Real-time savings rates, burn-rate metrics, and net-worth calculations derived directly from the immutable transaction ledger.
@@ -44,6 +48,83 @@
 ### 🔐 Passwordless Authentication & Instant Demo Sandbox
 - **Email OTP Verification**: Cryptographic 6-digit one-time code sent via Gmail SMTP, stored as SHA-256 hashes with 10-minute expiration and rate limiting.
 - **Instant Sandbox Demo**: New visitors can immediately explore preloaded sample data in demo mode with one click from the public landing page.
+
+---
+
+## AI Assistant: the LLM proposes, deterministic code decides
+
+Bagstack can read bank statements and receipts and answer questions like *"how much did I spend on food last month?"*. The model is never trusted with money: it only **proposes** structured data or picks a **read-only query**, and integer-only code decides what, if anything, reaches the ledger.
+
+```
+ document (CSV / text / PDF / image)
+        │
+        ▼
+ ┌──────────────────┐   zod schema: { date, amount: "1245.50", merchant, direction, balance_after }
+ │ LLM extraction   │── structured output, re-validated with zod on arrival
+ └──────────────────┘
+        │ proposal
+        ▼
+ ┌──────────────────────────────────────────────────────────────┐
+ │ Deterministic validation (src/lib/ai/validation.ts)          │
+ │  • decimal string → integer paise with BigInt, no floats;   │
+ │    excess precision rejected, never rounded                  │
+ │  • date sanity: real calendar date, not future, < 10 years,  │
+ │    inside the printed statement period                       │
+ │  • grounding: every amount and date must appear in the       │
+ │    source text (catches hallucinated / mistyped values)      │
+ │  • running-balance chain: prev balance ± amount = printed    │
+ │    balance, row by row (either print order)                  │
+ │  • reconciliation: opening + Σ rows = closing, or receipt    │
+ │    total; a mismatch blocks the *whole* document             │
+ │  • duplicates: within the document and against the ledger   │
+ │  • currency must match the target account                    │
+ └──────────────────────────────────────────────────────────────┘
+        │ validated rows            │ rows with reasons
+        ▼                           ▼
+   user confirms             review queue (edit / approve soft
+        │                    reasons / skip / remove / add row),
+        ▼                    re-validated after every change
+ FinanceService.createTransaction  ◄── the only write path; the batch is
+                                       re-validated server-side right before posting
+```
+
+**Auto-categorisation**: existing rules and merchant history run first. The model fills gaps, choosing only from the profile's own category list. Any answer that isn't one of those categories, or has the wrong income/expense type, is dropped, and the row stays uncategorised.
+
+**Natural-language queries**: the model picks one of 8 typed, read-only query functions (`total_spending`, `total_income`, `spending_by_category`, `top_merchants`, `account_balances`, `list_transactions`, `compare_spending`, `average_monthly_spending`) via strict tool use. It never writes SQL. Arguments are re-validated with zod (category names are an enum of the user's categories; periods are presets resolved by code). The profile id comes from the authenticated session when the executor is built and is never a tool argument. All SQL is static and parameterised. The answer sentence is formatted by code from the query result, so the model never produces the numbers shown to the user.
+
+**Provider adapter** (`src/lib/ai/provider.ts`): a two-method interface (`generateStructured`, `chooseTool`) with an Anthropic implementation (Claude Opus 5.5 by default, server-side refusal fallback enabled) and a deterministic offline rules engine. Both are wrapped in `ResilientProvider`, which adds a per-attempt timeout, bounded exponential backoff on retryable errors (429/5xx/timeouts), and one `ai_usage_log` row per call (tokens, integer micro-USD cost, latency, attempts). The hosted demo also has per-profile rate limits and a daily per-profile and global cost budget. With no `ANTHROPIC_API_KEY`, the app falls back to the offline engine, which reads text and CSV only.
+
+### Eval
+
+`tests/eval/` holds **33 labelled synthetic documents** (21 statements across 7 bank layouts, 5 receipts, 7 adversarial cases: misprinted closing balance, future-dated row, overlap with existing ledger rows, identical twin rows, prompt injection in a narration, a USD receipt into an INR account, and a wrong running balance). It also holds **20 NL questions** whose answers were computed by an independent reference implementation over a fixture ledger, including two that must not map to any tool (a delete request and an off-topic question).
+
+```bash
+npm run eval                                  # offline provider
+npm run eval:faults                           # + 2 simulated LLM errors per document
+ANTHROPIC_API_KEY=... npm run eval -- --provider anthropic
+```
+
+The headline metric is **unreconciled postings**: postings that reach the ledger but don't match a labelled, postable row. The target is 0, and CI enforces it in `tests/ai-eval.test.ts`.
+
+Fault injection simulates typical extraction errors on top of the provider output: decimal shift, digit typo, flipped debit/credit, swapped day/month, dropped row, hallucinated row, fabricated credit, and misread balance.
+
+| Metric | Offline baseline | Offline + 55 injected faults |
+|---|---|---|
+| Labelled rows / extracted | 274 / 274 | 274 / 279 |
+| Field accuracy: date / amount / direction / merchant | 99.6% / 100% / 100% / 100% | 94.5% / 89.8% / 94.9% / 96.0% |
+| Category accuracy | 96.0% | 95.1% |
+| Rows held for review by validation | 51 | 171 |
+| Postings after confirm (all correct) | 223 | 108 |
+| **Unreconciled postings reaching ledger** | **0** | **0** |
+| NL: correct tool / correct result (20 q) | 100% / 100% | n/a |
+
+Full tables (per sample, per reason, per question) are in `tests/eval/results/`.
+
+How to read these numbers:
+- The offline engine is a rules-based baseline written alongside these synthetic layouts. Its extraction accuracy is an upper bound for familiar formats, not a claim about real-world statements.
+- The fault-injection column measures the validation layer itself: 55 realistic model errors, and none produced a wrong ledger entry.
+- The price is recall. On a tampered statement, correct rows are held too, because reconciliation is a document-level gate.
+- Claude results are not included yet. Run the third command above to produce `tests/eval/results/anthropic.md`. It logs token usage and cost.
 
 ---
 
@@ -112,6 +193,10 @@ Run the Vitest test suite:
 ```bash
 npm test
 ```
+Run the AI eval (see [Eval](#eval)):
+```bash
+npm run eval && npm run eval:faults
+```
 Build for production verification:
 ```bash
 npm run build
@@ -161,6 +246,7 @@ Your SQLite database will be persisted in the local Docker volume `bagstack_data
 bagstack/
 ├── src/
 │   ├── app/                    # Next.js App Router pages & API routes
+│   │   ├── assistant/          # AI import review queue & NL questions
 │   │   ├── accounts/           # Financial accounts management
 │   │   ├── budgets/            # Envelope budgeting & limits
 │   │   ├── goals/              # Savings goals & account contributions
@@ -178,6 +264,7 @@ bagstack/
 │   │   └── ...
 │   ├── context/                # Global AppContext & theme state
 │   ├── lib/                    # Domain logic & services
+│   │   ├── ai/                 # Provider adapter, validation, review queue, query tools
 │   │   ├── db.ts               # SQLite schema, pragmas & migrations
 │   │   ├── finance-service.ts  # Financial engine & deterministic calculations
 │   │   ├── auth.ts             # Session & multi-profile management
@@ -188,6 +275,7 @@ bagstack/
 │   ├── manifest.json           # Web App Manifest for mobile installation
 │   └── icon.svg                # Vector brand app icon
 ├── tests/                      # Automated test suite (Vitest)
+│   └── eval/                   # Labelled AI eval set, fault injection & results
 ├── Dockerfile                  # Multi-stage production container
 ├── docker-compose.yml          # Persistent container orchestration
 └── README.md

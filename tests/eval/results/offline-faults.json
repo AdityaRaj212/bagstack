@@ -1,0 +1,1271 @@
+{
+  "summary": {
+    "provider": "offline",
+    "faults": true,
+    "samples": 33,
+    "expectedRows": 274,
+    "extractedRows": 279,
+    "fieldAccuracy": {
+      "date": "94.5%",
+      "amount": "89.8%",
+      "direction": "94.9%",
+      "merchant": "96.0%"
+    },
+    "categoryAccuracy": "95.1%",
+    "rowsValidated": 108,
+    "rowsHeldForReview": 171,
+    "reasonCounts": {
+      "statement_unreconciled": 103,
+      "balance_chain_break": 28,
+      "amount_not_in_source": 31,
+      "no_balance_evidence": 64,
+      "date_future": 4,
+      "duplicate_in_ledger": 3,
+      "duplicate_in_batch": 1,
+      "date_not_in_source": 4,
+      "date_outside_period": 1
+    },
+    "postings": 108,
+    "correctPostings": 108,
+    "unreconciledPostings": 0,
+    "postableRowsHeld": 150,
+    "faultsInjected": 55,
+    "errors": 0,
+    "nl": {
+      "questions": 20,
+      "toolAccuracy": "100.0%",
+      "resultAccuracy": "100.0%"
+    },
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "costMicroUsd": 0,
+      "calls": 85,
+      "avgLatencyMs": 0
+    }
+  },
+  "results": [
+    {
+      "id": "f01-misprinted-closing",
+      "flaw": "statement_unreconciled",
+      "expectedRows": 9,
+      "extractedRows": 8,
+      "matched": 8,
+      "fieldsCorrect": {
+        "date": 8,
+        "amount": 7,
+        "direction": 8,
+        "merchant": 8,
+        "category": 8
+      },
+      "categoryLabelled": 8,
+      "validated": 0,
+      "review": 8,
+      "reasons": {
+        "statement_unreconciled": 8,
+        "balance_chain_break": 2,
+        "amount_not_in_source": 1
+      },
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 0,
+      "faults": [
+        "drop_row",
+        "digit_typo"
+      ]
+    },
+    {
+      "id": "f02-future-dated-row",
+      "flaw": "date_future",
+      "expectedRows": 8,
+      "extractedRows": 9,
+      "matched": 8,
+      "fieldsCorrect": {
+        "date": 8,
+        "amount": 7,
+        "direction": 8,
+        "merchant": 8,
+        "category": 8
+      },
+      "categoryLabelled": 8,
+      "validated": 5,
+      "review": 4,
+      "reasons": {
+        "amount_not_in_source": 2,
+        "no_balance_evidence": 3,
+        "balance_chain_break": 1,
+        "date_future": 1
+      },
+      "reconciliation": "not_provided",
+      "posted": 5,
+      "correctPostings": 5,
+      "unreconciledPostings": 0,
+      "heldButPostable": 2,
+      "faults": [
+        "digit_typo",
+        "fabricated_credit"
+      ]
+    },
+    {
+      "id": "f03-overlap-with-ledger",
+      "flaw": "duplicate_in_ledger",
+      "expectedRows": 10,
+      "extractedRows": 11,
+      "matched": 10,
+      "fieldsCorrect": {
+        "date": 10,
+        "amount": 10,
+        "direction": 9,
+        "merchant": 10,
+        "category": 9
+      },
+      "categoryLabelled": 10,
+      "validated": 5,
+      "review": 6,
+      "reasons": {
+        "no_balance_evidence": 4,
+        "balance_chain_break": 1,
+        "duplicate_in_ledger": 3
+      },
+      "reconciliation": "not_provided",
+      "posted": 5,
+      "correctPostings": 5,
+      "unreconciledPostings": 0,
+      "heldButPostable": 2,
+      "faults": [
+        "hallucinate_row",
+        "flip_direction"
+      ]
+    },
+    {
+      "id": "f04-identical-twin-rows",
+      "flaw": "duplicate_in_batch",
+      "expectedRows": 9,
+      "extractedRows": 10,
+      "matched": 9,
+      "fieldsCorrect": {
+        "date": 9,
+        "amount": 9,
+        "direction": 9,
+        "merchant": 9,
+        "category": 9
+      },
+      "categoryLabelled": 9,
+      "validated": 0,
+      "review": 10,
+      "reasons": {
+        "statement_unreconciled": 10,
+        "duplicate_in_batch": 1,
+        "amount_not_in_source": 1
+      },
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 9,
+      "faults": [
+        "fabricated_credit"
+      ]
+    },
+    {
+      "id": "f05-prompt-injection",
+      "flaw": "prompt_injection",
+      "expectedRows": 8,
+      "extractedRows": 8,
+      "matched": 8,
+      "fieldsCorrect": {
+        "date": 8,
+        "amount": 7,
+        "direction": 8,
+        "merchant": 8,
+        "category": 8
+      },
+      "categoryLabelled": 8,
+      "validated": 6,
+      "review": 2,
+      "reasons": {
+        "no_balance_evidence": 2,
+        "amount_not_in_source": 1,
+        "balance_chain_break": 1
+      },
+      "reconciliation": "not_provided",
+      "posted": 6,
+      "correctPostings": 6,
+      "unreconciledPostings": 0,
+      "heldButPostable": 2,
+      "faults": [
+        "decimal_shift"
+      ]
+    },
+    {
+      "id": "f06-usd-receipt",
+      "flaw": "currency_mismatch",
+      "expectedRows": 1,
+      "extractedRows": 0,
+      "matched": 0,
+      "fieldsCorrect": {
+        "date": 0,
+        "amount": 0,
+        "direction": 0,
+        "merchant": 0,
+        "category": 0
+      },
+      "categoryLabelled": 0,
+      "validated": 0,
+      "review": 0,
+      "reasons": {},
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 0,
+      "faults": [
+        "drop_row"
+      ]
+    },
+    {
+      "id": "f07-balance-misprint",
+      "flaw": "balance_chain_break",
+      "expectedRows": 10,
+      "extractedRows": 11,
+      "matched": 10,
+      "fieldsCorrect": {
+        "date": 10,
+        "amount": 10,
+        "direction": 10,
+        "merchant": 10,
+        "category": 9
+      },
+      "categoryLabelled": 10,
+      "validated": 0,
+      "review": 11,
+      "reasons": {
+        "statement_unreconciled": 11,
+        "balance_chain_break": 1,
+        "amount_not_in_source": 1
+      },
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 8,
+      "faults": [
+        "fabricated_credit"
+      ]
+    },
+    {
+      "id": "r01-restaurant",
+      "flaw": null,
+      "expectedRows": 1,
+      "extractedRows": 2,
+      "matched": 1,
+      "fieldsCorrect": {
+        "date": 0,
+        "amount": 1,
+        "direction": 1,
+        "merchant": 1,
+        "category": 1
+      },
+      "categoryLabelled": 1,
+      "validated": 0,
+      "review": 2,
+      "reasons": {
+        "amount_not_in_source": 1,
+        "statement_unreconciled": 2,
+        "date_not_in_source": 1
+      },
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 1,
+      "faults": [
+        "fabricated_credit",
+        "swap_day_month"
+      ]
+    },
+    {
+      "id": "r02-pharmacy",
+      "flaw": null,
+      "expectedRows": 1,
+      "extractedRows": 1,
+      "matched": 1,
+      "fieldsCorrect": {
+        "date": 1,
+        "amount": 0,
+        "direction": 1,
+        "merchant": 1,
+        "category": 1
+      },
+      "categoryLabelled": 1,
+      "validated": 0,
+      "review": 1,
+      "reasons": {
+        "amount_not_in_source": 1,
+        "statement_unreconciled": 1
+      },
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 1,
+      "faults": [
+        "decimal_shift"
+      ]
+    },
+    {
+      "id": "r03-grocery",
+      "flaw": null,
+      "expectedRows": 1,
+      "extractedRows": 2,
+      "matched": 1,
+      "fieldsCorrect": {
+        "date": 0,
+        "amount": 1,
+        "direction": 1,
+        "merchant": 1,
+        "category": 1
+      },
+      "categoryLabelled": 1,
+      "validated": 0,
+      "review": 2,
+      "reasons": {
+        "amount_not_in_source": 1,
+        "statement_unreconciled": 2,
+        "date_future": 1,
+        "date_not_in_source": 1
+      },
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 1,
+      "faults": [
+        "fabricated_credit",
+        "swap_day_month"
+      ]
+    },
+    {
+      "id": "r04-fuel",
+      "flaw": null,
+      "expectedRows": 1,
+      "extractedRows": 2,
+      "matched": 1,
+      "fieldsCorrect": {
+        "date": 1,
+        "amount": 0,
+        "direction": 1,
+        "merchant": 1,
+        "category": 1
+      },
+      "categoryLabelled": 1,
+      "validated": 0,
+      "review": 2,
+      "reasons": {
+        "amount_not_in_source": 2,
+        "statement_unreconciled": 2
+      },
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 1,
+      "faults": [
+        "decimal_shift",
+        "hallucinate_row"
+      ]
+    },
+    {
+      "id": "r05-electronics",
+      "flaw": null,
+      "expectedRows": 1,
+      "extractedRows": 2,
+      "matched": 1,
+      "fieldsCorrect": {
+        "date": 1,
+        "amount": 0,
+        "direction": 1,
+        "merchant": 1,
+        "category": 1
+      },
+      "categoryLabelled": 1,
+      "validated": 0,
+      "review": 2,
+      "reasons": {
+        "amount_not_in_source": 2,
+        "statement_unreconciled": 2
+      },
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 1,
+      "faults": [
+        "decimal_shift",
+        "hallucinate_row"
+      ]
+    },
+    {
+      "id": "s01-csv-hdfc",
+      "flaw": null,
+      "expectedRows": 10,
+      "extractedRows": 9,
+      "matched": 9,
+      "fieldsCorrect": {
+        "date": 9,
+        "amount": 8,
+        "direction": 9,
+        "merchant": 9,
+        "category": 9
+      },
+      "categoryLabelled": 9,
+      "validated": 6,
+      "review": 3,
+      "reasons": {
+        "no_balance_evidence": 3,
+        "amount_not_in_source": 1,
+        "balance_chain_break": 2
+      },
+      "reconciliation": "not_provided",
+      "posted": 6,
+      "correctPostings": 6,
+      "unreconciledPostings": 0,
+      "heldButPostable": 4,
+      "faults": [
+        "drop_row",
+        "digit_typo"
+      ]
+    },
+    {
+      "id": "s02-csv-hdfc",
+      "flaw": null,
+      "expectedRows": 14,
+      "extractedRows": 13,
+      "matched": 13,
+      "fieldsCorrect": {
+        "date": 13,
+        "amount": 13,
+        "direction": 13,
+        "merchant": 13,
+        "category": 13
+      },
+      "categoryLabelled": 13,
+      "validated": 10,
+      "review": 3,
+      "reasons": {
+        "no_balance_evidence": 3,
+        "balance_chain_break": 2
+      },
+      "reconciliation": "not_provided",
+      "posted": 10,
+      "correctPostings": 10,
+      "unreconciledPostings": 0,
+      "heldButPostable": 4,
+      "faults": [
+        "misread_balance",
+        "drop_row"
+      ]
+    },
+    {
+      "id": "s03-csv-hdfc",
+      "flaw": null,
+      "expectedRows": 7,
+      "extractedRows": 8,
+      "matched": 7,
+      "fieldsCorrect": {
+        "date": 6,
+        "amount": 7,
+        "direction": 7,
+        "merchant": 7,
+        "category": 6
+      },
+      "categoryLabelled": 7,
+      "validated": 4,
+      "review": 4,
+      "reasons": {
+        "no_balance_evidence": 3,
+        "date_future": 1,
+        "date_not_in_source": 1,
+        "amount_not_in_source": 1
+      },
+      "reconciliation": "not_provided",
+      "posted": 4,
+      "correctPostings": 4,
+      "unreconciledPostings": 0,
+      "heldButPostable": 3,
+      "faults": [
+        "fabricated_credit",
+        "swap_day_month"
+      ]
+    },
+    {
+      "id": "s04-csv-hdfc",
+      "flaw": null,
+      "expectedRows": 12,
+      "extractedRows": 13,
+      "matched": 12,
+      "fieldsCorrect": {
+        "date": 12,
+        "amount": 11,
+        "direction": 12,
+        "merchant": 12,
+        "category": 12
+      },
+      "categoryLabelled": 12,
+      "validated": 10,
+      "review": 3,
+      "reasons": {
+        "amount_not_in_source": 2,
+        "no_balance_evidence": 3,
+        "balance_chain_break": 1
+      },
+      "reconciliation": "not_provided",
+      "posted": 10,
+      "correctPostings": 10,
+      "unreconciledPostings": 0,
+      "heldButPostable": 2,
+      "faults": [
+        "digit_typo",
+        "fabricated_credit"
+      ]
+    },
+    {
+      "id": "s05-csv-icici",
+      "flaw": null,
+      "expectedRows": 9,
+      "extractedRows": 10,
+      "matched": 9,
+      "fieldsCorrect": {
+        "date": 9,
+        "amount": 9,
+        "direction": 9,
+        "merchant": 9,
+        "category": 9
+      },
+      "categoryLabelled": 9,
+      "validated": 7,
+      "review": 3,
+      "reasons": {
+        "no_balance_evidence": 3,
+        "amount_not_in_source": 1
+      },
+      "reconciliation": "not_provided",
+      "posted": 7,
+      "correctPostings": 7,
+      "unreconciledPostings": 0,
+      "heldButPostable": 2,
+      "faults": [
+        "fabricated_credit"
+      ]
+    },
+    {
+      "id": "s06-csv-icici",
+      "flaw": null,
+      "expectedRows": 13,
+      "extractedRows": 12,
+      "matched": 12,
+      "fieldsCorrect": {
+        "date": 12,
+        "amount": 12,
+        "direction": 12,
+        "merchant": 12,
+        "category": 11
+      },
+      "categoryLabelled": 12,
+      "validated": 8,
+      "review": 4,
+      "reasons": {
+        "no_balance_evidence": 4,
+        "balance_chain_break": 3
+      },
+      "reconciliation": "not_provided",
+      "posted": 8,
+      "correctPostings": 8,
+      "unreconciledPostings": 0,
+      "heldButPostable": 5,
+      "faults": [
+        "misread_balance",
+        "drop_row"
+      ]
+    },
+    {
+      "id": "s07-csv-icici",
+      "flaw": null,
+      "expectedRows": 8,
+      "extractedRows": 7,
+      "matched": 7,
+      "fieldsCorrect": {
+        "date": 7,
+        "amount": 6,
+        "direction": 7,
+        "merchant": 7,
+        "category": 7
+      },
+      "categoryLabelled": 7,
+      "validated": 4,
+      "review": 3,
+      "reasons": {
+        "no_balance_evidence": 3,
+        "amount_not_in_source": 1,
+        "balance_chain_break": 2
+      },
+      "reconciliation": "not_provided",
+      "posted": 4,
+      "correctPostings": 4,
+      "unreconciledPostings": 0,
+      "heldButPostable": 4,
+      "faults": [
+        "drop_row",
+        "digit_typo"
+      ]
+    },
+    {
+      "id": "s08-csv-sbi",
+      "flaw": null,
+      "expectedRows": 11,
+      "extractedRows": 11,
+      "matched": 11,
+      "fieldsCorrect": {
+        "date": 11,
+        "amount": 11,
+        "direction": 10,
+        "merchant": 11,
+        "category": 10
+      },
+      "categoryLabelled": 11,
+      "validated": 8,
+      "review": 3,
+      "reasons": {
+        "no_balance_evidence": 3,
+        "balance_chain_break": 2
+      },
+      "reconciliation": "not_provided",
+      "posted": 8,
+      "correctPostings": 8,
+      "unreconciledPostings": 0,
+      "heldButPostable": 3,
+      "faults": [
+        "flip_direction",
+        "misread_balance"
+      ]
+    },
+    {
+      "id": "s09-csv-sbi",
+      "flaw": null,
+      "expectedRows": 6,
+      "extractedRows": 7,
+      "matched": 6,
+      "fieldsCorrect": {
+        "date": 6,
+        "amount": 5,
+        "direction": 6,
+        "merchant": 6,
+        "category": 6
+      },
+      "categoryLabelled": 6,
+      "validated": 3,
+      "review": 4,
+      "reasons": {
+        "no_balance_evidence": 4,
+        "amount_not_in_source": 2,
+        "balance_chain_break": 1
+      },
+      "reconciliation": "not_provided",
+      "posted": 3,
+      "correctPostings": 3,
+      "unreconciledPostings": 0,
+      "heldButPostable": 3,
+      "faults": [
+        "digit_typo",
+        "fabricated_credit"
+      ]
+    },
+    {
+      "id": "s10-csv-sbi",
+      "flaw": null,
+      "expectedRows": 15,
+      "extractedRows": 15,
+      "matched": 15,
+      "fieldsCorrect": {
+        "date": 15,
+        "amount": 14,
+        "direction": 15,
+        "merchant": 15,
+        "category": 12
+      },
+      "categoryLabelled": 15,
+      "validated": 13,
+      "review": 2,
+      "reasons": {
+        "no_balance_evidence": 2,
+        "amount_not_in_source": 1,
+        "balance_chain_break": 1
+      },
+      "reconciliation": "not_provided",
+      "posted": 13,
+      "correctPostings": 13,
+      "unreconciledPostings": 0,
+      "heldButPostable": 2,
+      "faults": [
+        "decimal_shift"
+      ]
+    },
+    {
+      "id": "s11-csv-generic-signed",
+      "flaw": null,
+      "expectedRows": 8,
+      "extractedRows": 7,
+      "matched": 7,
+      "fieldsCorrect": {
+        "date": 7,
+        "amount": 6,
+        "direction": 7,
+        "merchant": 7,
+        "category": 7
+      },
+      "categoryLabelled": 7,
+      "validated": 0,
+      "review": 7,
+      "reasons": {
+        "no_balance_evidence": 7,
+        "amount_not_in_source": 1
+      },
+      "reconciliation": "not_provided",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 8,
+      "faults": [
+        "drop_row",
+        "digit_typo"
+      ]
+    },
+    {
+      "id": "s12-csv-generic-signed",
+      "flaw": null,
+      "expectedRows": 10,
+      "extractedRows": 9,
+      "matched": 9,
+      "fieldsCorrect": {
+        "date": 9,
+        "amount": 9,
+        "direction": 9,
+        "merchant": 9,
+        "category": 9
+      },
+      "categoryLabelled": 9,
+      "validated": 0,
+      "review": 9,
+      "reasons": {
+        "no_balance_evidence": 9
+      },
+      "reconciliation": "not_provided",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 10,
+      "faults": [
+        "drop_row"
+      ]
+    },
+    {
+      "id": "s13-csv-axis-drcr",
+      "flaw": null,
+      "expectedRows": 9,
+      "extractedRows": 10,
+      "matched": 9,
+      "fieldsCorrect": {
+        "date": 9,
+        "amount": 9,
+        "direction": 8,
+        "merchant": 9,
+        "category": 6
+      },
+      "categoryLabelled": 9,
+      "validated": 6,
+      "review": 4,
+      "reasons": {
+        "no_balance_evidence": 4,
+        "balance_chain_break": 1
+      },
+      "reconciliation": "not_provided",
+      "posted": 6,
+      "correctPostings": 6,
+      "unreconciledPostings": 0,
+      "heldButPostable": 3,
+      "faults": [
+        "hallucinate_row",
+        "flip_direction"
+      ]
+    },
+    {
+      "id": "s14-csv-axis-drcr",
+      "flaw": null,
+      "expectedRows": 12,
+      "extractedRows": 11,
+      "matched": 11,
+      "fieldsCorrect": {
+        "date": 11,
+        "amount": 10,
+        "direction": 11,
+        "merchant": 11,
+        "category": 10
+      },
+      "categoryLabelled": 11,
+      "validated": 9,
+      "review": 2,
+      "reasons": {
+        "no_balance_evidence": 2,
+        "amount_not_in_source": 1,
+        "balance_chain_break": 1
+      },
+      "reconciliation": "not_provided",
+      "posted": 9,
+      "correctPostings": 9,
+      "unreconciledPostings": 0,
+      "heldButPostable": 3,
+      "faults": [
+        "drop_row",
+        "digit_typo"
+      ]
+    },
+    {
+      "id": "s15-csv-axis-drcr",
+      "flaw": null,
+      "expectedRows": 7,
+      "extractedRows": 6,
+      "matched": 6,
+      "fieldsCorrect": {
+        "date": 6,
+        "amount": 6,
+        "direction": 6,
+        "merchant": 6,
+        "category": 6
+      },
+      "categoryLabelled": 6,
+      "validated": 4,
+      "review": 2,
+      "reasons": {
+        "no_balance_evidence": 2,
+        "balance_chain_break": 1
+      },
+      "reconciliation": "not_provided",
+      "posted": 4,
+      "correctPostings": 4,
+      "unreconciledPostings": 0,
+      "heldButPostable": 3,
+      "faults": [
+        "misread_balance",
+        "drop_row"
+      ]
+    },
+    {
+      "id": "s16-text-fixed-width",
+      "flaw": null,
+      "expectedRows": 10,
+      "extractedRows": 11,
+      "matched": 10,
+      "fieldsCorrect": {
+        "date": 10,
+        "amount": 9,
+        "direction": 10,
+        "merchant": 10,
+        "category": 10
+      },
+      "categoryLabelled": 10,
+      "validated": 0,
+      "review": 11,
+      "reasons": {
+        "statement_unreconciled": 11,
+        "amount_not_in_source": 2,
+        "balance_chain_break": 1
+      },
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 10,
+      "faults": [
+        "digit_typo",
+        "fabricated_credit"
+      ]
+    },
+    {
+      "id": "s17-text-fixed-width",
+      "flaw": null,
+      "expectedRows": 12,
+      "extractedRows": 11,
+      "matched": 11,
+      "fieldsCorrect": {
+        "date": 11,
+        "amount": 10,
+        "direction": 11,
+        "merchant": 11,
+        "category": 11
+      },
+      "categoryLabelled": 11,
+      "validated": 0,
+      "review": 11,
+      "reasons": {
+        "statement_unreconciled": 11,
+        "balance_chain_break": 2,
+        "amount_not_in_source": 1
+      },
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 12,
+      "faults": [
+        "drop_row",
+        "digit_typo"
+      ]
+    },
+    {
+      "id": "s18-text-fixed-width",
+      "flaw": null,
+      "expectedRows": 8,
+      "extractedRows": 8,
+      "matched": 8,
+      "fieldsCorrect": {
+        "date": 7,
+        "amount": 7,
+        "direction": 8,
+        "merchant": 8,
+        "category": 8
+      },
+      "categoryLabelled": 8,
+      "validated": 0,
+      "review": 8,
+      "reasons": {
+        "statement_unreconciled": 8,
+        "amount_not_in_source": 1,
+        "balance_chain_break": 1,
+        "date_future": 1,
+        "date_outside_period": 1,
+        "date_not_in_source": 1
+      },
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 8,
+      "faults": [
+        "swap_day_month",
+        "decimal_shift"
+      ]
+    },
+    {
+      "id": "s19-text-drcr-suffix",
+      "flaw": null,
+      "expectedRows": 9,
+      "extractedRows": 10,
+      "matched": 9,
+      "fieldsCorrect": {
+        "date": 9,
+        "amount": 9,
+        "direction": 9,
+        "merchant": 9,
+        "category": 9
+      },
+      "categoryLabelled": 9,
+      "validated": 0,
+      "review": 10,
+      "reasons": {
+        "statement_unreconciled": 10,
+        "amount_not_in_source": 1
+      },
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 9,
+      "faults": [
+        "fabricated_credit"
+      ]
+    },
+    {
+      "id": "s20-text-drcr-suffix",
+      "flaw": null,
+      "expectedRows": 11,
+      "extractedRows": 12,
+      "matched": 11,
+      "fieldsCorrect": {
+        "date": 11,
+        "amount": 11,
+        "direction": 11,
+        "merchant": 11,
+        "category": 10
+      },
+      "categoryLabelled": 11,
+      "validated": 0,
+      "review": 12,
+      "reasons": {
+        "statement_unreconciled": 12,
+        "amount_not_in_source": 1
+      },
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 11,
+      "faults": [
+        "fabricated_credit"
+      ]
+    },
+    {
+      "id": "s21-text-drcr-suffix",
+      "flaw": null,
+      "expectedRows": 13,
+      "extractedRows": 13,
+      "matched": 13,
+      "fieldsCorrect": {
+        "date": 13,
+        "amount": 12,
+        "direction": 13,
+        "merchant": 13,
+        "category": 13
+      },
+      "categoryLabelled": 13,
+      "validated": 0,
+      "review": 13,
+      "reasons": {
+        "statement_unreconciled": 13,
+        "amount_not_in_source": 1,
+        "balance_chain_break": 1
+      },
+      "reconciliation": "mismatch",
+      "posted": 0,
+      "correctPostings": 0,
+      "unreconciledPostings": 0,
+      "heldButPostable": 13,
+      "faults": [
+        "decimal_shift"
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "q01",
+      "question": "How much did I spend on food last month?",
+      "expectedTool": "total_spending",
+      "gotTool": "total_spending",
+      "toolCorrect": true,
+      "expectedValue": 399095,
+      "gotValue": 399095,
+      "resultCorrect": true,
+      "answer": "You spent ₹3,990.95 on Food & Dining last month (3 transactions)."
+    },
+    {
+      "id": "q02",
+      "question": "What have I spent in total so far this month?",
+      "expectedTool": "total_spending",
+      "gotTool": "total_spending",
+      "toolCorrect": true,
+      "expectedValue": 3963073,
+      "gotValue": 3963073,
+      "resultCorrect": true,
+      "answer": "You spent ₹39,630.73 this month (9 transactions)."
+    },
+    {
+      "id": "q03",
+      "question": "How much income did I receive last month?",
+      "expectedTool": "total_income",
+      "gotTool": "total_income",
+      "toolCorrect": true,
+      "expectedValue": 12000000,
+      "gotValue": 12000000,
+      "resultCorrect": true,
+      "answer": "You received ₹1,20,000 last month (1 transaction)."
+    },
+    {
+      "id": "q04",
+      "question": "How much have I spent on Uber this year?",
+      "expectedTool": "total_spending",
+      "gotTool": "total_spending",
+      "toolCorrect": true,
+      "expectedValue": 268307,
+      "gotValue": 268307,
+      "resultCorrect": true,
+      "answer": "You spent ₹2,683.07 on Cab & Auto at Uber this year (4 transactions)."
+    },
+    {
+      "id": "q05",
+      "question": "Which category did I spend the most on in April 2026? Give me the breakdown.",
+      "expectedTool": "spending_by_category",
+      "gotTool": "spending_by_category",
+      "toolCorrect": true,
+      "expectedValue": 3200000,
+      "gotValue": 3200000,
+      "resultCorrect": true,
+      "answer": "Spending by category from 01-04-2026 to 30-04-2026: Housing & Utilities ₹32,000, Shopping & Electronics ₹22,203.13, Food & Dining ₹11,952.01, Entertainment & Leisure ₹2,139.14, Transportation ₹597.52."
+    },
+    {
+      "id": "q06",
+      "question": "Who were my top 3 merchants by spending last month?",
+      "expectedTool": "top_merchants",
+      "gotTool": "top_merchants",
+      "toolCorrect": true,
+      "expectedValue": 3200000,
+      "gotValue": 3200000,
+      "resultCorrect": true,
+      "answer": "Top merchants last month: Landlord Rent ₹32,000, Croma ₹11,393.01, HPCL Petrol ₹7,721.40."
+    },
+    {
+      "id": "q07",
+      "question": "What's my total balance across all accounts right now?",
+      "expectedTool": "account_balances",
+      "gotTool": "account_balances",
+      "toolCorrect": true,
+      "expectedValue": 57106193,
+      "gotValue": 57106193,
+      "resultCorrect": true,
+      "answer": "Cash Wallet: -₹8,883.82, HDFC Savings: ₹5,79,945.75. Net total ₹5,71,061.93."
+    },
+    {
+      "id": "q08",
+      "question": "Am I spending more this month than last month? Compare them.",
+      "expectedTool": "compare_spending",
+      "gotTool": "compare_spending",
+      "toolCorrect": true,
+      "expectedValue": -2183401,
+      "gotValue": -2183401,
+      "resultCorrect": true,
+      "answer": "You spent ₹39,630.73 this month vs ₹61,464.74 last month (down ₹21,834.01)."
+    },
+    {
+      "id": "q09",
+      "question": "What is my average monthly spending over the last 3 months?",
+      "expectedTool": "average_monthly_spending",
+      "gotTool": "average_monthly_spending",
+      "toolCorrect": true,
+      "expectedValue": 6175814,
+      "gotValue": 6175814,
+      "resultCorrect": true,
+      "answer": "Over the last 3 complete months (01-03-2026 to 31-05-2026) you averaged ₹61,758.14 per month."
+    },
+    {
+      "id": "q10",
+      "question": "How much did I spend on groceries in March 2026?",
+      "expectedTool": "total_spending",
+      "gotTool": "total_spending",
+      "toolCorrect": true,
+      "expectedValue": 261405,
+      "gotValue": 261405,
+      "resultCorrect": true,
+      "answer": "You spent ₹2,614.05 on Groceries from 01-03-2026 to 31-03-2026 (1 transaction)."
+    },
+    {
+      "id": "q11",
+      "question": "Show me my last 5 transactions.",
+      "expectedTool": "list_transactions",
+      "gotTool": "list_transactions",
+      "toolCorrect": true,
+      "expectedValue": 5,
+      "gotValue": 5,
+      "resultCorrect": true,
+      "answer": "5 transactions in total: 2026-06-14 Airtel -₹999; 2026-06-13 Netflix -₹649; 2026-06-11 BigBasket -₹1,064.07; 2026-06-10 Airtel -₹999; 2026-06-09 Namma Metro -₹555.22."
+    },
+    {
+      "id": "q12",
+      "question": "How much did I spend on transport in the last 30 days?",
+      "expectedTool": "total_spending",
+      "gotTool": "total_spending",
+      "toolCorrect": true,
+      "expectedValue": 827662,
+      "gotValue": 827662,
+      "resultCorrect": true,
+      "answer": "You spent ₹8,276.62 on Transportation in the last 30 days (4 transactions)."
+    },
+    {
+      "id": "q13",
+      "question": "How much did entertainment cost me last month?",
+      "expectedTool": "total_spending",
+      "gotTool": "total_spending",
+      "toolCorrect": true,
+      "expectedValue": 171191,
+      "gotValue": 171191,
+      "resultCorrect": true,
+      "answer": "You spent ₹1,711.91 on Entertainment & Leisure last month (2 transactions)."
+    },
+    {
+      "id": "q14",
+      "question": "How much salary have I earned this year?",
+      "expectedTool": "total_income",
+      "gotTool": "total_income",
+      "toolCorrect": true,
+      "expectedValue": 60000000,
+      "gotValue": 60000000,
+      "resultCorrect": true,
+      "answer": "You received ₹6,00,000 on Salary & Professional this year (5 transactions)."
+    },
+    {
+      "id": "q15",
+      "question": "How much did I spend at Swiggy in May 2026?",
+      "expectedTool": "total_spending",
+      "gotTool": "total_spending",
+      "toolCorrect": true,
+      "expectedValue": 0,
+      "gotValue": 0,
+      "resultCorrect": true,
+      "answer": "You spent ₹0 at Swiggy from 01-05-2026 to 31-05-2026 (0 transactions)."
+    },
+    {
+      "id": "q16",
+      "question": "What did I spend on health and wellness in the last 90 days?",
+      "expectedTool": "total_spending",
+      "gotTool": "total_spending",
+      "toolCorrect": true,
+      "expectedValue": 946467,
+      "gotValue": 946467,
+      "resultCorrect": true,
+      "answer": "You spent ₹9,464.67 on Health & Wellness in the last 90 days (7 transactions)."
+    },
+    {
+      "id": "q17",
+      "question": "On average, how much do I spend on food per month over the last 6 months?",
+      "expectedTool": "average_monthly_spending",
+      "gotTool": "average_monthly_spending",
+      "toolCorrect": true,
+      "expectedValue": 488537,
+      "gotValue": 488537,
+      "resultCorrect": true,
+      "answer": "Over the last 6 complete months (01-12-2025 to 31-05-2026) you averaged ₹4,885.37 per month on Food & Dining."
+    },
+    {
+      "id": "q18",
+      "question": "How much rent have I paid this year?",
+      "expectedTool": "total_spending",
+      "gotTool": "total_spending",
+      "toolCorrect": true,
+      "expectedValue": 16000000,
+      "gotValue": 16000000,
+      "resultCorrect": true,
+      "answer": "You spent ₹1,60,000 on Rent this year (5 transactions)."
+    },
+    {
+      "id": "q19",
+      "question": "Delete all my transactions from last month.",
+      "expectedTool": null,
+      "gotTool": null,
+      "toolCorrect": true,
+      "expectedValue": null,
+      "gotValue": null,
+      "resultCorrect": true,
+      "answer": "I can only answer questions about your spending, income and balances, and that one didn't map to a query I support."
+    },
+    {
+      "id": "q20",
+      "question": "What's the weather going to be in Bengaluru tomorrow?",
+      "expectedTool": null,
+      "gotTool": null,
+      "toolCorrect": true,
+      "expectedValue": null,
+      "gotValue": null,
+      "resultCorrect": true,
+      "answer": "I can only answer questions about your spending, income and balances, and that one didn't map to a query I support."
+    }
+  ]
+}

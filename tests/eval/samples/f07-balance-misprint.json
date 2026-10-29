@@ -1,0 +1,106 @@
+{
+  "id": "f07-balance-misprint",
+  "description": "One row prints a wrong running balance",
+  "kind": "statement",
+  "format": "text-drcr-suffix",
+  "accountCurrency": "INR",
+  "flaw": "balance_chain_break",
+  "input": "YES BANK LTD\nStatement of Account for the period 01-Apr-2026 to 30-Apr-2026\nOpening Balance         84,193.75 Cr\n\n06-Apr-2026  NEFT CR-SALARY ACME TECHNOLOGIES                   99,752.64 Cr     1,83,946.39 Cr\n08-Apr-2026  BY TRANSFER-UPI/DR/546150/NETFLIX                     259.95 Dr     1,83,686.44 Cr\n10-Apr-2026  BY TRANSFER-UPI/DR/428395/BMRCL METRO RECHARGE        391.16 Dr     1,83,295.28 Cr\n14-Apr-2026  BY TRANSFER-UPI/DR/803038/HPCL PETROL PUMP          1,728.58 Dr     1,81,566.70 Cr\n15-Apr-2026  BY TRANSFER-UPI/DR/841720/ZOMATO                      473.83 Dr     1,81,092.87 Cr\n16-Apr-2026  BY TRANSFER-UPI/DR/179385/CROMA RETAIL             12,252.19 Dr     1,68,849.68 Cr\n18-Apr-2026  BY TRANSFER-UPI/DR/267137/CULT FIT                  1,251.88 Dr     1,67,588.80 Cr\n19-Apr-2026  SMS ALERT CHARGES QTR                                  19.47 Dr     1,67,569.33 Cr\n20-Apr-2026  BY TRANSFER-UPI/DR/614505/BESCOM ELECTRICITY        2,876.60 Dr     1,64,692.73 Cr\n24-Apr-2026  BY TRANSFER-UPI/DR/659742/PVR CINEMAS               1,380.80 Dr     1,63,311.93 Cr\n\nClosing Balance         1,63,311.93 Cr",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": 8419375,
+    "closing": 16331193,
+    "rows": [
+      {
+        "date": "2026-04-06",
+        "amount": 9975264,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 18394639,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-08",
+        "amount": 25995,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/546150/NETFLIX",
+        "balanceAfter": 18368644,
+        "category": "Streaming Services",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-10",
+        "amount": 39116,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/428395/BMRCL METRO RECHARGE",
+        "balanceAfter": 18329528,
+        "category": "Public Transit",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-14",
+        "amount": 172858,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/803038/HPCL PETROL PUMP",
+        "balanceAfter": 18156670,
+        "category": "Fuel",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-15",
+        "amount": 47383,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/841720/ZOMATO",
+        "balanceAfter": 18109287,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-16",
+        "amount": 1225219,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/179385/CROMA RETAIL",
+        "balanceAfter": 16884968,
+        "category": "Electronics",
+        "shouldPost": false
+      },
+      {
+        "date": "2026-04-18",
+        "amount": 125188,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/267137/CULT FIT",
+        "balanceAfter": 16758880,
+        "category": "Gym & Fitness",
+        "shouldPost": false
+      },
+      {
+        "date": "2026-04-19",
+        "amount": 1947,
+        "direction": "debit",
+        "merchant": "SMS ALERT CHARGES QTR",
+        "balanceAfter": 16756933,
+        "category": "Bank Charges & Fees",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-20",
+        "amount": 287660,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/614505/BESCOM ELECTRICITY",
+        "balanceAfter": 16469273,
+        "category": "Electricity & Gas",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-24",
+        "amount": 138080,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/659742/PVR CINEMAS",
+        "balanceAfter": 16331193,
+        "category": "Movies & Events",
+        "shouldPost": true
+      }
+    ]
+  }
+}

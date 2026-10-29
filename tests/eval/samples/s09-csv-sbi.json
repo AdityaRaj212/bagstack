@@ -1,0 +1,70 @@
+{
+  "id": "s09-csv-sbi",
+  "description": "csv-sbi statement, 6 rows, 2026-03",
+  "kind": "statement",
+  "format": "csv-sbi",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "Txn Date,Value Date,Description,Ref No./Cheque No.,Debit,Credit,Balance\n04 Mar 2026,04 Mar 2026,NEFT CR-SALARY ACME TECHNOLOGIES,TRF67839,,\"1,21,102.98\",\"1,88,326.29\"\n06 Mar 2026,06 Mar 2026,BY TRANSFER-UPI/CR/770603/REFUND AMAZON SELLER,TRF55676,,\"2,230.51\",\"1,90,556.80\"\n07 Mar 2026,07 Mar 2026,BY TRANSFER-UPI/DR/622327/ZOMATO,TRF26954,868.14,,\"1,89,688.66\"\n17 Mar 2026,17 Mar 2026,BY TRANSFER-UPI/DR/393644/HPCL PETROL PUMP,TRF86724,\"1,141.19\",,\"1,88,547.47\"\n19 Mar 2026,19 Mar 2026,BY TRANSFER-UPI/DR/325931/HOUSE RENT NOBROKER,TRF17871,\"38,547.04\",,\"1,50,000.43\"\n22 Mar 2026,22 Mar 2026,BY TRANSFER-UPI/DR/264382/RAMESH KUMAR,TRF22271,\"2,551.15\",,\"1,47,449.28\"",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-03-04",
+        "amount": 12110298,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 18832629,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-06",
+        "amount": 223051,
+        "direction": "credit",
+        "merchant": "BY TRANSFER-UPI/CR/770603/REFUND AMAZON SELLER",
+        "balanceAfter": 19055680,
+        "category": "Refunds & Reimbursements",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-07",
+        "amount": 86814,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/622327/ZOMATO",
+        "balanceAfter": 18968866,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-17",
+        "amount": 114119,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/393644/HPCL PETROL PUMP",
+        "balanceAfter": 18854747,
+        "category": "Fuel",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-19",
+        "amount": 3854704,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/325931/HOUSE RENT NOBROKER",
+        "balanceAfter": 15000043,
+        "category": "Rent",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-22",
+        "amount": 255115,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/264382/RAMESH KUMAR",
+        "balanceAfter": 14744928,
+        "category": null,
+        "shouldPost": true
+      }
+    ]
+  }
+}

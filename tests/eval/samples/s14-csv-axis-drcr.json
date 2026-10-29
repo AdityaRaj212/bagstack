@@ -1,0 +1,124 @@
+{
+  "id": "s14-csv-axis-drcr",
+  "description": "csv-axis-drcr statement, 12 rows, 2026-02",
+  "kind": "statement",
+  "format": "csv-axis-drcr",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "Tran Date,CHQNO,PARTICULARS,AMOUNT,DR/CR,BAL\n01-02-2026,,NEFT CR-SALARY ACME TECHNOLOGIES,96455.56,CR,184772.39\n07-02-2026,,INT.PD INTEREST CREDIT,1227.32,CR,185999.71\n08-02-2026,,INT.PD INTEREST CREDIT,1106.70,CR,187106.41\n09-02-2026,,NETFLIX 509370,482.91,DR,186623.50\n11-02-2026,,CULT FIT 663090,2319.59,DR,184303.91\n13-02-2026,,BESCOM ELECTRICITY 104871,1267.29,DR,183036.62\n15-02-2026,,HOUSE RENT NOBROKER 393913,28317.62,DR,154719.00\n17-02-2026,,SWIGGY 684142,307.61,DR,154411.39\n18-02-2026,,HPCL PETROL PUMP 513555,1129.00,DR,153282.39\n19-02-2026,,HOUSE RENT NOBROKER 737539,21688.00,DR,131594.39\n27-02-2026,,UBER INDIA 658600,301.87,DR,131292.52\n28-02-2026,,BMRCL METRO RECHARGE 654337,479.98,DR,130812.54",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-02-01",
+        "amount": 9645556,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 18477239,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-07",
+        "amount": 122732,
+        "direction": "credit",
+        "merchant": "INT.PD INTEREST CREDIT",
+        "balanceAfter": 18599971,
+        "category": "Interest Income",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-08",
+        "amount": 110670,
+        "direction": "credit",
+        "merchant": "INT.PD INTEREST CREDIT",
+        "balanceAfter": 18710641,
+        "category": "Interest Income",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-09",
+        "amount": 48291,
+        "direction": "debit",
+        "merchant": "NETFLIX 509370",
+        "balanceAfter": 18662350,
+        "category": "Streaming Services",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-11",
+        "amount": 231959,
+        "direction": "debit",
+        "merchant": "CULT FIT 663090",
+        "balanceAfter": 18430391,
+        "category": "Gym & Fitness",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-13",
+        "amount": 126729,
+        "direction": "debit",
+        "merchant": "BESCOM ELECTRICITY 104871",
+        "balanceAfter": 18303662,
+        "category": "Electricity & Gas",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-15",
+        "amount": 2831762,
+        "direction": "debit",
+        "merchant": "HOUSE RENT NOBROKER 393913",
+        "balanceAfter": 15471900,
+        "category": "Rent",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-17",
+        "amount": 30761,
+        "direction": "debit",
+        "merchant": "SWIGGY 684142",
+        "balanceAfter": 15441139,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-18",
+        "amount": 112900,
+        "direction": "debit",
+        "merchant": "HPCL PETROL PUMP 513555",
+        "balanceAfter": 15328239,
+        "category": "Fuel",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-19",
+        "amount": 2168800,
+        "direction": "debit",
+        "merchant": "HOUSE RENT NOBROKER 737539",
+        "balanceAfter": 13159439,
+        "category": "Rent",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-27",
+        "amount": 30187,
+        "direction": "debit",
+        "merchant": "UBER INDIA 658600",
+        "balanceAfter": 13129252,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-02-28",
+        "amount": 47998,
+        "direction": "debit",
+        "merchant": "BMRCL METRO RECHARGE 654337",
+        "balanceAfter": 13081254,
+        "category": "Public Transit",
+        "shouldPost": true
+      }
+    ]
+  }
+}

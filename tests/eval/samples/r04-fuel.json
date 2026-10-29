@@ -1,0 +1,25 @@
+{
+  "id": "r04-fuel",
+  "description": "Fuel receipt, single line",
+  "kind": "receipt",
+  "format": "receipt-ocr-text",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "HPCL PETROL PUMP OUTER RING ROAD\nORR, Bellandur, Bengaluru\nGSTIN: 29ABCDE2767F1Z5\nBill No: 1773    Date: 11/06/2026    Time: 20:17\n----------------------------------------\nPetrol 30.12 L x1               3,125.00\n----------------------------------------\nSub Total                       3,125.00\nGrand Total                     3,125.00\nPaid via UPI\nThank you! Visit again",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-06-11",
+        "amount": 312500,
+        "direction": "debit",
+        "merchant": "HPCL PETROL PUMP OUTER RING ROAD",
+        "balanceAfter": null,
+        "category": "Fuel",
+        "shouldPost": true
+      }
+    ]
+  }
+}

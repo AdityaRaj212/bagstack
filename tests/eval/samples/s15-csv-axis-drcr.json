@@ -1,0 +1,79 @@
+{
+  "id": "s15-csv-axis-drcr",
+  "description": "csv-axis-drcr statement, 7 rows, 2025-11",
+  "kind": "statement",
+  "format": "csv-axis-drcr",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "Tran Date,CHQNO,PARTICULARS,AMOUNT,DR/CR,BAL\n03-11-2025,,NEFT CR-SALARY ACME TECHNOLOGIES,96324.87,CR,149071.59\n06-11-2025,,MYNTRA 946295,5086.45,DR,143985.14\n10-11-2025,,BESCOM ELECTRICITY 246143,1815.42,DR,142169.72\n14-11-2025,,INT.PD INTEREST CREDIT,1083.18,CR,143252.90\n23-11-2025,,SWIGGY 185497,1054.60,DR,142198.30\n25-11-2025,,APOLLO PHARMACY 638288,1430.71,DR,140767.59\n27-11-2025,,PRIYA SHARMA 707557,8362.13,CR,149129.72",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2025-11-03",
+        "amount": 9632487,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 14907159,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-11-06",
+        "amount": 508645,
+        "direction": "debit",
+        "merchant": "MYNTRA 946295",
+        "balanceAfter": 14398514,
+        "category": "Clothing",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-11-10",
+        "amount": 181542,
+        "direction": "debit",
+        "merchant": "BESCOM ELECTRICITY 246143",
+        "balanceAfter": 14216972,
+        "category": "Electricity & Gas",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-11-14",
+        "amount": 108318,
+        "direction": "credit",
+        "merchant": "INT.PD INTEREST CREDIT",
+        "balanceAfter": 14325290,
+        "category": "Interest Income",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-11-23",
+        "amount": 105460,
+        "direction": "debit",
+        "merchant": "SWIGGY 185497",
+        "balanceAfter": 14219830,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-11-25",
+        "amount": 143071,
+        "direction": "debit",
+        "merchant": "APOLLO PHARMACY 638288",
+        "balanceAfter": 14076759,
+        "category": "Medicines & Pharmacy",
+        "shouldPost": true
+      },
+      {
+        "date": "2025-11-27",
+        "amount": 836213,
+        "direction": "credit",
+        "merchant": "PRIYA SHARMA 707557",
+        "balanceAfter": 14912972,
+        "category": null,
+        "shouldPost": true
+      }
+    ]
+  }
+}

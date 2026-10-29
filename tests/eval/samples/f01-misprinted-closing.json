@@ -1,0 +1,97 @@
+{
+  "id": "f01-misprinted-closing",
+  "description": "Printed closing balance does not reconcile with the rows",
+  "kind": "statement",
+  "format": "text-fixed-width",
+  "accountCurrency": "INR",
+  "flaw": "statement_unreconciled",
+  "input": "KOTAK MAHINDRA BANK - SAVINGS ACCOUNT STATEMENT\nAccount Holder: A. R. SYNTHETIC          Account No: XXXXXXXX4821\nStatement Period: 01/05/2026 to 31/05/2026\nOpening Balance: 41,318.57\n\nDate        Description                                    Withdrawals      Deposits         Balance\n----------------------------------------------------------------------------------------------------\n05/05/2026  NEFT CR-SALARY ACME TECHNOLOGIES                             1,14,953.29     1,56,271.86\n06/05/2026  UPI-BMRCL METRO RECHARGE-528161713620               591.33                   1,55,680.53\n07/05/2026  UPI-PVR CINEMAS-295403485652                      1,174.96                   1,54,505.57\n11/05/2026  UPI-HOUSE RENT NOBROKER-656248092860             39,882.14                   1,14,623.43\n17/05/2026  UPI-DMART-256783367227                            1,523.90                   1,13,099.53\n18/05/2026  UPI-RAMESH KUMAR-577992836036                       948.67                   1,12,150.86\n22/05/2026  UPI-HDFC ERGO INSURANCE-126315395929              6,816.34                   1,05,334.52\n26/05/2026  UPI-PVR CINEMAS-812735925917                        437.49                   1,04,897.03\n28/05/2026  UPI-NETFLIX-657757298112                            305.04                   1,04,591.99\n----------------------------------------------------------------------------------------------------\nClosing Balance: 1,05,591.99\nThis is a computer generated statement and does not require a signature.",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": 4131857,
+    "closing": 10559199,
+    "rows": [
+      {
+        "date": "2026-05-05",
+        "amount": 11495329,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 15627186,
+        "category": "Full-time Salary",
+        "shouldPost": false
+      },
+      {
+        "date": "2026-05-06",
+        "amount": 59133,
+        "direction": "debit",
+        "merchant": "UPI-BMRCL METRO RECHARGE-528161713620",
+        "balanceAfter": 15568053,
+        "category": "Public Transit",
+        "shouldPost": false
+      },
+      {
+        "date": "2026-05-07",
+        "amount": 117496,
+        "direction": "debit",
+        "merchant": "UPI-PVR CINEMAS-295403485652",
+        "balanceAfter": 15450557,
+        "category": "Movies & Events",
+        "shouldPost": false
+      },
+      {
+        "date": "2026-05-11",
+        "amount": 3988214,
+        "direction": "debit",
+        "merchant": "UPI-HOUSE RENT NOBROKER-656248092860",
+        "balanceAfter": 11462343,
+        "category": "Rent",
+        "shouldPost": false
+      },
+      {
+        "date": "2026-05-17",
+        "amount": 152390,
+        "direction": "debit",
+        "merchant": "UPI-DMART-256783367227",
+        "balanceAfter": 11309953,
+        "category": "Groceries",
+        "shouldPost": false
+      },
+      {
+        "date": "2026-05-18",
+        "amount": 94867,
+        "direction": "debit",
+        "merchant": "UPI-RAMESH KUMAR-577992836036",
+        "balanceAfter": 11215086,
+        "category": null,
+        "shouldPost": false
+      },
+      {
+        "date": "2026-05-22",
+        "amount": 681634,
+        "direction": "debit",
+        "merchant": "UPI-HDFC ERGO INSURANCE-126315395929",
+        "balanceAfter": 10533452,
+        "category": "Insurance Premium",
+        "shouldPost": false
+      },
+      {
+        "date": "2026-05-26",
+        "amount": 43749,
+        "direction": "debit",
+        "merchant": "UPI-PVR CINEMAS-812735925917",
+        "balanceAfter": 10489703,
+        "category": "Movies & Events",
+        "shouldPost": false
+      },
+      {
+        "date": "2026-05-28",
+        "amount": 30504,
+        "direction": "debit",
+        "merchant": "UPI-NETFLIX-657757298112",
+        "balanceAfter": 10459199,
+        "category": "Streaming Services",
+        "shouldPost": false
+      }
+    ]
+  }
+}

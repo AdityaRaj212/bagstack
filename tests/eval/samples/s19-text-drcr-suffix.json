@@ -1,0 +1,97 @@
+{
+  "id": "s19-text-drcr-suffix",
+  "description": "text-drcr-suffix statement, 9 rows, 2026-05",
+  "kind": "statement",
+  "format": "text-drcr-suffix",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "YES BANK LTD\nStatement of Account for the period 01-May-2026 to 31-May-2026\nOpening Balance         81,775.76 Cr\n\n03-May-2026  NEFT CR-SALARY ACME TECHNOLOGIES                 1,24,574.61 Cr     2,06,350.37 Cr\n06-May-2026  BESCOM ELECTRICITY 416873                           1,894.34 Dr     2,04,456.03 Cr\n07-May-2026  BESCOM ELECTRICITY 172528                           2,755.68 Dr     2,01,700.35 Cr\n12-May-2026  MYNTRA 683635                                       4,502.26 Dr     1,97,198.09 Cr\n17-May-2026  RAMESH KUMAR 537029                                 4,345.88 Dr     1,92,852.21 Cr\n18-May-2026  ZERODHA SIP 513061                                  7,937.14 Dr     1,84,915.07 Cr\n20-May-2026  CROMA RETAIL 275200                                10,907.33 Dr     1,74,007.74 Cr\n23-May-2026  PRIYA SHARMA 489298                                13,908.98 Cr     1,87,916.72 Cr\n27-May-2026  REFUND AMAZON SELLER 187140                         3,651.23 Cr     1,91,567.95 Cr\n\nClosing Balance         1,91,567.95 Cr",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": 8177576,
+    "closing": 19156795,
+    "rows": [
+      {
+        "date": "2026-05-03",
+        "amount": 12457461,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 20635037,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-06",
+        "amount": 189434,
+        "direction": "debit",
+        "merchant": "BESCOM ELECTRICITY 416873",
+        "balanceAfter": 20445603,
+        "category": "Electricity & Gas",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-07",
+        "amount": 275568,
+        "direction": "debit",
+        "merchant": "BESCOM ELECTRICITY 172528",
+        "balanceAfter": 20170035,
+        "category": "Electricity & Gas",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-12",
+        "amount": 450226,
+        "direction": "debit",
+        "merchant": "MYNTRA 683635",
+        "balanceAfter": 19719809,
+        "category": "Clothing",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-17",
+        "amount": 434588,
+        "direction": "debit",
+        "merchant": "RAMESH KUMAR 537029",
+        "balanceAfter": 19285221,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-18",
+        "amount": 793714,
+        "direction": "debit",
+        "merchant": "ZERODHA SIP 513061",
+        "balanceAfter": 18491507,
+        "category": "Investments & Mutual Funds",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-20",
+        "amount": 1090733,
+        "direction": "debit",
+        "merchant": "CROMA RETAIL 275200",
+        "balanceAfter": 17400774,
+        "category": "Electronics",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-23",
+        "amount": 1390898,
+        "direction": "credit",
+        "merchant": "PRIYA SHARMA 489298",
+        "balanceAfter": 18791672,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-27",
+        "amount": 365123,
+        "direction": "credit",
+        "merchant": "REFUND AMAZON SELLER 187140",
+        "balanceAfter": 19156795,
+        "category": "Refunds & Reimbursements",
+        "shouldPost": true
+      }
+    ]
+  }
+}

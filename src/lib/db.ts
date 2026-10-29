@@ -240,7 +240,8 @@ export function initSchema(db: DatabaseSync) {
     const hasLoanNotes = (db as any).prepare("SELECT 1 FROM pragma_table_info('loans') WHERE name = 'notes'").get();
     const hasTxLoanId = (db as any).prepare("SELECT 1 FROM pragma_table_info('transactions') WHERE name = 'loan_id'").get();
     const hasLoanPayments = (db as any).prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='loan_payments'").get();
-    if (hasGoalNotes && hasLoanType && hasLoanNotes && hasTxLoanId && hasLoanPayments) {
+    const hasAiTables = (db as any).prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='ai_usage_log'").get();
+    if (hasGoalNotes && hasLoanType && hasLoanNotes && hasTxLoanId && hasLoanPayments && hasAiTables) {
       isFullyMigrated = true;
     }
   } catch {
@@ -537,6 +538,73 @@ export function initSchema(db: DatabaseSync) {
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
+
+    -- AI import review queue: LLM proposals live here until deterministic validation + user confirmation
+    CREATE TABLE IF NOT EXISTS ai_import_batches (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      account_id TEXT NOT NULL,
+      source_kind TEXT NOT NULL, -- 'statement' | 'receipt'
+      source_format TEXT NOT NULL, -- 'text' | 'pdf' | 'image'
+      file_name TEXT,
+      provider TEXT NOT NULL,
+      model TEXT NOT NULL,
+      currency TEXT DEFAULT 'INR',
+      opening_balance INTEGER, -- minor units, NULL when the document has none
+      closing_balance INTEGER,
+      stated_total INTEGER,
+      reconciliation_status TEXT NOT NULL, -- 'balanced' | 'mismatch' | 'unverifiable' | 'not_provided'
+      reconciliation_diff INTEGER,
+      period_start TEXT,
+      period_end TEXT,
+      source_text TEXT, -- kept for deterministic grounding checks on re-validation (text sources only)
+      status TEXT DEFAULT 'pending', -- 'pending' | 'completed' | 'discarded'
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS ai_import_rows (
+      id TEXT PRIMARY KEY,
+      batch_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      row_index INTEGER NOT NULL,
+      raw_json TEXT NOT NULL, -- the model's proposal, verbatim
+      date TEXT,
+      amount INTEGER, -- minor units, NULL when unparseable
+      direction TEXT,
+      merchant TEXT,
+      balance_after INTEGER,
+      category_id TEXT,
+      category_source TEXT, -- 'rule' | 'llm' | 'user'
+      user_edited INTEGER DEFAULT 0,
+      approved INTEGER DEFAULT 0, -- user acknowledged soft review reasons
+      status TEXT NOT NULL, -- 'validated' | 'review' | 'posted' | 'skipped' | 'removed'
+      reasons TEXT NOT NULL DEFAULT '[]', -- JSON array of reason codes
+      transaction_id TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (batch_id) REFERENCES ai_import_batches(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS ai_usage_log (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      provider TEXT NOT NULL,
+      model TEXT NOT NULL,
+      task TEXT NOT NULL, -- 'extract' | 'categorize' | 'query'
+      input_tokens INTEGER DEFAULT 0,
+      output_tokens INTEGER DEFAULT 0,
+      cost_micro_usd INTEGER DEFAULT 0, -- integer micro-dollars
+      latency_ms INTEGER DEFAULT 0,
+      attempts INTEGER DEFAULT 1,
+      status TEXT NOT NULL, -- 'ok' | 'error'
+      error TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_ai_rows_batch ON ai_import_rows(batch_id);
+    CREATE INDEX IF NOT EXISTS idx_ai_batches_user ON ai_import_batches(user_id);
+    CREATE INDEX IF NOT EXISTS idx_ai_usage_user ON ai_usage_log(user_id, created_at);
 
     -- Performance indexes
     CREATE INDEX IF NOT EXISTS idx_tx_user_date ON transactions(user_id, date);

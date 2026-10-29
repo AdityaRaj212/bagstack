@@ -51,6 +51,7 @@ export const Sidebar = () => {
   const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/transactions', label: 'Transactions', icon: Wallet },
+    { href: '/assistant', label: 'AI Assistant', icon: Sparkles },
     { href: '/accounts', label: 'Accounts', icon: Landmark },
     { href: '/budgets', label: 'Budgets', icon: PieChart },
     { href: '/goals', label: 'Goals', icon: Target },
@@ -365,6 +366,7 @@ export const MobileNavigation = () => {
   ];
 
   const moreLinks = [
+    { href: '/assistant', label: 'AI Assistant', icon: Sparkles },
     { href: '/budgets', label: 'Budgets', icon: PieChart },
     { href: '/goals', label: 'Savings Goals', icon: Target },
     { href: '/subscriptions', label: 'Subscriptions', icon: Repeat },

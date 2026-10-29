@@ -1,0 +1,106 @@
+{
+  "id": "s01-csv-hdfc",
+  "description": "csv-hdfc statement, 10 rows, 2026-05",
+  "kind": "statement",
+  "format": "csv-hdfc",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "Date,Narration,Chq./Ref.No.,Value Dt,Withdrawal Amt.,Deposit Amt.,Closing Balance\n05/05/26,NEFT CR-SALARY ACME TECHNOLOGIES,3206572,05/05/26,,142333.83,204411.09\n07/05/26,UPI-HPCL PETROL PUMP-550656538968,6811249,07/05/26,1591.76,,202819.33\n08/05/26,UPI-HOUSE RENT NOBROKER-103458656766,2885594,08/05/26,34486.77,,168332.56\n13/05/26,UPI-NETFLIX-146088339667,3732666,13/05/26,575.81,,167756.75\n14/05/26,UPI-CULT FIT-340260388166,7647592,14/05/26,1062.07,,166694.68\n15/05/26,UPI-ZOMATO-805192563845,8728398,15/05/26,289.26,,166405.42\n18/05/26,UPI-APOLLO PHARMACY-255704711005,5571966,18/05/26,216.45,,166188.97\n19/05/26,UPI-RAMESH KUMAR-828120685392,2837710,19/05/26,2694.83,,163494.14\n24/05/26,UPI-HPCL PETROL PUMP-133695292240,3557862,24/05/26,2349.69,,161144.45\n25/05/26,UPI-ZOMATO-637056561512,3636924,25/05/26,567.45,,160577.00",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-05-05",
+        "amount": 14233383,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 20441109,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-07",
+        "amount": 159176,
+        "direction": "debit",
+        "merchant": "UPI-HPCL PETROL PUMP-550656538968",
+        "balanceAfter": 20281933,
+        "category": "Fuel",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-08",
+        "amount": 3448677,
+        "direction": "debit",
+        "merchant": "UPI-HOUSE RENT NOBROKER-103458656766",
+        "balanceAfter": 16833256,
+        "category": "Rent",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-13",
+        "amount": 57581,
+        "direction": "debit",
+        "merchant": "UPI-NETFLIX-146088339667",
+        "balanceAfter": 16775675,
+        "category": "Streaming Services",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-14",
+        "amount": 106207,
+        "direction": "debit",
+        "merchant": "UPI-CULT FIT-340260388166",
+        "balanceAfter": 16669468,
+        "category": "Gym & Fitness",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-15",
+        "amount": 28926,
+        "direction": "debit",
+        "merchant": "UPI-ZOMATO-805192563845",
+        "balanceAfter": 16640542,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-18",
+        "amount": 21645,
+        "direction": "debit",
+        "merchant": "UPI-APOLLO PHARMACY-255704711005",
+        "balanceAfter": 16618897,
+        "category": "Medicines & Pharmacy",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-19",
+        "amount": 269483,
+        "direction": "debit",
+        "merchant": "UPI-RAMESH KUMAR-828120685392",
+        "balanceAfter": 16349414,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-24",
+        "amount": 234969,
+        "direction": "debit",
+        "merchant": "UPI-HPCL PETROL PUMP-133695292240",
+        "balanceAfter": 16114445,
+        "category": "Fuel",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-25",
+        "amount": 56745,
+        "direction": "debit",
+        "merchant": "UPI-ZOMATO-637056561512",
+        "balanceAfter": 16057700,
+        "category": "Food Delivery",
+        "shouldPost": true
+      }
+    ]
+  }
+}

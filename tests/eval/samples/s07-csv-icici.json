@@ -1,0 +1,88 @@
+{
+  "id": "s07-csv-icici",
+  "description": "csv-icici statement, 8 rows, 2026-01",
+  "kind": "statement",
+  "format": "csv-icici",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "S No.,Value Date,Transaction Date,Cheque Number,Transaction Remarks,Withdrawal Amount (INR ),Deposit Amount (INR ),Balance (INR )\n1,05/01/2026,05/01/2026,-,NEFT-SALARY ACME TECHNOLOGIES-53798040,0.00,\"147,493.84\",\"196,420.99\"\n2,09/01/2026,09/01/2026,-,UPI/794089074106/OLA CABS/Payment,471.08,0.00,\"195,949.91\"\n3,10/01/2026,10/01/2026,-,UPI/267300799745/HDFC ERGO INSURANCE/Payment,\"13,579.86\",0.00,\"182,370.05\"\n4,15/01/2026,15/01/2026,-,UPI/590259906603/RAMESH KUMAR/Payment,\"4,561.52\",0.00,\"177,808.53\"\n5,18/01/2026,18/01/2026,-,UPI/549916007881/NETFLIX/Payment,231.63,0.00,\"177,576.90\"\n6,20/01/2026,20/01/2026,-,INT.PD INTEREST CREDIT,0.00,\"1,254.43\",\"178,831.33\"\n7,24/01/2026,24/01/2026,-,UPI/745545480959/NETFLIX/Payment,476.14,0.00,\"178,355.19\"\n8,25/01/2026,25/01/2026,-,UPI/250832899520/PVR CINEMAS/Payment,404.14,0.00,\"177,951.05\"",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-01-05",
+        "amount": 14749384,
+        "direction": "credit",
+        "merchant": "NEFT-SALARY ACME TECHNOLOGIES-53798040",
+        "balanceAfter": 19642099,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-09",
+        "amount": 47108,
+        "direction": "debit",
+        "merchant": "UPI/794089074106/OLA CABS/Payment",
+        "balanceAfter": 19594991,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-10",
+        "amount": 1357986,
+        "direction": "debit",
+        "merchant": "UPI/267300799745/HDFC ERGO INSURANCE/Payment",
+        "balanceAfter": 18237005,
+        "category": "Insurance Premium",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-15",
+        "amount": 456152,
+        "direction": "debit",
+        "merchant": "UPI/590259906603/RAMESH KUMAR/Payment",
+        "balanceAfter": 17780853,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-18",
+        "amount": 23163,
+        "direction": "debit",
+        "merchant": "UPI/549916007881/NETFLIX/Payment",
+        "balanceAfter": 17757690,
+        "category": "Streaming Services",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-20",
+        "amount": 125443,
+        "direction": "credit",
+        "merchant": "INT.PD INTEREST CREDIT",
+        "balanceAfter": 17883133,
+        "category": "Interest Income",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-24",
+        "amount": 47614,
+        "direction": "debit",
+        "merchant": "UPI/745545480959/NETFLIX/Payment",
+        "balanceAfter": 17835519,
+        "category": "Streaming Services",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-25",
+        "amount": 40414,
+        "direction": "debit",
+        "merchant": "UPI/250832899520/PVR CINEMAS/Payment",
+        "balanceAfter": 17795105,
+        "category": "Movies & Events",
+        "shouldPost": true
+      }
+    ]
+  }
+}

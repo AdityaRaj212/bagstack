@@ -1,0 +1,106 @@
+{
+  "id": "s16-text-fixed-width",
+  "description": "text-fixed-width statement, 10 rows, 2026-05",
+  "kind": "statement",
+  "format": "text-fixed-width",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "KOTAK MAHINDRA BANK - SAVINGS ACCOUNT STATEMENT\nAccount Holder: A. R. SYNTHETIC          Account No: XXXXXXXX4821\nStatement Period: 01/05/2026 to 31/05/2026\nOpening Balance: 56,706.96\n\nDate        Description                                    Withdrawals      Deposits         Balance\n----------------------------------------------------------------------------------------------------\n03/05/2026  NEFT CR-SALARY ACME TECHNOLOGIES                             1,41,652.97     1,98,359.93\n07/05/2026  UPI-UBER INDIA-543242135411                         538.21                   1,97,821.72\n10/05/2026  UPI-PVR CINEMAS-614498873148                      1,261.06                   1,96,560.66\n11/05/2026  UPI-BESCOM ELECTRICITY-299520098767               3,492.15                   1,93,068.51\n13/05/2026  UPI-BESCOM ELECTRICITY-239103259192                 914.25                   1,92,154.26\n16/05/2026  UPI-ZOMATO-405069490429                             240.90                   1,91,913.36\n19/05/2026  UPI-ZERODHA SIP-506275297095                     15,539.99                   1,76,373.37\n20/05/2026  UPI-AIRTEL POSTPAID-753350116801                  1,296.64                   1,75,076.73\n25/05/2026  UPI-BESCOM ELECTRICITY-774435493489               1,741.03                   1,73,335.70\n26/05/2026  UPI-HPCL PETROL PUMP-337560874712                 2,752.75                   1,70,582.95\n----------------------------------------------------------------------------------------------------\nClosing Balance: 1,70,582.95\nThis is a computer generated statement and does not require a signature.",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": 5670696,
+    "closing": 17058295,
+    "rows": [
+      {
+        "date": "2026-05-03",
+        "amount": 14165297,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 19835993,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-07",
+        "amount": 53821,
+        "direction": "debit",
+        "merchant": "UPI-UBER INDIA-543242135411",
+        "balanceAfter": 19782172,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-10",
+        "amount": 126106,
+        "direction": "debit",
+        "merchant": "UPI-PVR CINEMAS-614498873148",
+        "balanceAfter": 19656066,
+        "category": "Movies & Events",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-11",
+        "amount": 349215,
+        "direction": "debit",
+        "merchant": "UPI-BESCOM ELECTRICITY-299520098767",
+        "balanceAfter": 19306851,
+        "category": "Electricity & Gas",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-13",
+        "amount": 91425,
+        "direction": "debit",
+        "merchant": "UPI-BESCOM ELECTRICITY-239103259192",
+        "balanceAfter": 19215426,
+        "category": "Electricity & Gas",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-16",
+        "amount": 24090,
+        "direction": "debit",
+        "merchant": "UPI-ZOMATO-405069490429",
+        "balanceAfter": 19191336,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-19",
+        "amount": 1553999,
+        "direction": "debit",
+        "merchant": "UPI-ZERODHA SIP-506275297095",
+        "balanceAfter": 17637337,
+        "category": "Investments & Mutual Funds",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-20",
+        "amount": 129664,
+        "direction": "debit",
+        "merchant": "UPI-AIRTEL POSTPAID-753350116801",
+        "balanceAfter": 17507673,
+        "category": "Internet & Mobile",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-25",
+        "amount": 174103,
+        "direction": "debit",
+        "merchant": "UPI-BESCOM ELECTRICITY-774435493489",
+        "balanceAfter": 17333570,
+        "category": "Electricity & Gas",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-05-26",
+        "amount": 275275,
+        "direction": "debit",
+        "merchant": "UPI-HPCL PETROL PUMP-337560874712",
+        "balanceAfter": 17058295,
+        "category": "Fuel",
+        "shouldPost": true
+      }
+    ]
+  }
+}

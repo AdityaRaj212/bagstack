@@ -1,0 +1,88 @@
+{
+  "id": "s18-text-fixed-width",
+  "description": "text-fixed-width statement, 8 rows, 2026-03",
+  "kind": "statement",
+  "format": "text-fixed-width",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "KOTAK MAHINDRA BANK - SAVINGS ACCOUNT STATEMENT\nAccount Holder: A. R. SYNTHETIC          Account No: XXXXXXXX4821\nStatement Period: 01/03/2026 to 31/03/2026\nOpening Balance: 64,440.65\n\nDate        Description                                    Withdrawals      Deposits         Balance\n----------------------------------------------------------------------------------------------------\n01/03/2026  NEFT CR-SALARY ACME TECHNOLOGIES                             1,02,831.64     1,67,272.29\n03/03/2026  BY TRANSFER-UPI/CR/284999/PRIYA SHARMA                          8,794.87     1,76,067.16\n07/03/2026  BY TRANSFER-UPI/DR/135622/SWIGGY                  1,006.68                   1,75,060.48\n11/03/2026  BY TRANSFER-UPI/CR/957198/REFUND AMAZON SE                      1,547.26     1,76,607.74\n15/03/2026  BY TRANSFER-UPI/CR/232637/REFUND AMAZON SE                      3,143.26     1,79,751.00\n20/03/2026  BY TRANSFER-UPI/DR/162040/AIRTEL POSTPAID           724.86                   1,79,026.14\n23/03/2026  BY TRANSFER-UPI/DR/640236/MYNTRA                  3,899.44                   1,75,126.70\n24/03/2026  BY TRANSFER-UPI/DR/157566/CROMA RETAIL           15,379.57                   1,59,747.13\n----------------------------------------------------------------------------------------------------\nClosing Balance: 1,59,747.13\nThis is a computer generated statement and does not require a signature.",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": 6444065,
+    "closing": 15974713,
+    "rows": [
+      {
+        "date": "2026-03-01",
+        "amount": 10283164,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 16727229,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-03",
+        "amount": 879487,
+        "direction": "credit",
+        "merchant": "BY TRANSFER-UPI/CR/284999/PRIYA SHARMA",
+        "balanceAfter": 17606716,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-07",
+        "amount": 100668,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/135622/SWIGGY",
+        "balanceAfter": 17506048,
+        "category": "Food Delivery",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-11",
+        "amount": 154726,
+        "direction": "credit",
+        "merchant": "BY TRANSFER-UPI/CR/957198/REFUND AMAZON SE",
+        "balanceAfter": 17660774,
+        "category": "Refunds & Reimbursements",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-15",
+        "amount": 314326,
+        "direction": "credit",
+        "merchant": "BY TRANSFER-UPI/CR/232637/REFUND AMAZON SE",
+        "balanceAfter": 17975100,
+        "category": "Refunds & Reimbursements",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-20",
+        "amount": 72486,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/162040/AIRTEL POSTPAID",
+        "balanceAfter": 17902614,
+        "category": "Internet & Mobile",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-23",
+        "amount": 389944,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/640236/MYNTRA",
+        "balanceAfter": 17512670,
+        "category": "Clothing",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-03-24",
+        "amount": 1537957,
+        "direction": "debit",
+        "merchant": "BY TRANSFER-UPI/DR/157566/CROMA RETAIL",
+        "balanceAfter": 15974713,
+        "category": "Electronics",
+        "shouldPost": true
+      }
+    ]
+  }
+}

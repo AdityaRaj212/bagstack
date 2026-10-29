@@ -1,0 +1,133 @@
+{
+  "id": "s21-text-drcr-suffix",
+  "description": "text-drcr-suffix statement, 13 rows, 2026-01",
+  "kind": "statement",
+  "format": "text-drcr-suffix",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "YES BANK LTD\nStatement of Account for the period 01-Jan-2026 to 31-Jan-2026\nOpening Balance         75,354.01 Cr\n\n01-Jan-2026  NEFT-SALARY ACME TECHNOLOGIES-31430536             95,941.03 Cr     1,71,295.04 Cr\n02-Jan-2026  UPI/972075458662/STARBUCKS/Payment                    499.00 Dr     1,70,796.04 Cr\n04-Jan-2026  UPI/872370980354/PVR CINEMAS/Payment                1,246.01 Dr     1,69,550.03 Cr\n08-Jan-2026  SMS ALERT CHARGES QTR                                  20.32 Dr     1,69,529.71 Cr\n11-Jan-2026  UPI/152738578524/AIRTEL POSTPAID/Payment              703.57 Dr     1,68,826.14 Cr\n15-Jan-2026  UPI/901843157759/HDFC ERGO INSURANCE/Payment       14,162.30 Dr     1,54,663.84 Cr\n16-Jan-2026  UPI/654669253900/PVR CINEMAS/Payment                  665.65 Dr     1,53,998.19 Cr\n17-Jan-2026  UPI/903333492623/MYNTRA/Payment                     2,366.37 Dr     1,51,631.82 Cr\n21-Jan-2026  UPI/663544954056/ZERODHA SIP/Payment               17,545.48 Dr     1,34,086.34 Cr\n24-Jan-2026  UPI/466626556543/PVR CINEMAS/Payment                1,491.08 Dr     1,32,595.26 Cr\n25-Jan-2026  UPI/177483658213/REFUND AMAZON SELLER/Received      3,330.82 Cr     1,35,926.08 Cr\n26-Jan-2026  UPI/851597488624/RAMESH KUMAR/Payment               3,733.87 Dr     1,32,192.21 Cr\n28-Jan-2026  UPI/855169827886/OLA CABS/Payment                     153.57 Dr     1,32,038.64 Cr\n\nClosing Balance         1,32,038.64 Cr",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": 7535401,
+    "closing": 13203864,
+    "rows": [
+      {
+        "date": "2026-01-01",
+        "amount": 9594103,
+        "direction": "credit",
+        "merchant": "NEFT-SALARY ACME TECHNOLOGIES-31430536",
+        "balanceAfter": 17129504,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-02",
+        "amount": 49900,
+        "direction": "debit",
+        "merchant": "UPI/972075458662/STARBUCKS/Payment",
+        "balanceAfter": 17079604,
+        "category": "Coffee & Snacks",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-04",
+        "amount": 124601,
+        "direction": "debit",
+        "merchant": "UPI/872370980354/PVR CINEMAS/Payment",
+        "balanceAfter": 16955003,
+        "category": "Movies & Events",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-08",
+        "amount": 2032,
+        "direction": "debit",
+        "merchant": "SMS ALERT CHARGES QTR",
+        "balanceAfter": 16952971,
+        "category": "Bank Charges & Fees",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-11",
+        "amount": 70357,
+        "direction": "debit",
+        "merchant": "UPI/152738578524/AIRTEL POSTPAID/Payment",
+        "balanceAfter": 16882614,
+        "category": "Internet & Mobile",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-15",
+        "amount": 1416230,
+        "direction": "debit",
+        "merchant": "UPI/901843157759/HDFC ERGO INSURANCE/Payment",
+        "balanceAfter": 15466384,
+        "category": "Insurance Premium",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-16",
+        "amount": 66565,
+        "direction": "debit",
+        "merchant": "UPI/654669253900/PVR CINEMAS/Payment",
+        "balanceAfter": 15399819,
+        "category": "Movies & Events",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-17",
+        "amount": 236637,
+        "direction": "debit",
+        "merchant": "UPI/903333492623/MYNTRA/Payment",
+        "balanceAfter": 15163182,
+        "category": "Clothing",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-21",
+        "amount": 1754548,
+        "direction": "debit",
+        "merchant": "UPI/663544954056/ZERODHA SIP/Payment",
+        "balanceAfter": 13408634,
+        "category": "Investments & Mutual Funds",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-24",
+        "amount": 149108,
+        "direction": "debit",
+        "merchant": "UPI/466626556543/PVR CINEMAS/Payment",
+        "balanceAfter": 13259526,
+        "category": "Movies & Events",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-25",
+        "amount": 333082,
+        "direction": "credit",
+        "merchant": "UPI/177483658213/REFUND AMAZON SELLER/Received",
+        "balanceAfter": 13592608,
+        "category": "Refunds & Reimbursements",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-26",
+        "amount": 373387,
+        "direction": "debit",
+        "merchant": "UPI/851597488624/RAMESH KUMAR/Payment",
+        "balanceAfter": 13219221,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-01-28",
+        "amount": 15357,
+        "direction": "debit",
+        "merchant": "UPI/855169827886/OLA CABS/Payment",
+        "balanceAfter": 13203864,
+        "category": "Cab & Auto",
+        "shouldPost": true
+      }
+    ]
+  }
+}

@@ -281,6 +281,9 @@ export function deleteUser(userId: string): boolean {
   db.prepare('DELETE FROM tags WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM merchants WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM user_preferences WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM ai_import_rows WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM ai_import_batches WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM ai_usage_log WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM users WHERE id = ?').run(userId);
   return true;
 }

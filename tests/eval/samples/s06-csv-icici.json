@@ -1,0 +1,133 @@
+{
+  "id": "s06-csv-icici",
+  "description": "csv-icici statement, 13 rows, 2026-04",
+  "kind": "statement",
+  "format": "csv-icici",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "S No.,Value Date,Transaction Date,Cheque Number,Transaction Remarks,Withdrawal Amount (INR ),Deposit Amount (INR ),Balance (INR )\n1,02/04/2026,02/04/2026,-,NEFT-SALARY ACME TECHNOLOGIES-70152841,0.00,\"128,689.13\",\"152,660.57\"\n2,03/04/2026,03/04/2026,-,UPI/119919580942/CULT FIT/Payment,\"2,952.30\",0.00,\"149,708.27\"\n3,05/04/2026,05/04/2026,-,UPI/355717866099/AIRTEL POSTPAID/Payment,769.27,0.00,\"148,939.00\"\n4,07/04/2026,07/04/2026,-,SMS ALERT CHARGES QTR,25.73,0.00,\"148,913.27\"\n5,08/04/2026,08/04/2026,-,UPI/339628084423/REFUND AMAZON SELLER/Received,0.00,\"3,822.77\",\"152,736.04\"\n6,11/04/2026,11/04/2026,-,UPI/941811997746/PVR CINEMAS/Payment,\"1,425.02\",0.00,\"151,311.02\"\n7,15/04/2026,15/04/2026,-,UPI/828925737435/HOUSE RENT NOBROKER/Payment,\"33,350.48\",0.00,\"117,960.54\"\n8,16/04/2026,16/04/2026,-,UPI/775225519924/HPCL PETROL PUMP/Payment,\"2,482.09\",0.00,\"115,478.45\"\n9,19/04/2026,19/04/2026,-,UPI/598858105624/APOLLO PHARMACY/Payment,\"1,833.83\",0.00,\"113,644.62\"\n10,20/04/2026,20/04/2026,-,UPI/985883558890/APOLLO PHARMACY/Payment,\"2,519.09\",0.00,\"111,125.53\"\n11,22/04/2026,22/04/2026,-,UPI/668398557323/ZERODHA SIP/Payment,\"11,174.37\",0.00,\"99,951.16\"\n12,23/04/2026,23/04/2026,-,UPI/448163497028/CROMA RETAIL/Payment,\"21,820.10\",0.00,\"78,131.06\"\n13,28/04/2026,28/04/2026,-,UPI/891885787248/RAMESH KUMAR/Payment,\"1,926.31\",0.00,\"76,204.75\"",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-04-02",
+        "amount": 12868913,
+        "direction": "credit",
+        "merchant": "NEFT-SALARY ACME TECHNOLOGIES-70152841",
+        "balanceAfter": 15266057,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-03",
+        "amount": 295230,
+        "direction": "debit",
+        "merchant": "UPI/119919580942/CULT FIT/Payment",
+        "balanceAfter": 14970827,
+        "category": "Gym & Fitness",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-05",
+        "amount": 76927,
+        "direction": "debit",
+        "merchant": "UPI/355717866099/AIRTEL POSTPAID/Payment",
+        "balanceAfter": 14893900,
+        "category": "Internet & Mobile",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-07",
+        "amount": 2573,
+        "direction": "debit",
+        "merchant": "SMS ALERT CHARGES QTR",
+        "balanceAfter": 14891327,
+        "category": "Bank Charges & Fees",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-08",
+        "amount": 382277,
+        "direction": "credit",
+        "merchant": "UPI/339628084423/REFUND AMAZON SELLER/Received",
+        "balanceAfter": 15273604,
+        "category": "Refunds & Reimbursements",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-11",
+        "amount": 142502,
+        "direction": "debit",
+        "merchant": "UPI/941811997746/PVR CINEMAS/Payment",
+        "balanceAfter": 15131102,
+        "category": "Movies & Events",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-15",
+        "amount": 3335048,
+        "direction": "debit",
+        "merchant": "UPI/828925737435/HOUSE RENT NOBROKER/Payment",
+        "balanceAfter": 11796054,
+        "category": "Rent",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-16",
+        "amount": 248209,
+        "direction": "debit",
+        "merchant": "UPI/775225519924/HPCL PETROL PUMP/Payment",
+        "balanceAfter": 11547845,
+        "category": "Fuel",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-19",
+        "amount": 183383,
+        "direction": "debit",
+        "merchant": "UPI/598858105624/APOLLO PHARMACY/Payment",
+        "balanceAfter": 11364462,
+        "category": "Medicines & Pharmacy",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-20",
+        "amount": 251909,
+        "direction": "debit",
+        "merchant": "UPI/985883558890/APOLLO PHARMACY/Payment",
+        "balanceAfter": 11112553,
+        "category": "Medicines & Pharmacy",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-22",
+        "amount": 1117437,
+        "direction": "debit",
+        "merchant": "UPI/668398557323/ZERODHA SIP/Payment",
+        "balanceAfter": 9995116,
+        "category": "Investments & Mutual Funds",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-23",
+        "amount": 2182010,
+        "direction": "debit",
+        "merchant": "UPI/448163497028/CROMA RETAIL/Payment",
+        "balanceAfter": 7813106,
+        "category": "Electronics",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-28",
+        "amount": 192631,
+        "direction": "debit",
+        "merchant": "UPI/891885787248/RAMESH KUMAR/Payment",
+        "balanceAfter": 7620475,
+        "category": null,
+        "shouldPost": true
+      }
+    ]
+  }
+}

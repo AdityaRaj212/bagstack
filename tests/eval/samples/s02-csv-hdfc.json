@@ -1,0 +1,142 @@
+{
+  "id": "s02-csv-hdfc",
+  "description": "csv-hdfc statement, 14 rows, 2026-04",
+  "kind": "statement",
+  "format": "csv-hdfc",
+  "accountCurrency": "INR",
+  "flaw": null,
+  "input": "Date,Narration,Chq./Ref.No.,Value Dt,Withdrawal Amt.,Deposit Amt.,Closing Balance\n01/04/26,NEFT CR-SALARY ACME TECHNOLOGIES,8981909,01/04/26,,118820.56,144049.18\n03/04/26,UPI-DMART-606520193163,3937401,03/04/26,3785.18,,140264.00\n04/04/26,INT.PD INTEREST CREDIT,8131845,04/04/26,,849.10,141113.10\n06/04/26,UPI-BMRCL METRO RECHARGE-390662015601,4536512,06/04/26,676.99,,140436.11\n08/04/26,UPI-HDFC ERGO INSURANCE-504786462802,2182535,08/04/26,7075.73,,133360.38\n11/04/26,UPI-RAMESH KUMAR-994610339030,8773319,11/04/26,3627.80,,129732.58\n13/04/26,INT.PD INTEREST CREDIT,4327393,13/04/26,,845.58,130578.16\n14/04/26,UPI-HPCL PETROL PUMP-727049361122,1085737,14/04/26,1302.63,,129275.53\n18/04/26,UPI-HPCL PETROL PUMP-914297942095,7636801,18/04/26,3357.83,,125917.70\n19/04/26,UPI-BIGBASKET-839755726722,6717374,19/04/26,2454.03,,123463.67\n20/04/26,UPI-DMART-260555361118,8883310,20/04/26,3707.34,,119756.33\n21/04/26,UPI-HOUSE RENT NOBROKER-300863917125,9173480,21/04/26,36891.67,,82864.66\n26/04/26,UPI-BESCOM ELECTRICITY-689199750404,2880899,26/04/26,1241.28,,81623.38\n27/04/26,UPI-BMRCL METRO RECHARGE-666013050288,6435392,27/04/26,365.56,,81257.82",
+  "ledgerSeed": [],
+  "expected": {
+    "opening": null,
+    "closing": null,
+    "rows": [
+      {
+        "date": "2026-04-01",
+        "amount": 11882056,
+        "direction": "credit",
+        "merchant": "NEFT CR-SALARY ACME TECHNOLOGIES",
+        "balanceAfter": 14404918,
+        "category": "Full-time Salary",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-03",
+        "amount": 378518,
+        "direction": "debit",
+        "merchant": "UPI-DMART-606520193163",
+        "balanceAfter": 14026400,
+        "category": "Groceries",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-04",
+        "amount": 84910,
+        "direction": "credit",
+        "merchant": "INT.PD INTEREST CREDIT",
+        "balanceAfter": 14111310,
+        "category": "Interest Income",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-06",
+        "amount": 67699,
+        "direction": "debit",
+        "merchant": "UPI-BMRCL METRO RECHARGE-390662015601",
+        "balanceAfter": 14043611,
+        "category": "Public Transit",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-08",
+        "amount": 707573,
+        "direction": "debit",
+        "merchant": "UPI-HDFC ERGO INSURANCE-504786462802",
+        "balanceAfter": 13336038,
+        "category": "Insurance Premium",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-11",
+        "amount": 362780,
+        "direction": "debit",
+        "merchant": "UPI-RAMESH KUMAR-994610339030",
+        "balanceAfter": 12973258,
+        "category": null,
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-13",
+        "amount": 84558,
+        "direction": "credit",
+        "merchant": "INT.PD INTEREST CREDIT",
+        "balanceAfter": 13057816,
+        "category": "Interest Income",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-14",
+        "amount": 130263,
+        "direction": "debit",
+        "merchant": "UPI-HPCL PETROL PUMP-727049361122",
+        "balanceAfter": 12927553,
+        "category": "Fuel",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-18",
+        "amount": 335783,
+        "direction": "debit",
+        "merchant": "UPI-HPCL PETROL PUMP-914297942095",
+        "balanceAfter": 12591770,
+        "category": "Fuel",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-19",
+        "amount": 245403,
+        "direction": "debit",
+        "merchant": "UPI-BIGBASKET-839755726722",
+        "balanceAfter": 12346367,
+        "category": "Groceries",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-20",
+        "amount": 370734,
+        "direction": "debit",
+        "merchant": "UPI-DMART-260555361118",
+        "balanceAfter": 11975633,
+        "category": "Groceries",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-21",
+        "amount": 3689167,
+        "direction": "debit",
+        "merchant": "UPI-HOUSE RENT NOBROKER-300863917125",
+        "balanceAfter": 8286466,
+        "category": "Rent",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-26",
+        "amount": 124128,
+        "direction": "debit",
+        "merchant": "UPI-BESCOM ELECTRICITY-689199750404",
+        "balanceAfter": 8162338,
+        "category": "Electricity & Gas",
+        "shouldPost": true
+      },
+      {
+        "date": "2026-04-27",
+        "amount": 36556,
+        "direction": "debit",
+        "merchant": "UPI-BMRCL METRO RECHARGE-666013050288",
+        "balanceAfter": 8125782,
+        "category": "Public Transit",
+        "shouldPost": true
+      }
+    ]
+  }
+}
