@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi, onTestFinished } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import { initSchema, seedDefaultCategories } from '../src/lib/db';
 import { FinanceService } from '../src/lib/finance-service';
@@ -304,6 +304,14 @@ describe('Finance Domain Business Logic Tests', () => {
   });
 
   it('manages subscription payments, alreadyPaid flag, and snooze properly', () => {
+    // getSubscriptions auto-processes anything due before "today", so pin the clock
+    // between the first payment and the next billing date used below.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-09-15T12:00:00Z'));
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+
     const acc = service.createAccount({
       userId,
       name: 'Salary Account',
