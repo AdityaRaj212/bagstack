@@ -92,7 +92,14 @@ Bagstack can read bank statements and receipts and answer questions like *"how m
 
 **Natural-language queries**: the model picks one of 8 typed, read-only query functions (`total_spending`, `total_income`, `spending_by_category`, `top_merchants`, `account_balances`, `list_transactions`, `compare_spending`, `average_monthly_spending`) via strict tool use. It never writes SQL. Arguments are re-validated with zod (category names are an enum of the user's categories; periods are presets resolved by code). The profile id comes from the authenticated session when the executor is built and is never a tool argument. All SQL is static and parameterised. The answer sentence is formatted by code from the query result, so the model never produces the numbers shown to the user.
 
-**Provider adapter** (`src/lib/ai/provider.ts`): a two-method interface (`generateStructured`, `chooseTool`) with an Anthropic implementation (Claude Opus 5.5 by default, server-side refusal fallback enabled) and a deterministic offline rules engine. Both are wrapped in `ResilientProvider`, which adds a per-attempt timeout, bounded exponential backoff on retryable errors (429/5xx/timeouts), and one `ai_usage_log` row per call (tokens, integer micro-USD cost, latency, attempts). The hosted demo also has per-profile rate limits and a daily per-profile and global cost budget. With no `ANTHROPIC_API_KEY`, the app falls back to the offline engine, which reads text and CSV only.
+**Provider adapter** (`src/lib/ai/provider.ts`): a two-method interface (`generateStructured`, `chooseTool`) with three implementations:
+- **Google Gemini** (`gemini-3.8-flash` by default, free tier). Uses schema-constrained JSON and function calling, and reads PDFs and images natively. Schemas are normalized to Gemini's documented JSON Schema subset.
+- **Anthropic** (Claude Opus 5.5 by default, server-side refusal fallback enabled).
+- **Offline**: a deterministic rules engine.
+
+The provider is picked by `AI_PROVIDER`, or by whichever key is set (Gemini first). All three feed the same zod re-validation and the same deterministic checks, so switching provider only changes how well rows are transcribed, never what is allowed to post. Both are wrapped in `ResilientProvider`, which adds a per-attempt timeout, bounded exponential backoff on retryable errors (429/5xx/timeouts), and one `ai_usage_log` row per call (tokens, integer micro-USD cost, latency, attempts). Free-tier 429s are retried after the server-suggested delay. The hosted demo also has per-profile rate limits and a daily per-profile and global cost budget. With no API key, the app falls back to the offline engine, which reads text and CSV only.
+
+> **Data use on Gemini's free tier:** Google's pricing page states that free-tier content is used to improve Google's products. That is fine for the demo sandbox and the synthetic eval set. For real users' bank statements, use a paid tier (Gemini or Anthropic).
 
 ### Eval
 
@@ -101,8 +108,11 @@ Bagstack can read bank statements and receipts and answer questions like *"how m
 ```bash
 npm run eval                                  # offline provider
 npm run eval:faults                           # + 2 simulated LLM errors per document
+GEMINI_API_KEY=... npm run eval -- --provider gemini        # free tier, paced to 8 req/min
 ANTHROPIC_API_KEY=... npm run eval -- --provider anthropic
 ```
+
+Live model responses are recorded under `tests/eval/cache/<model>/`. A run cut off by a free-tier daily quota resumes where it stopped, and anyone can re-score a committed recording without a key. Pass `--no-cache` for fresh calls and `--rpm N` to change pacing.
 
 The headline metric is **unreconciled postings**: postings that reach the ledger but don't match a labelled, postable row. The target is 0, and CI enforces it in `tests/ai-eval.test.ts`.
 
@@ -124,7 +134,7 @@ How to read these numbers:
 - The offline engine is a rules-based baseline written alongside these synthetic layouts. Its extraction accuracy is an upper bound for familiar formats, not a claim about real-world statements.
 - The fault-injection column measures the validation layer itself: 55 realistic model errors, and none produced a wrong ledger entry.
 - The price is recall. On a tampered statement, correct rows are held too, because reconciliation is a document-level gate.
-- Claude results are not included yet. Run the third command above to produce `tests/eval/results/anthropic.md`. It logs token usage and cost.
+- Gemini and Claude results are not included yet. Run the commands above to produce `tests/eval/results/<provider>.md`, including token usage and list-price cost.
 
 ---
 

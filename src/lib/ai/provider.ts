@@ -69,7 +69,9 @@ export class ProviderError extends Error {
   constructor(
     message: string,
     readonly retryable: boolean,
-    readonly status?: number
+    readonly status?: number,
+    /** Server-suggested wait before retrying (e.g. free-tier quota resets). */
+    readonly retryAfterMs?: number
   ) {
     super(message);
     this.name = 'ProviderError';

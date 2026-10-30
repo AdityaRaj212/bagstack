@@ -50,6 +50,8 @@ interface Batch {
   rows: Row[];
 }
 
+const PROVIDER_LABELS: Record<string, string> = { gemini: 'Gemini', anthropic: 'Claude' };
+
 const EXAMPLE_QUESTIONS = [
   'How much did I spend on food last month?',
   'Who were my top 5 merchants this month?',
@@ -255,7 +257,7 @@ export default function AssistantPage() {
         </div>
         {status && (
           <span className="badge badge-neutral" title="Active model provider">
-            {status.provider === 'anthropic' ? `Claude · ${status.model}` : 'Offline rules engine (no API key)'}
+            {status.provider === 'offline' ? 'Offline rules engine (no API key)' : `${PROVIDER_LABELS[status.provider] ?? status.provider} · ${status.model}`}
           </span>
         )}
       </div>
@@ -388,7 +390,7 @@ export default function AssistantPage() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              {counts.validated} validated · {counts.review} in review · {counts.posted} posted · read by {batch.provider === 'anthropic' ? batch.model : 'offline rules'}
+              {counts.validated} validated · {counts.review} in review · {counts.posted} posted · read by {batch.provider === 'offline' ? 'offline rules' : batch.model}
             </div>
             <button className="btn-primary" disabled={validatedRows.length === 0 || posting} onClick={() => setConfirmOpen(true)}>
               <ShieldCheck size={16} /> Post {validatedRows.length} validated row{validatedRows.length === 1 ? '' : 's'}

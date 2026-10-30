@@ -11,19 +11,23 @@ import {
 } from './provider';
 
 /**
- * Per-token prices in integer micro-USD (USD per 1M tokens == micro-USD per token).
- * Unknown models are logged at zero cost rather than guessed.
+ * Paid list prices in integer micro-USD per 1M tokens. Unknown models are
+ * logged at zero cost rather than guessed.
  */
-const PRICE_MICRO_USD_PER_TOKEN: Record<string, { input: number; output: number }> = {
-  'claude-opus-5-5': { input: 4, output: 20 },
-  'claude-sonnet-5-5': { input: 2, output: 10 },
+const PRICE_MICRO_USD_PER_MTOK: Record<string, { input: number; output: number }> = {
+  'claude-opus-5-5': { input: 4_000_000, output: 20_000_000 },
+  'claude-sonnet-5-5': { input: 2_000_000, output: 10_000_000 },
+  'gemini-3.8-flash': { input: 750_000, output: 3_750_000 },
+  'gemini-3.6-flash': { input: 750_000, output: 3_750_000 },
+  'gemini-3.5-flash-lite': { input: 300_000, output: 2_500_000 },
   offline: { input: 0, output: 0 },
 };
 
+/** Cost at paid list price, rounded to whole micro-USD. */
 export function costMicroUsd(model: string, usage: Usage): number {
-  const price = PRICE_MICRO_USD_PER_TOKEN[model];
+  const price = PRICE_MICRO_USD_PER_MTOK[model];
   if (!price) return 0;
-  return usage.inputTokens * price.input + usage.outputTokens * price.output;
+  return Math.round((usage.inputTokens * price.input + usage.outputTokens * price.output) / 1_000_000);
 }
 
 export interface UsageLogEntry {
@@ -76,6 +80,10 @@ export interface ResilienceOptions {
   userId?: string | null;
   logger?: UsageLogger;
   sleep?: (ms: number) => Promise<void>;
+  /** Free-tier usage is logged at $0 (tokens are still recorded). */
+  freeTier?: boolean;
+  /** Upper bound on a server-suggested retry wait. */
+  maxRetryAfterMs?: number;
 }
 
 const defaultSleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
@@ -138,8 +146,9 @@ export class ResilientProvider implements LlmProvider {
         lastError = err;
         const retryable = err instanceof ProviderError ? err.retryable : false;
         if (!retryable || attempts > this.maxRetries) break;
-        const backoff = this.baseBackoffMs * 2 ** (attempts - 1);
-        await this.sleep(backoff + Math.floor(Math.random() * this.baseBackoffMs));
+        const backoff = this.baseBackoffMs * 2 ** (attempts - 1) + Math.floor(Math.random() * this.baseBackoffMs);
+        const suggested = err instanceof ProviderError && err.retryAfterMs ? Math.min(err.retryAfterMs, this.opts.maxRetryAfterMs ?? 60_000) : 0;
+        await this.sleep(Math.max(backoff, suggested));
       } finally {
         clearTimeout(timer);
       }
@@ -157,7 +166,7 @@ export class ResilientProvider implements LlmProvider {
       model,
       task,
       usage,
-      costMicroUsd: costMicroUsd(model, usage),
+      costMicroUsd: this.opts.freeTier ? 0 : costMicroUsd(model, usage),
       latencyMs: Date.now() - started,
       attempts,
       status,

@@ -1,30 +1,50 @@
 import type { DatabaseSync } from 'node:sqlite';
 import type { LlmProvider } from './provider';
 import { AnthropicProvider } from './anthropic-provider';
+import { GeminiProvider } from './gemini-provider';
 import { OfflineProvider } from './offline-provider';
 import { ResilientProvider, sqliteUsageLogger } from './resilient-provider';
 
+export type ProviderName = 'gemini' | 'anthropic' | 'offline';
+
+export const DEFAULT_MODELS: Record<ProviderName, string> = {
+  gemini: 'gemini-3.8-flash',
+  anthropic: 'claude-opus-5-5',
+  offline: 'offline',
+};
+
 /**
- * Picks the provider from env. AI_PROVIDER=anthropic|offline; when unset, the
- * Anthropic adapter is used if an API key is configured, otherwise the offline
- * rule-based provider (so demo mode and CI work with no key).
+ * Picks the provider from env. AI_PROVIDER=gemini|anthropic|offline; when unset,
+ * the first provider with a key wins (Gemini's free tier first), otherwise the
+ * offline rule-based provider so demo mode and CI work with no key.
  */
-export function resolveProviderName(): 'anthropic' | 'offline' {
+export function resolveProviderName(): ProviderName {
   const explicit = process.env.AI_PROVIDER?.trim().toLowerCase();
-  if (explicit === 'anthropic' || explicit === 'offline') return explicit;
-  return process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'offline';
+  if (explicit === 'gemini' || explicit === 'anthropic' || explicit === 'offline') return explicit;
+  if (process.env.GEMINI_API_KEY) return 'gemini';
+  if (process.env.ANTHROPIC_API_KEY) return 'anthropic';
+  return 'offline';
+}
+
+export function resolveModel(provider: ProviderName = resolveProviderName()): string {
+  return provider === 'offline' ? 'offline' : process.env.AI_MODEL || DEFAULT_MODELS[provider];
+}
+
+export function buildBaseProvider(provider: ProviderName = resolveProviderName()): LlmProvider {
+  if (provider === 'gemini') return new GeminiProvider(resolveModel(provider));
+  if (provider === 'anthropic') return new AnthropicProvider(resolveModel(provider));
+  return new OfflineProvider();
 }
 
 export function createProvider(db: DatabaseSync, userId: string | null): LlmProvider {
-  const inner: LlmProvider =
-    resolveProviderName() === 'anthropic'
-      ? new AnthropicProvider(process.env.AI_MODEL || 'claude-opus-5-5')
-      : new OfflineProvider();
-  return new ResilientProvider(inner, {
+  const provider = resolveProviderName();
+  return new ResilientProvider(buildBaseProvider(provider), {
     timeoutMs: Number(process.env.AI_TIMEOUT_MS) || 60_000,
     maxRetries: process.env.AI_MAX_RETRIES !== undefined ? Number(process.env.AI_MAX_RETRIES) : 2,
     userId,
     logger: sqliteUsageLogger(db),
+    // Gemini's free tier costs nothing; set GEMINI_PAID_TIER=true to log list-price cost
+    freeTier: provider === 'gemini' && process.env.GEMINI_PAID_TIER !== 'true',
   });
 }
 

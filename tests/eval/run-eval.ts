@@ -3,13 +3,21 @@
  *
  *   npx tsx tests/eval/run-eval.ts                      # offline provider (no key needed)
  *   npx tsx tests/eval/run-eval.ts --faults             # + simulated LLM extraction errors
- *   npx tsx tests/eval/run-eval.ts --provider anthropic # real model (needs ANTHROPIC_API_KEY)
+ *   npx tsx tests/eval/run-eval.ts --provider gemini    # free tier (needs GEMINI_API_KEY)
+ *   npx tsx tests/eval/run-eval.ts --provider anthropic # needs ANTHROPIC_API_KEY
+ *
+ * Live model calls are recorded under tests/eval/cache/<model>/, so an
+ * interrupted run (e.g. free-tier daily quota) resumes where it stopped, and
+ * committed recordings let anyone re-score a model run offline. --no-cache
+ * forces fresh calls; --rpm N paces live calls (default 8 for gemini).
  *
  * Reports extraction field accuracy, rows held back by validation, categorisation
  * accuracy, and the key safety metric: postings that reached the ledger but do
  * not match a labelled, postable row ("unreconciled postings", target 0).
  */
 import fs from 'node:fs';
+import crypto from 'node:crypto';
+import { z } from 'zod';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
@@ -17,9 +25,8 @@ import { initSchema, seedDefaultCategories } from '../../src/lib/db';
 import { FinanceService } from '../../src/lib/finance-service';
 import { AiImportService } from '../../src/lib/ai/import-service';
 import { askQuestion } from '../../src/lib/ai/query-service';
-import { OfflineProvider } from '../../src/lib/ai/offline-provider';
-import { AnthropicProvider } from '../../src/lib/ai/anthropic-provider';
-import { ResilientProvider, type UsageLogEntry } from '../../src/lib/ai/resilient-provider';
+import { buildBaseProvider, type ProviderName } from '../../src/lib/ai';
+import { ResilientProvider, costMicroUsd, type UsageLogEntry } from '../../src/lib/ai/resilient-provider';
 import type { LlmProvider, ProviderResult, StructuredRequest, ToolCall, ToolChoiceRequest } from '../../src/lib/ai/provider';
 import type { Extraction } from '../../src/lib/ai/schemas';
 import { EVAL_TODAY, OPENING, type LedgerTxn, type NlQuestion, type Sample } from './generate-fixtures';
@@ -135,9 +142,57 @@ function freshDb() {
 const norm = (s: string | null | undefined) => (s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const pct = (n: number, d: number) => (d === 0 ? 'n/a' : `${((n * 100) / d).toFixed(1)}%`);
 
-function buildProvider(name: string): LlmProvider {
-  if (name === 'anthropic') return new AnthropicProvider(process.env.AI_MODEL || 'claude-opus-5-5');
-  return new OfflineProvider();
+interface ProviderOptions { name: string; cache: boolean; rpm: number }
+const cacheStats = { hits: 0, live: 0 };
+let lastLiveCall = 0;
+
+/**
+ * Record/replay wrapper keyed on the full request. Replayed results carry the
+ * recorded token usage, so token totals stay comparable across runs.
+ */
+class RecordingProvider implements LlmProvider {
+  readonly name: string;
+  readonly model: string;
+  readonly supportsBinaryInput: boolean;
+  private readonly dir: string;
+  constructor(private readonly inner: LlmProvider, private readonly opts: ProviderOptions) {
+    this.name = inner.name;
+    this.model = inner.model;
+    this.supportsBinaryInput = inner.supportsBinaryInput;
+    this.dir = path.join(here, 'cache', inner.model);
+  }
+  private async through<R>(key: unknown, call: () => Promise<ProviderResult<R>>): Promise<ProviderResult<R>> {
+    const file = path.join(this.dir, `${crypto.createHash('sha256').update(JSON.stringify(key)).digest('hex').slice(0, 24)}.json`);
+    if (this.opts.cache && fs.existsSync(file)) {
+      cacheStats.hits++;
+      return JSON.parse(fs.readFileSync(file, 'utf8')).result as ProviderResult<R>;
+    }
+    if (this.opts.rpm > 0) {
+      const wait = lastLiveCall + 60_000 / this.opts.rpm - Date.now();
+      if (wait > 0) await new Promise(r => setTimeout(r, wait));
+    }
+    lastLiveCall = Date.now();
+    cacheStats.live++;
+    const result = await call();
+    fs.mkdirSync(this.dir, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify({ key, result }, null, 1) + '\n');
+    return result;
+  }
+  generateStructured<T>(req: StructuredRequest<T>): Promise<ProviderResult<T>> {
+    const key = { model: this.model, task: req.task, system: req.system, content: req.content, schema: z.toJSONSchema(req.schema) };
+    return this.through(key, () => this.inner.generateStructured(req));
+  }
+  chooseTool(req: ToolChoiceRequest): Promise<ProviderResult<ToolCall | null>> {
+    const key = { model: this.model, task: req.task, system: req.system, question: req.question, tools: req.tools };
+    return this.through(key, () => this.inner.chooseTool(req));
+  }
+}
+
+const isFreeTier = (opts: ProviderOptions) => opts.name === 'gemini' && process.env.GEMINI_PAID_TIER !== 'true';
+
+function buildProvider(opts: ProviderOptions): LlmProvider {
+  const base = buildBaseProvider(opts.name as ProviderName);
+  return opts.name === 'offline' ? base : new RecordingProvider(base, opts);
 }
 
 // --- import eval ------------------------------------------------------------------------
@@ -162,7 +217,7 @@ interface SampleResult {
   error?: string;
 }
 
-async function evalSample(sample: Sample, providerName: string, faults: boolean, usage: UsageLogEntry[]): Promise<SampleResult> {
+async function evalSample(sample: Sample, providerOpts: ProviderOptions, faults: boolean, usage: UsageLogEntry[]): Promise<SampleResult> {
   const db = freshDb();
   const finance = new FinanceService(db);
   const account = finance.createAccount({ userId: USER, name: 'Eval Savings', type: 'savings', openingBalance: 0, currency: sample.accountCurrency })!;
@@ -170,9 +225,9 @@ async function evalSample(sample: Sample, providerName: string, faults: boolean,
     finance.createTransaction({ userId: USER, accountId: account.id, type: s.direction === 'credit' ? 'income' : 'expense', amount: s.amount, date: s.date, merchantName: s.merchant, notes: 'seed' });
   }
 
-  const base = buildProvider(providerName);
+  const base = buildProvider(providerOpts);
   const injector = faults ? new FaultInjectingProvider(base, hash(sample.id)) : null;
-  const provider = new ResilientProvider(injector ?? base, { logger: e => usage.push(e), timeoutMs: 120_000 });
+  const provider = new ResilientProvider(injector ?? base, { logger: e => usage.push(e), timeoutMs: 120_000, maxRetries: 3, maxRetryAfterMs: 90_000, freeTier: isFreeTier(providerOpts) });
   const service = new AiImportService(provider, db, () => new Date(`${EVAL_TODAY}T12:00:00`));
 
   const result: SampleResult = {
@@ -244,7 +299,7 @@ async function evalSample(sample: Sample, providerName: string, faults: boolean,
 
 interface QuestionResult { id: string; question: string; expectedTool: string | null; gotTool: string | null; toolCorrect: boolean; expectedValue: number | null; gotValue: number | null; resultCorrect: boolean; answer: string }
 
-async function evalQuestions(providerName: string, usage: UsageLogEntry[]): Promise<QuestionResult[]> {
+async function evalQuestions(providerOpts: ProviderOptions, usage: UsageLogEntry[]): Promise<QuestionResult[]> {
   const { transactions } = JSON.parse(fs.readFileSync(path.join(here, 'nl', 'ledger.json'), 'utf8')) as { transactions: LedgerTxn[] };
   const questions = JSON.parse(fs.readFileSync(path.join(here, 'nl', 'questions.json'), 'utf8')) as NlQuestion[];
   const db = freshDb();
@@ -260,7 +315,7 @@ async function evalQuestions(providerName: string, usage: UsageLogEntry[]): Prom
     finance.createTransaction({ userId: USER, accountId: t.account === 'savings' ? savings.id : wallet.id, type: t.type, amount: t.amount, date: t.date, merchantName: t.merchant, categoryId: t.categoryId });
   }
 
-  const provider = new ResilientProvider(buildProvider(providerName), { logger: e => usage.push(e), timeoutMs: 120_000 });
+  const provider = new ResilientProvider(buildProvider(providerOpts), { logger: e => usage.push(e), timeoutMs: 120_000, maxRetries: 3, maxRetryAfterMs: 90_000, freeTier: isFreeTier(providerOpts) });
   const out: QuestionResult[] = [];
   for (const q of questions) {
     let res;
@@ -304,16 +359,28 @@ export interface EvalSummary {
   faultsInjected: number;
   errors: number;
   nl: { questions: number; toolAccuracy: string; resultAccuracy: string };
-  tokens: { input: number; output: number; costMicroUsd: number; calls: number; avgLatencyMs: number };
+  model: string;
+  tokens: { input: number; output: number; costMicroUsd: number; listPriceMicroUsd: number; calls: number; liveCalls: number; cacheHits: number; avgLatencyMs: number };
 }
 
-export async function runEval(opts: { provider: string; faults: boolean; skipNl?: boolean }) {
+export async function runEval(opts: { provider: string; faults: boolean; skipNl?: boolean; cache?: boolean; rpm?: number }) {
+  const providerOpts: ProviderOptions = {
+    name: opts.provider,
+    cache: opts.cache ?? true,
+    rpm: opts.rpm ?? (opts.provider === 'gemini' ? 8 : 0),
+  };
+  cacheStats.hits = 0;
+  cacheStats.live = 0;
   const samples = fs.readdirSync(path.join(here, 'samples')).filter(f => f.endsWith('.json')).sort()
     .map(f => JSON.parse(fs.readFileSync(path.join(here, 'samples', f), 'utf8')) as Sample);
   const usage: UsageLogEntry[] = [];
   const results: SampleResult[] = [];
-  for (const s of samples) results.push(await evalSample(s, opts.provider, opts.faults, usage));
-  const questions = opts.skipNl ? [] : await evalQuestions(opts.provider, usage);
+  for (const s of samples) {
+    results.push(await evalSample(s, providerOpts, opts.faults, usage));
+    if (opts.provider !== 'offline') process.stderr.write(`  ${s.id}: ${results[results.length - 1].error ?? 'ok'}\n`);
+  }
+  const questions = opts.skipNl ? [] : await evalQuestions(providerOpts, usage);
+  const model = buildBaseProvider(opts.provider as ProviderName).model;
 
   const sum = (f: (r: SampleResult) => number) => results.reduce((a, r) => a + f(r), 0);
   const expectedRows = sum(r => r.expectedRows);
@@ -322,6 +389,7 @@ export async function runEval(opts: { provider: string; faults: boolean; skipNl?
 
   const summary: EvalSummary = {
     provider: opts.provider,
+    model,
     faults: opts.faults,
     samples: results.length,
     expectedRows,
@@ -346,7 +414,10 @@ export async function runEval(opts: { provider: string; faults: boolean; skipNl?
       input: usage.reduce((a, u) => a + u.usage.inputTokens, 0),
       output: usage.reduce((a, u) => a + u.usage.outputTokens, 0),
       costMicroUsd: usage.reduce((a, u) => a + u.costMicroUsd, 0),
+      listPriceMicroUsd: usage.reduce((a, u) => a + costMicroUsd(u.model, u.usage), 0),
       calls: usage.length,
+      liveCalls: cacheStats.live,
+      cacheHits: cacheStats.hits,
       avgLatencyMs: usage.length ? Math.round(usage.reduce((a, u) => a + u.latencyMs, 0) / usage.length) : 0,
     },
   };
@@ -356,7 +427,7 @@ export async function runEval(opts: { provider: string; faults: boolean; skipNl?
 function render(run: Awaited<ReturnType<typeof runEval>>) {
   const { summary: s, results, questions } = run;
   const out: string[] = [];
-  out.push(`## Eval results: provider=${s.provider}${s.faults ? ' + fault injection' : ''}\n`);
+  out.push(`## Eval results: provider=${s.provider} (${s.model})${s.faults ? ' + fault injection' : ''}\n`);
   out.push(table(['Metric', 'Value'], [
     ['Samples (statements + receipts)', String(s.samples)],
     ['Labelled rows / extracted rows', `${s.expectedRows} / ${s.extractedRows}`],
@@ -374,8 +445,8 @@ function render(run: Awaited<ReturnType<typeof runEval>>) {
     ['Errors', String(s.errors)],
     ['NL questions: tool choice correct', `${s.nl.toolAccuracy} of ${s.nl.questions}`],
     ['NL questions: result correct', `${s.nl.resultAccuracy} of ${s.nl.questions}`],
-    ['Model calls / tokens in / out', `${s.tokens.calls} / ${s.tokens.input} / ${s.tokens.output}`],
-    ['Cost (USD)', `$${(s.tokens.costMicroUsd / 1_000_000).toFixed(4)}`],
+    ['Model calls (live / replayed) / tokens in / out', `${s.tokens.calls} (${s.tokens.liveCalls} / ${s.tokens.cacheHits}) / ${s.tokens.input} / ${s.tokens.output}`],
+    ['Cost billed / at paid list price (USD)', `$${(s.tokens.costMicroUsd / 1_000_000).toFixed(4)} / $${(s.tokens.listPriceMicroUsd / 1_000_000).toFixed(4)}`],
     ['Avg latency per call', `${s.tokens.avgLatencyMs} ms`],
   ]));
   out.push('\n### Validation reasons\n');
@@ -395,7 +466,15 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   const args = process.argv.slice(2);
   const provider = args.includes('--provider') ? args[args.indexOf('--provider') + 1] : 'offline';
   const faults = args.includes('--faults');
-  runEval({ provider, faults }).then(run => {
+  const cache = !args.includes('--no-cache');
+  const rpm = args.includes('--rpm') ? Number(args[args.indexOf('--rpm') + 1]) : undefined;
+  const keyVar = { gemini: 'GEMINI_API_KEY', anthropic: 'ANTHROPIC_API_KEY' }[provider];
+  const hasRecordings = fs.existsSync(path.join(here, 'cache')) && cache;
+  if (keyVar && !process.env[keyVar] && !hasRecordings) {
+    console.error(`${keyVar} is not set (and no recorded responses to replay). Get a free Gemini key at https://aistudio.google.com/apikey`);
+    process.exit(2);
+  }
+  runEval({ provider, faults, cache, rpm }).then(run => {
     const md = render(run);
     console.log(md);
     const dir = path.join(here, 'results');

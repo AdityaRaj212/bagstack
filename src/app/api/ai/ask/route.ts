@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser, handleApiError } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 import { rateLimiter } from '@/lib/rate-limiter';
-import { askQuestion, checkDailyBudget, createProvider, resolveProviderName } from '@/lib/ai';
+import { askQuestion, checkDailyBudget, createProvider, resolveModel, resolveProviderName } from '@/lib/ai';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -19,8 +19,8 @@ export async function GET(req: Request) {
     const provider = resolveProviderName();
     return NextResponse.json({
       provider,
-      model: provider === 'anthropic' ? process.env.AI_MODEL || 'claude-opus-5-5' : 'offline',
-      supportsBinaryInput: provider === 'anthropic',
+      model: resolveModel(provider),
+      supportsBinaryInput: provider !== 'offline',
     });
   } catch (error: any) {
     return handleApiError(error, 'Failed to load AI status');
