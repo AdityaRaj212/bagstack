@@ -215,9 +215,9 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
         style={{
           width: '100%',
           maxWidth: '520px',
-          backgroundColor: 'var(--card-bg)',
+          backgroundColor: 'var(--bg-surface-elevated)',
           borderRadius: 'var(--radius-xl)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--border-color)',
+          boxShadow: 'var(--shadow-lg)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -229,7 +229,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
         <div
           style={{
             padding: '1.25rem 1.5rem',
-            borderBottom: '1px solid var(--border-color)',
+            borderBottom: '1px solid var(--border-default)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -242,7 +242,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                 width: '36px',
                 height: '36px',
                 borderRadius: '10px',
-                backgroundColor: isSubcategory ? 'rgba(99, 102, 241, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                backgroundColor: isSubcategory ? 'var(--brand-light)' : 'var(--color-income-subtle)',
                 color: isSubcategory ? '#818CF8' : '#34D399',
                 display: 'flex',
                 alignItems: 'center',
@@ -284,10 +284,10 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
             <div
               style={{
                 padding: '0.75rem 1rem',
-                backgroundColor: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
+                backgroundColor: 'var(--color-expense-subtle)',
+                border: '1px solid color-mix(in srgb, var(--color-expense) 30%, transparent)',
                 borderRadius: 'var(--radius-md)',
-                color: '#EF4444',
+                color: 'var(--color-expense)',
                 fontSize: '0.8125rem',
                 marginBottom: '1.25rem',
               }}
@@ -309,7 +309,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                 padding: '4px',
                 backgroundColor: 'var(--bg-subtle)',
                 borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--border-color)',
+                border: '1px solid var(--border-default)',
               }}
             >
               <button
@@ -327,7 +327,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   justifyContent: 'center',
                   gap: '0.5rem',
                   transition: 'all 0.15s ease',
-                  backgroundColor: !isSubcategory ? 'var(--card-bg)' : 'transparent',
+                  backgroundColor: !isSubcategory ? 'var(--bg-surface-elevated)' : 'transparent',
                   color: !isSubcategory ? 'var(--text-primary)' : 'var(--text-muted)',
                   boxShadow: !isSubcategory ? '0 2px 6px rgba(0,0,0,0.1)' : 'none',
                 }}
@@ -350,7 +350,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   justifyContent: 'center',
                   gap: '0.5rem',
                   transition: 'all 0.15s ease',
-                  backgroundColor: isSubcategory ? 'var(--card-bg)' : 'transparent',
+                  backgroundColor: isSubcategory ? 'var(--bg-surface-elevated)' : 'transparent',
                   color: isSubcategory ? 'var(--text-primary)' : 'var(--text-muted)',
                   boxShadow: isSubcategory ? '0 2px 6px rgba(0,0,0,0.1)' : 'none',
                 }}
@@ -380,9 +380,9 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   fontWeight: 600,
                   borderRadius: 'var(--radius-md)',
                   border: '1px solid',
-                  borderColor: type === 'expense' ? '#EF4444' : 'var(--border-color)',
-                  backgroundColor: type === 'expense' ? 'rgba(239, 68, 68, 0.12)' : 'var(--bg-subtle)',
-                  color: type === 'expense' ? '#EF4444' : 'var(--text-secondary)',
+                  borderColor: type === 'expense' ? 'var(--color-expense)' : 'var(--border-default)',
+                  backgroundColor: type === 'expense' ? 'var(--color-expense-subtle)' : 'var(--bg-subtle)',
+                  color: type === 'expense' ? 'var(--color-expense)' : 'var(--text-secondary)',
                   cursor: 'pointer',
                 }}
               >
@@ -401,8 +401,8 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   fontWeight: 600,
                   borderRadius: 'var(--radius-md)',
                   border: '1px solid',
-                  borderColor: type === 'income' ? '#10B981' : 'var(--border-color)',
-                  backgroundColor: type === 'income' ? 'rgba(16, 185, 129, 0.12)' : 'var(--bg-subtle)',
+                  borderColor: type === 'income' ? '#10B981' : 'var(--border-default)',
+                  backgroundColor: type === 'income' ? 'var(--color-income-subtle)' : 'var(--bg-subtle)',
                   color: type === 'income' ? '#10B981' : 'var(--text-secondary)',
                   cursor: 'pointer',
                 }}
@@ -438,7 +438,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   width: '100%',
                   padding: '0.625rem 0.75rem',
                   backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-color)',
+                  border: '1px solid var(--border-default)',
                   borderRadius: 'var(--radius-md)',
                   color: 'var(--text-primary)',
                   fontSize: '0.875rem',
@@ -479,7 +479,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   width: '42px',
                   height: '42px',
                   borderRadius: 'var(--radius-md)',
-                  backgroundColor: color ? `${color}20` : 'var(--bg-subtle)',
+                  backgroundColor: color ? `color-mix(in srgb, ${color} 12%, transparent)` : 'var(--bg-subtle)',
                   color: color || 'var(--text-primary)',
                   border: `1px solid ${color}40`,
                   display: 'flex',
@@ -502,7 +502,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   padding: '0.625rem 0.75rem',
                   fontSize: '0.875rem',
                   backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-color)',
+                  border: '1px solid var(--border-default)',
                   borderRadius: 'var(--radius-md)',
                   color: 'var(--text-primary)',
                 }}
@@ -526,7 +526,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                     height: '28px',
                     borderRadius: '50%',
                     backgroundColor: c,
-                    border: color === c ? '3px solid var(--card-bg)' : '1px solid transparent',
+                    border: color === c ? '3px solid var(--bg-surface-elevated)' : '1px solid transparent',
                     outline: color === c ? `2px solid ${c}` : 'none',
                     cursor: 'pointer',
                     transition: 'transform 0.12s ease',
@@ -552,7 +552,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                 padding: '0.5rem',
                 backgroundColor: 'var(--bg-subtle)',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-color)',
+                border: '1px solid var(--border-default)',
               }}
             >
               {ICON_OPTIONS.map(opt => {
@@ -571,7 +571,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                       justifyContent: 'center',
                       borderRadius: 'var(--radius-sm)',
                       border: isSelected ? `1px solid ${color}` : '1px solid transparent',
-                      backgroundColor: isSelected ? `${color}25` : 'transparent',
+                      backgroundColor: isSelected ? `color-mix(in srgb, ${color} 15%, transparent)` : 'transparent',
                       color: isSelected ? color : 'var(--text-muted)',
                       cursor: 'pointer',
                       padding: '4px',
@@ -585,7 +585,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
           </div>
 
           {/* Actions */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-default)' }}>
             <button
               type="button"
               className="btn-secondary"

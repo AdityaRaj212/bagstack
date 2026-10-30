@@ -51,7 +51,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
               width: '48px',
               height: '48px',
               borderRadius: '12px',
-              backgroundColor: 'rgba(99, 102, 241, 0.15)',
+              backgroundColor: 'var(--brand-light)',
               color: 'var(--brand-primary)',
               display: 'flex',
               alignItems: 'center',
@@ -81,7 +81,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
               onClick={enterDemoMode}
               style={{ width: '100%', padding: '0.75rem', justifyContent: 'center' }}
             >
-              <Sparkles size={15} style={{ color: '#f59e0b' }} /> Continue in Demo Sandbox
+              <Sparkles size={15} style={{ color: 'var(--color-warning)' }} /> Continue in Demo Sandbox
             </button>
           </div>
         </div>
@@ -97,8 +97,9 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
       {isDemoMode && (
         <div
           style={{
-            backgroundColor: '#0b132b',
-            borderBottom: '1px solid #1e293b',
+            backgroundColor: 'var(--bg-surface-elevated)',
+            borderBottom: '1px solid var(--border-default)',
+            minHeight: 'var(--demo-banner-h)',
             padding: '0.55rem 1.25rem',
             display: 'flex',
             alignItems: 'center',
@@ -108,7 +109,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
             position: 'sticky',
             top: 0,
             zIndex: 100,
-            boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
+            boxShadow: 'var(--shadow-lg)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -117,19 +118,18 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-                backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                color: '#f59e0b',
-                border: '1px solid rgba(245, 158, 11, 0.35)',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                padding: '2px 8px',
-                borderRadius: '12px',
-                letterSpacing: '0.04em',
+                backgroundColor: 'var(--color-warning-subtle)',
+                color: 'var(--color-warning)',
+                border: '1px solid color-mix(in srgb, var(--color-warning) 35%, transparent)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                padding: '2px 9px',
+                borderRadius: 'var(--radius-full)',
               }}
             >
-              <Sparkles size={12} /> LIVE DEMO SANDBOX
+              <Sparkles size={12} /> Demo sandbox
             </span>
-            <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+            <span className="demo-banner-desc" style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
               You are exploring Bagstack with preloaded sample data.
             </span>
           </div>
@@ -143,16 +143,16 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
                 gap: '0.4rem',
                 fontSize: '0.78rem',
                 padding: '0.35rem 0.75rem',
-                backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
-                color: '#f1f5f9',
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-default)',
+                color: 'var(--text-primary)',
                 fontWeight: 600,
                 borderRadius: 'var(--radius-md)',
                 cursor: 'pointer',
               }}
               title="Leave demo and return to public homepage"
             >
-              ← Exit Demo to Homepage
+              <span>← Exit Demo<span className="demo-banner-desc"> to Homepage</span></span>
             </button>
 
             <button
@@ -164,13 +164,13 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
                 fontWeight: 600,
               }}
             >
-              Sign In with Real Email
+              <span>Sign In<span className="demo-banner-desc"> with Real Email</span></span>
             </button>
           </div>
         </div>
       )}
 
-      <div className="app-layout">
+      <div className={`app-layout${isDemoMode ? ' has-demo-banner' : ''}`}>
         <Sidebar />
         <main className="main-content">{children}</main>
         <MobileNavigation />

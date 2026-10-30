@@ -43,7 +43,6 @@ export const Sidebar = () => {
     triggerRefresh,
     logout,
     isDemoMode,
-    openAuthModal,
   } = useApp();
 
   const [showSignoutConfirm, setShowSignoutConfirm] = useState(false);
@@ -61,147 +60,41 @@ export const Sidebar = () => {
   ];
 
   return (
-    <aside
-      style={{
-        width: '260px',
-        height: '100vh',
-        position: 'sticky',
-        top: 0,
-        backgroundColor: 'var(--bg-surface)',
-        borderRight: '1px solid var(--border-default)',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '1.25rem 1rem',
-        zIndex: 20,
-      }}
-      className="desktop-sidebar"
-    >
-      {/* Brand Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', padding: '0 0.5rem' }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <div
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, var(--brand-primary), #8b5cf6)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
-            }}
-          >
-            <Layers size={18} />
-          </div>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: '1.05rem', letterSpacing: '-0.02em', lineHeight: 1.1 }}>Bagstack</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Financial Command Center</div>
-          </div>
-        </Link>
-      </div>
-
-      {/* Demo Mode Notice */}
-      {isDemoMode && (
-        <div
-          style={{
-            padding: '0.45rem 0.65rem',
-            borderRadius: 'var(--radius-md)',
-            backgroundColor: 'rgba(245, 158, 11, 0.12)',
-            border: '1px solid rgba(245, 158, 11, 0.25)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '0.75rem',
-            fontSize: '0.74rem',
-            color: '#d97706',
-          }}
-        >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600 }}>
-            <Sparkles size={12} /> Demo Mode
-          </span>
-          <button
-            onClick={openAuthModal}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--brand-primary)',
-              fontWeight: 600,
-              fontSize: '0.72rem',
-              cursor: 'pointer',
-              padding: 0,
-            }}
-          >
-            Sign In
-          </button>
-        </div>
-      )}
+    <aside className="desktop-sidebar app-sidebar">
+      {/* Brand */}
+      <Link href="/" className="brand-lockup">
+        <span className="brand-mark" aria-hidden="true">
+          <Layers size={16} strokeWidth={2.25} />
+        </span>
+        <span className="brand-name">Bagstack</span>
+      </Link>
 
       {/* Active User Profile & Account Switcher */}
       <button
         type="button"
         onClick={openAccountModal}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%',
-          padding: '0.5rem 0.65rem',
-          borderRadius: 'var(--radius-md)',
-          backgroundColor: 'var(--bg-subtle)',
-          border: '1px solid var(--border-default)',
-          marginBottom: '0.9rem',
-          cursor: 'pointer',
-          textAlign: 'left',
-          transition: 'all var(--transition-fast)',
-        }}
-        className="card-interactive"
+        className="profile-switcher"
         title="Switch profile or create new account"
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', overflow: 'hidden' }}>
-          <div
-            style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: 'var(--brand-primary)',
-              color: '#ffffff',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'U'}
-          </div>
-          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-              {currentUser?.name || 'Demo User'}
-            </div>
-            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <span>{currentUser?.baseCurrency || 'INR'}</span>
-              <span>•</span>
-              <span style={{ color: 'var(--brand-primary)', fontWeight: 500 }}>Switch / +New</span>
-            </div>
-          </div>
-        </div>
+        <span className="profile-avatar">
+          {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'U'}
+        </span>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+          <span style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.25 }}>
+            {currentUser?.name || 'Demo User'}
+          </span>
+          <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {currentUser?.baseCurrency || 'INR'} · Switch profile
+          </span>
+        </span>
         <ChevronDown size={14} color="var(--text-muted)" style={{ flexShrink: 0 }} />
       </button>
 
       {/* Global Quick Action Button */}
       <button
-        className="btn-primary"
+        className="btn-secondary"
         onClick={() => openTransactionModal('expense')}
-        style={{
-          width: '100%',
-          marginBottom: '1rem',
-          justifyContent: 'center',
-          gap: '0.5rem',
-          padding: '0.7rem',
-          boxShadow: '0 4px 14px rgba(79, 70, 229, 0.25)',
-        }}
+        style={{ width: '100%', justifyContent: 'center', padding: '0.6rem', marginBottom: '0.75rem' }}
       >
         <Plus size={16} /> Record Transaction
       </button>
@@ -209,43 +102,21 @@ export const Sidebar = () => {
       {/* Command Palette Trigger */}
       <button
         type="button"
+        className="sidebar-search"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           openCommandPalette();
         }}
-        style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0.5rem 0.75rem',
-          borderRadius: 'var(--radius-md)',
-          backgroundColor: 'var(--bg-subtle)',
-          border: '1px solid var(--border-default)',
-          color: 'var(--text-muted)',
-          fontSize: '0.8rem',
-          marginBottom: '1.25rem',
-        }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Search size={14} /> Search or Command
-        </div>
-        <kbd
-          style={{
-            fontSize: '0.7rem',
-            backgroundColor: 'var(--bg-surface)',
-            padding: '0.1rem 0.35rem',
-            borderRadius: '4px',
-            border: '1px solid var(--border-default)',
-          }}
-        >
-          ⌘K
-        </kbd>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Search size={14} /> Search or jump to…
+        </span>
+        <kbd className="kbd">⌘K</kbd>
       </button>
 
       {/* Nav Links */}
-      <nav style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+      <nav className="sidebar-nav" aria-label="Primary">
         {navItems.map(item => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -253,50 +124,25 @@ export const Sidebar = () => {
             <Link
               key={item.href}
               href={item.href}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.6rem 0.75rem',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.875rem',
-                fontWeight: isActive ? 600 : 500,
-                color: isActive ? 'var(--brand-primary)' : 'var(--text-secondary)',
-                backgroundColor: isActive ? 'var(--brand-light)' : 'transparent',
-                transition: 'all var(--transition-fast)',
-              }}
-              className="card-interactive"
+              className="nav-link"
+              aria-current={isActive ? 'page' : undefined}
             >
-              <Icon size={18} color={isActive ? 'var(--brand-primary)' : 'currentColor'} />
+              <Icon size={17} strokeWidth={isActive ? 2.25 : 2} />
               <span>{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Bottom Actions: Theme, Demo Data, CSV Import */}
-      <div
-        style={{
-          paddingTop: '1rem',
-          borderTop: '1px solid var(--border-default)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.4rem',
-        }}
-      >
-        <button
-          className="btn-ghost"
-          onClick={openImportModal}
-          style={{ width: '100%', justifyContent: 'flex-start', fontSize: '0.8rem' }}
-        >
+      {/* Bottom Actions: Import, Theme, Sign out */}
+      <div className="sidebar-footer">
+        <button className="btn-ghost sidebar-footer-btn" onClick={openImportModal}>
           <Upload size={15} /> Import Bank Statement
         </button>
 
-
         <button
-          className="btn-ghost"
+          className="btn-ghost sidebar-footer-btn"
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          style={{ width: '100%', justifyContent: 'flex-start', fontSize: '0.8rem' }}
         >
           {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
           <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
@@ -304,9 +150,9 @@ export const Sidebar = () => {
 
         {isDemoMode ? (
           <button
-            className="btn-ghost"
+            className="btn-ghost sidebar-footer-btn"
             onClick={() => setShowSignoutConfirm(true)}
-            style={{ width: '100%', justifyContent: 'flex-start', fontSize: '0.8rem', color: '#f59e0b', fontWeight: 600 }}
+            style={{ color: 'var(--color-warning)', fontWeight: 600 }}
             title="Leave demo and return to homepage"
           >
             <LogOut size={15} />
@@ -314,9 +160,9 @@ export const Sidebar = () => {
           </button>
         ) : (
           <button
-            className="btn-ghost"
+            className="btn-ghost sidebar-footer-btn"
             onClick={() => setShowSignoutConfirm(true)}
-            style={{ width: '100%', justifyContent: 'flex-start', fontSize: '0.8rem', color: 'var(--color-danger)' }}
+            style={{ color: 'var(--color-expense)' }}
           >
             <LogOut size={15} />
             <span>Sign Out</span>
@@ -415,20 +261,7 @@ export const MobileNavigation = () => {
               className="card-interactive"
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <div
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: 'var(--radius-full)',
-                    backgroundColor: 'var(--brand-primary)',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                  }}
-                >
+                <div className="profile-avatar" style={{ width: '32px', height: '32px', fontSize: '0.8rem' }}>
                   {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'U'}
                 </div>
                 <div style={{ textAlign: 'left' }}>
@@ -483,7 +316,7 @@ export const MobileNavigation = () => {
                     setMoreOpen(false);
                     setShowSignoutConfirm(true);
                   }}
-                  style={{ width: '100%', justifyContent: 'center', color: 'var(--color-danger)' }}
+                  style={{ width: '100%', justifyContent: 'center', color: 'var(--color-expense)' }}
                 >
                   <LogOut size={16} /> Sign Out
                 </button>
@@ -500,16 +333,15 @@ export const MobileNavigation = () => {
           bottom: 0,
           left: 0,
           right: 0,
-          backgroundColor: 'var(--bg-surface)',
           borderTop: '1px solid var(--border-default)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-around',
-          height: '60px',
+          height: 'calc(62px + env(safe-area-inset-bottom))',
+          paddingBottom: 'env(safe-area-inset-bottom)',
           zIndex: 40,
-          boxShadow: 'var(--shadow-lg)',
         }}
-        className="mobile-bottom-nav"
+        className="mobile-bottom-nav mobile-tabbar"
       >
         {primaryTabs.map(tab => {
           const Icon = tab.icon;
@@ -522,11 +354,13 @@ export const MobileNavigation = () => {
                   width: '46px',
                   height: '46px',
                   borderRadius: 'var(--radius-full)',
-                  backgroundColor: 'var(--brand-primary)',
-                  color: '#ffffff',
-                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.4)',
-                  transform: 'translateY(-12px)',
+                  backgroundColor: 'var(--btn-primary-bg)',
+                  color: 'var(--btn-primary-fg)',
+                  boxShadow: 'var(--shadow-lg)',
+                  transform: 'translateY(-10px)',
+                  border: '3px solid var(--bg-app)',
                 }}
+                aria-label="Add transaction"
               >
                 <Plus size={24} />
               </button>

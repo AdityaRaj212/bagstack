@@ -896,8 +896,8 @@ export const TransactionModal = () => {
                     : 'var(--brand-light)',
                   border: `1px solid ${
                     !amountEvaluation.isPositive && amountEvaluation.errorMessage
-                      ? 'rgba(239, 68, 68, 0.3)'
-                      : 'rgba(99, 102, 241, 0.3)'
+                      ? 'color-mix(in srgb, var(--color-expense) 30%, transparent)'
+                      : 'color-mix(in srgb, var(--brand-primary) 30%, transparent)'
                   }`,
                   fontSize: '0.8rem',
                 }}
@@ -1122,7 +1122,7 @@ export const TransactionModal = () => {
                         backgroundColor: 'var(--bg-surface)',
                         border: '1px solid var(--border-default)',
                         borderRadius: 'var(--radius-md)',
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                        boxShadow: 'var(--shadow-lg)',
                         zIndex: 50,
                         maxHeight: '180px',
                         overflowY: 'auto',
@@ -1149,7 +1149,7 @@ export const TransactionModal = () => {
                                   alignItems: 'center',
                                   gap: '0.5rem',
                                   borderBottom: filteredMerchants.length > 0 ? '1px solid var(--border-subtle)' : 'none',
-                                  backgroundColor: isHighlighted ? 'rgba(59, 130, 246, 0.18)' : 'rgba(59, 130, 246, 0.08)',
+                                  backgroundColor: isHighlighted ? 'color-mix(in srgb, var(--color-transfer) 24%, transparent)' : 'var(--color-transfer-subtle)',
                                   outline: isHighlighted ? '1px solid var(--brand-primary)' : 'none',
                                 }}
                                 onMouseEnter={() => setMerchantSelectedIndex(idx)}
@@ -1224,7 +1224,7 @@ export const TransactionModal = () => {
                       >
                         + Add Category
                       </button>
-                      <span style={{ color: 'var(--border-color)' }}>•</span>
+                      <span style={{ color: 'var(--border-default)' }}>•</span>
                       <button
                         type="button"
                         onClick={() => setShowSplits(true)}
@@ -1356,7 +1356,7 @@ export const TransactionModal = () => {
                           backgroundColor: 'var(--bg-surface)',
                           border: '1px solid var(--border-default)',
                           borderRadius: 'var(--radius-md)',
-                          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
+                          boxShadow: 'var(--shadow-lg)',
                           zIndex: 60,
                           maxHeight: '260px',
                           overflowY: 'auto',
@@ -1391,9 +1391,9 @@ export const TransactionModal = () => {
                                     justifyContent: 'space-between',
                                     color: parent.color || 'var(--text-primary)',
                                     backgroundColor: isParentActive
-                                      ? 'rgba(79, 70, 229, 0.22)'
+                                      ? 'color-mix(in srgb, var(--brand-primary) 22%, transparent)'
                                       : isParentSelected
-                                        ? 'rgba(79, 70, 229, 0.12)'
+                                        ? 'var(--brand-light)'
                                         : 'transparent',
                                     outline: isParentActive ? '1px solid var(--brand-primary)' : 'none',
                                     transition: 'background-color 0.12s ease',
@@ -1412,7 +1412,7 @@ export const TransactionModal = () => {
                                         width: '10px',
                                         height: '10px',
                                         borderRadius: '50%',
-                                        backgroundColor: parent.color || '#6B7280',
+                                        backgroundColor: parent.color || 'var(--cat-11)',
                                         flexShrink: 0,
                                       }}
                                     />
@@ -1441,9 +1441,9 @@ export const TransactionModal = () => {
                                         justifyContent: 'space-between',
                                         color: isSubActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                                         backgroundColor: isSubActive
-                                          ? 'rgba(79, 70, 229, 0.22)'
+                                          ? 'color-mix(in srgb, var(--brand-primary) 22%, transparent)'
                                           : isSubSelected
-                                            ? 'rgba(79, 70, 229, 0.12)'
+                                            ? 'var(--brand-light)'
                                             : 'transparent',
                                         outline: isSubActive ? '1px solid var(--brand-primary)' : 'none',
                                         transition: 'background-color 0.12s ease, color 0.12s ease',
@@ -1462,7 +1462,7 @@ export const TransactionModal = () => {
                                             width: '6px',
                                             height: '6px',
                                             borderRadius: '50%',
-                                            backgroundColor: sub.color || parent.color || '#6B7280',
+                                            backgroundColor: sub.color || parent.color || 'var(--cat-11)',
                                             opacity: 0.8,
                                             flexShrink: 0,
                                           }}
@@ -1488,7 +1488,7 @@ export const TransactionModal = () => {
                           style={{
                             marginTop: '0.35rem',
                             paddingTop: '0.35rem',
-                            borderTop: '1px solid var(--border-color)',
+                            borderTop: '1px solid var(--border-default)',
                           }}
                         >
                           <button
@@ -1523,7 +1523,7 @@ export const TransactionModal = () => {
                               justifyContent: 'center',
                               gap: '0.375rem',
                               borderRadius: 'var(--radius-sm)',
-                              backgroundColor: 'rgba(79, 70, 229, 0.08)',
+                              backgroundColor: 'var(--brand-light)',
                               cursor: 'pointer',
                               border: 'none',
                             }}
@@ -1781,7 +1781,7 @@ export const TransactionModal = () => {
                     backgroundColor: 'var(--bg-surface)',
                     border: '1px solid var(--border-default)',
                     borderRadius: 'var(--radius-md)',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                    boxShadow: 'var(--shadow-lg)',
                     zIndex: 50,
                     maxHeight: '160px',
                     overflowY: 'auto',
@@ -1807,7 +1807,7 @@ export const TransactionModal = () => {
                               display: 'flex',
                               alignItems: 'center',
                               gap: '0.5rem',
-                              backgroundColor: isHighlighted ? 'rgba(59, 130, 246, 0.18)' : 'rgba(59, 130, 246, 0.08)',
+                              backgroundColor: isHighlighted ? 'color-mix(in srgb, var(--color-transfer) 24%, transparent)' : 'var(--color-transfer-subtle)',
                               borderBottom: availableTags.length > 0 ? '1px solid var(--border-subtle)' : 'none',
                               outline: isHighlighted ? '1px solid var(--brand-primary)' : 'none',
                             }}
@@ -1890,7 +1890,7 @@ export const TransactionModal = () => {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.4rem',
-                  borderColor: 'rgba(79, 70, 229, 0.4)',
+                  borderColor: 'color-mix(in srgb, var(--brand-primary) 40%, transparent)',
                   color: 'var(--brand-primary)',
                   fontWeight: 600,
                 }}

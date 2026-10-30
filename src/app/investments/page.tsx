@@ -87,8 +87,8 @@ export default function InvestmentsPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Investments Portfolio</h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <h1 className="page-title">Investments Portfolio</h1>
+          <p className="page-subtitle">
             Track equity, mutual funds, ETFs, fixed deposits, and unrealized returns.
           </p>
         </div>

@@ -426,7 +426,7 @@ export const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
                   padding: '0.2rem 0.5rem',
                   borderRadius: 'var(--radius-full)',
                   backgroundColor: value === todayStr ? 'var(--brand-primary)' : 'var(--bg-subtle)',
-                  color: value === todayStr ? '#ffffff' : 'var(--text-secondary)',
+                  color: value === todayStr ? 'var(--text-on-accent)' : 'var(--text-secondary)',
                   border: '1px solid var(--border-subtle)',
                   cursor: 'pointer',
                   fontWeight: 500,
@@ -604,7 +604,7 @@ export const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
                       ? 'var(--brand-light)'
                       : 'transparent',
                     color: day.isSelected
-                      ? '#ffffff'
+                      ? 'var(--text-on-accent)'
                       : day.isDisabled
                       ? 'var(--text-muted)'
                       : day.isCurrentMonth
@@ -612,7 +612,7 @@ export const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
                       : 'var(--text-muted)',
                     border: day.isToday && !day.isSelected ? '1px solid var(--brand-primary)' : 'none',
                     boxShadow: day.dateStr === focusedDate
-                      ? (day.isSelected ? '0 0 0 2px #ffffff, 0 0 0 4px var(--brand-primary)' : '0 0 0 2px var(--brand-primary)')
+                      ? (day.isSelected ? '0 0 0 2px var(--bg-surface-elevated), 0 0 0 4px var(--brand-primary)' : '0 0 0 2px var(--brand-primary)')
                       : 'none',
                     zIndex: day.dateStr === focusedDate ? 2 : 1,
                     cursor: day.isDisabled ? 'not-allowed' : 'pointer',

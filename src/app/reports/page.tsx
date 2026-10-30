@@ -17,11 +17,9 @@ import {
   ArrowRight,
   ArrowUpRight,
   ArrowDownRight,
-  Flame,
   Scale,
   Tag,
   Gauge,
-  ShieldCheck,
   ShieldAlert,
   AlertTriangle,
   CheckCircle2,
@@ -31,7 +29,7 @@ import {
 } from 'lucide-react';
 
 /* ──── SVG Speedometer Gauge ──── */
-export function SpeedometerGauge({ value, max, label, sublabel }: { value: number; max: number; label: string; sublabel?: string }) {
+export function SpeedometerGauge({ value, max, label, sublabel, goodWhenHigh = false }: { value: number; max: number; label: string; sublabel?: string; goodWhenHigh?: boolean }) {
   const safeVal = Number.isFinite(value) ? value : 0;
   const safeMax = Number.isFinite(max) && max > 0 ? max : 100;
   const clampedPercent = Math.min(100, Math.max(0, (safeVal / safeMax) * 100));
@@ -53,13 +51,14 @@ export function SpeedometerGauge({ value, max, label, sublabel }: { value: numbe
     return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
   };
 
-  const needleAngle = startAngle + (clampedPercent / 100) * sweepAngle;
-  const needleLen = radius - 15;
-  const nx = cx + needleLen * Math.cos(toRad(needleAngle));
-  const ny = cy + needleLen * Math.sin(toRad(needleAngle));
 
   // Color zones
   const getColor = (pct: number) => {
+    if (goodWhenHigh) {
+      if (pct >= 20) return 'var(--color-income)';
+      if (pct >= 10) return 'var(--color-warning)';
+      return 'var(--color-expense)';
+    }
     if (pct <= 50) return 'var(--color-income)';
     if (pct <= 80) return 'var(--color-warning)';
     return 'var(--color-expense)';
@@ -89,26 +88,14 @@ export function SpeedometerGauge({ value, max, label, sublabel }: { value: numbe
             style={{ transition: 'all 600ms ease' }}
           />
         )}
-        {/* Needle */}
-        <line
-          x1={cx}
-          y1={cy}
-          x2={nx}
-          y2={ny}
-          stroke="var(--text-primary)"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          style={{ transition: 'all 600ms ease' }}
-        />
-        <circle cx={cx} cy={cy} r="5" fill="var(--text-primary)" />
         {/* Center value */}
         <text
           x={cx}
-          y={cy + 28}
+          y={cy + 9}
           textAnchor="middle"
           fill="var(--text-primary)"
-          fontSize="20"
-          fontWeight="700"
+          fontSize="28"
+          fontWeight="650"
           fontFamily="inherit"
         >
           {Math.round(clampedPercent)}%
@@ -167,7 +154,7 @@ export function DailyBar({ day, date, spent, cumulative, maxSpend, avgSpend }: {
             fontSize: '0.7rem',
             whiteSpace: 'nowrap',
             zIndex: 20,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            boxShadow: 'var(--shadow-lg)',
             color: 'var(--text-primary)',
             pointerEvents: 'none',
           }}
@@ -184,8 +171,8 @@ export function DailyBar({ day, date, spent, cumulative, maxSpend, avgSpend }: {
           height: `${Math.max(2, barHeight)}px`,
           background: hasSpend
             ? isSpike
-              ? 'linear-gradient(180deg, #F43F5E, #BE123C)'
-              : 'linear-gradient(180deg, #6366F1, #4F46E5)'
+              ? 'var(--color-expense)'
+              : 'var(--brand-primary)'
             : 'var(--border-subtle)',
           borderRadius: '2px 2px 0 0',
           transition: 'height 300ms ease',
@@ -198,9 +185,9 @@ export function DailyBar({ day, date, spent, cumulative, maxSpend, avgSpend }: {
 
 /* ──── Interactive SVG Donut / Pie Chart ──── */
 const DONUT_PALETTE = [
-  '#6366F1', '#EC4899', '#10B981', '#F59E0B', '#3B82F6',
-  '#8B5CF6', '#14B8A6', '#F43F5E', '#06B6D4', '#EAB308',
-  '#84CC16', '#A855F7',
+  '#7C87FF', '#2BD4A4', '#FFB547', '#FF6B81', '#5AB8FF',
+  '#B18CFF', '#3DD6D0', '#FF9F6B', '#E879C6', '#C7D65A',
+  '#8B90A0', '#6FE38F',
 ];
 
 interface DonutSliceData {
@@ -364,13 +351,11 @@ export function ExpenseDonutChart({
           textAnchor="middle"
           fill="var(--text-muted)"
           fontSize="9.5"
-          fontWeight="600"
-          letterSpacing="0.04em"
-          style={{ textTransform: 'uppercase' }}
+          fontWeight="500"
         >
           {activeSlice
             ? (activeSliceName.length > 14 ? activeSliceName.substring(0, 12) + '…' : activeSliceName)
-            : (analyticsLabel === 'Tag' ? 'TOTAL TAGGED' : 'TOTAL SPENT')}
+            : (analyticsLabel === 'Tag' ? 'Total tagged' : 'Total spent')}
         </text>
 
         <text
@@ -546,8 +531,8 @@ export default function ReportsPage({
       {/* Header & Export Options */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Analytics & Reports</h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <h1 className="page-title">Analytics & Reports</h1>
+          <p className="page-subtitle">
             Deep dive into monthly cash flows, spending patterns, budget health, and forecasts.
           </p>
         </div>
@@ -787,12 +772,13 @@ export default function ReportsPage({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
         {/* Savings Rate Gauge */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            <Gauge size={15} /> SAVINGS RATE
+          <div className="card-title">
+            Savings rate
           </div>
           <SpeedometerGauge
             value={Math.max(0, savingsRate)}
             max={100}
+            goodWhenHigh
             label={totalMonthIncome >= totalMonthSpend ? `₹${Math.round((totalMonthIncome - totalMonthSpend) / 100).toLocaleString('en-IN')} saved` : `₹${Math.round((totalMonthSpend - totalMonthIncome) / 100).toLocaleString('en-IN')} deficit`}
             sublabel={`of ₹${Math.round(totalMonthIncome / 100).toLocaleString('en-IN')} income (${Math.round(totalMonthIncome > 0 ? (totalMonthSpend / totalMonthIncome) * 100 : 0)}% spent)`}
           />
@@ -800,8 +786,8 @@ export default function ReportsPage({
 
         {/* Budget Utilization Gauge */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            <BarChart3 size={15} /> BUDGET UTILIZATION
+          <div className="card-title">
+            Budget utilization
           </div>
           {budgetHealth ? (
             <SpeedometerGauge
@@ -822,8 +808,7 @@ export default function ReportsPage({
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div>
-            <h2 style={{ fontSize: '1.05rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Flame size={18} style={{ color: 'var(--color-expense)' }} />
+            <h2 className="card-title" style={{ fontSize: '1rem' }}>
               Daily Spending Burn Rate ({formatMonthDisplay(selectedMonth)})
             </h2>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -899,8 +884,7 @@ export default function ReportsPage({
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div>
-              <h2 style={{ fontSize: '1.05rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <ShieldCheck size={18} style={{ color: 'var(--brand-primary)' }} />
+              <h2 className="card-title" style={{ fontSize: '1rem' }}>
                 Budget Health ({formatMonthDisplay(selectedMonth)})
               </h2>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -939,8 +923,8 @@ export default function ReportsPage({
                     alignItems: 'center',
                     padding: '0.5rem 0.75rem',
                     borderRadius: 'var(--radius-sm)',
-                    backgroundColor: 'rgba(239,68,68,0.06)',
-                    border: '1px solid rgba(239,68,68,0.15)',
+                    backgroundColor: 'var(--color-expense-subtle)',
+                    border: '1px solid var(--color-expense-subtle)',
                     fontSize: '0.8125rem',
                   }}
                 >
@@ -949,7 +933,7 @@ export default function ReportsPage({
                     <span style={{ color: 'var(--text-muted)' }}>
                       ₹{Math.round((b.spent || 0) / 100).toLocaleString('en-IN')} / ₹{Math.round((b.amount || 0) / 100).toLocaleString('en-IN')}
                     </span>
-                    <span style={{ fontWeight: 700, color: '#EF4444' }}>{b.percentUsed ?? 0}%</span>
+                    <span style={{ fontWeight: 700, color: 'var(--color-expense)' }}>{b.percentUsed ?? 0}%</span>
                   </div>
                 </div>
               ))}
@@ -959,7 +943,7 @@ export default function ReportsPage({
           {/* Near limit warnings */}
           {(budgetHealth.nearLimitItems || []).length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#F59E0B' }}>APPROACHING LIMIT (≥80%)</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-warning)' }}>APPROACHING LIMIT (≥80%)</div>
               {(budgetHealth.nearLimitItems || []).map((b: any) => (
                 <div
                   key={b.id}
@@ -969,8 +953,8 @@ export default function ReportsPage({
                     alignItems: 'center',
                     padding: '0.5rem 0.75rem',
                     borderRadius: 'var(--radius-sm)',
-                    backgroundColor: 'rgba(245,158,11,0.06)',
-                    border: '1px solid rgba(245,158,11,0.15)',
+                    backgroundColor: 'var(--color-warning-subtle)',
+                    border: '1px solid var(--color-warning-subtle)',
                     fontSize: '0.8125rem',
                   }}
                 >
@@ -979,7 +963,7 @@ export default function ReportsPage({
                     <span style={{ color: 'var(--text-muted)' }}>
                       ₹{Math.round((b.spent || 0) / 100).toLocaleString('en-IN')} / ₹{Math.round((b.amount || 0) / 100).toLocaleString('en-IN')}
                     </span>
-                    <span style={{ fontWeight: 700, color: '#F59E0B' }}>{b.percentUsed ?? 0}%</span>
+                    <span style={{ fontWeight: 700, color: 'var(--color-warning)' }}>{b.percentUsed ?? 0}%</span>
                   </div>
                 </div>
               ))}
@@ -993,8 +977,7 @@ export default function ReportsPage({
         {/* Spending by Category or Tag with Donut Chart / Split View */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <PieChart size={18} style={{ color: 'var(--brand-primary)' }} />
+            <h2 className="card-title" style={{ fontSize: '1rem' }}>
               Expenses by {analyticsLabel} ({formatMonthDisplay(selectedMonth)})
             </h2>
 

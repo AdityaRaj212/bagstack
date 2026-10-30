@@ -88,8 +88,8 @@ export default function BudgetsPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Budgets</h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <h1 className="page-title">Budgets</h1>
+          <p className="page-subtitle">
             Track categorical spending limits, overspending alerts, and rollover reserves.
           </p>
         </div>

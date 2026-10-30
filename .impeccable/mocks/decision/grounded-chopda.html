@@ -1,0 +1,68 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1440px;height:900px;overflow:hidden;font-family:'Bricolage Grotesque',sans-serif;background:#150B0D;color:#F6EDE6;display:grid;grid-template-columns:84px 1fr}
+.rail{background:linear-gradient(180deg,#8A2231,#5E1520);display:flex;flex-direction:column;align-items:center;padding:20px 0;gap:10px}
+.rail .m{width:44px;height:44px;border-radius:14px;background:#F2A12E;color:#2A1216;display:grid;place-items:center;font-weight:800;font-size:20px;margin-bottom:16px}
+.rail a{width:48px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:11px;color:#F3C9CF;font-weight:600}
+.rail a.on{background:rgba(246,237,230,.14);color:#fff;box-shadow:inset 3px 0 0 #F2A12E}
+main{padding:24px 32px;display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:min-content;gap:18px}
+.top{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center}
+.top h1{font-size:28px;font-weight:700;letter-spacing:-.02em}
+.top p{color:#B49A9E;font-size:14px}
+.tabs{display:flex;background:#22121A;border-radius:12px;padding:4px;gap:2px;font-size:13px}
+.tabs span{padding:7px 14px;border-radius:9px;color:#B49A9E}
+.tabs span.on{background:#3A1C24;color:#fff;font-weight:600}
+.btn{background:#F2A12E;color:#2A1216;font-weight:700;padding:10px 16px;border-radius:12px;font-size:14px}
+.c{background:linear-gradient(180deg,#22121A,#1C0F14);border:1px solid #3A1C24;border-radius:22px;padding:20px}
+.lab{font-size:12px;color:#B49A9E;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.hero{grid-column:span 8;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;right:-80px;top:-120px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(242,161,46,.22),transparent 65%)}
+.amt{font-size:52px;font-weight:800;letter-spacing:-.03em;color:#F2A12E;font-variant-numeric:tabular-nums;margin-top:4px}
+.meta{display:flex;gap:24px;margin-top:6px;font-size:14px;color:#D8C5C0}
+.meta b{color:#3FB57A}.meta s{color:#FF7A9A;text-decoration:none;font-weight:700}
+.bars{display:flex;align-items:flex-end;gap:14px;height:150px;margin-top:22px;position:relative;z-index:1}
+.bars div{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:#B49A9E}
+.bars i{width:100%;border-radius:8px 8px 3px 3px;background:#3A1C24;display:block}
+.bars div.on i{background:linear-gradient(180deg,#F2A12E,#C9711A);box-shadow:0 0 24px rgba(242,161,46,.35)}
+.side{grid-column:span 4;display:flex;flex-direction:column;gap:18px}
+.goal{display:flex;align-items:center;gap:14px;padding:10px 0}
+.ring{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700}
+.goal small{display:block;color:#B49A9E;font-size:12px}
+.led{grid-column:span 12}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+th{text-align:left;font-size:11px;color:#B49A9E;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:8px 10px;border-bottom:1px solid #3A1C24}
+td{padding:11px 10px;border-bottom:1px solid #2A161C;font-variant-numeric:tabular-nums}
+td.r,th.r{text-align:right}
+.pill{font-size:12px;padding:3px 9px;border-radius:99px;background:#2E1820;color:#E8D6D2}
+.in{color:#3FB57A;font-weight:700}.out{color:#FF7A9A;font-weight:700}
+.chk{color:#F2A12E;font-size:12px;font-weight:600}
+</style></head><body>
+<nav class="rail"><div class="m">B</div><a class="on">Home</a><a>Txns</a><a>Accts</a><a>Budget</a><a>Subs</a><a>Goals</a><a>Loans</a><a>Invest</a><a>Reports</a></nav>
+<main>
+ <div class="top"><div><h1>Shubh Labh, Aditya</h1><p>Personal khata · October 2026</p></div>
+  <div style="display:flex;gap:12px;align-items:center"><div class="tabs"><span>Week</span><span class="on">Month</span><span>Quarter</span><span>Year</span></div><span class="btn">+ Add entry</span></div></div>
+ <section class="c hero">
+  <div class="lab">Net worth</div><div class="amt">₹18,42,310</div>
+  <div class="meta"><span><b>+₹46,200</b> this month</span><span>Income ₹1,24,550</span><span>Spent <s>₹61,875</s></span><span>Savings rate 50.3%</span></div>
+  <div class="bars">
+   <div><i style="height:52px"></i>May</div><div><i style="height:64px"></i>Jun</div><div><i style="height:58px"></i>Jul</div><div><i style="height:80px"></i>Aug</div><div><i style="height:92px"></i>Sep</div><div class="on"><i style="height:120px"></i>Oct</div>
+  </div>
+ </section>
+ <div class="side">
+  <section class="c"><div class="lab">Goals</div>
+   <div class="goal"><div class="ring" style="background:conic-gradient(#F2A12E 72%,#3A1C24 0)"><span style="background:#1F1016;width:42px;height:42px;border-radius:50%;display:grid;place-items:center">72%</span></div><div>Emergency fund<small>₹3,60,000 of ₹5,00,000</small></div></div>
+   <div class="goal"><div class="ring" style="background:conic-gradient(#3FB57A 35%,#3A1C24 0)"><span style="background:#1F1016;width:42px;height:42px;border-radius:50%;display:grid;place-items:center">35%</span></div><div>Goa trip, Dec<small>₹28,000 of ₹80,000</small></div></div>
+  </section>
+  <section class="c"><div class="lab">Due tomorrow</div><div style="font-size:22px;font-weight:700;margin-top:8px">Home loan EMI · ₹28,450</div><div style="color:#B49A9E;font-size:13px;margin-top:4px">From HDFC Savings ··4821 · balance covers it</div></section>
+ </div>
+ <section class="c led"><div style="display:flex;justify-content:space-between"><div class="lab">Recent entries</div><span class="chk">3 imported rows waiting for review →</span></div>
+  <table><thead><tr><th>Date</th><th>Payee</th><th>Category</th><th>Account</th><th class="r">Amount</th></tr></thead><tbody>
+   <tr><td>30 Oct</td><td>Jio Fiber</td><td><span class="pill">Bills</span></td><td>HDFC Savings</td><td class="r out">−₹999.00</td></tr>
+   <tr><td>29 Oct</td><td>Swiggy</td><td><span class="pill">Food</span></td><td>ICICI card</td><td class="r out">−₹640.00</td></tr>
+   <tr><td>27 Oct</td><td>Myntra refund</td><td><span class="pill">Shopping</span></td><td>ICICI card</td><td class="r in">+₹1,299.00</td></tr>
+  </tbody></table></section>
+</main>
+</body></html>

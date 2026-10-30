@@ -216,8 +216,8 @@ export default function SubscriptionsPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Subscriptions</h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <h1 className="page-title">Subscriptions</h1>
+          <p className="page-subtitle">
             Manage recurring memberships, track auto-deductions, and schedule payments on your terms.
           </p>
         </div>
@@ -265,7 +265,7 @@ export default function SubscriptionsPage() {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '0.85rem',
-                border: isDue && !isPaid ? '1px solid rgba(245, 158, 11, 0.4)' : undefined,
+                border: isDue && !isPaid ? '1px solid color-mix(in srgb, var(--color-warning) 40%, transparent)' : undefined,
                 transition: 'all var(--transition-fast)',
               }}
             >

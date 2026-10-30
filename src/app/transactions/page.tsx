@@ -353,8 +353,8 @@ export default function TransactionsPage() {
       {/* Header & Actions */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Transactions</h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <h1 className="page-title">Transactions</h1>
+          <p className="page-subtitle">
             Complete audit ledger categorized by date with instant undo and filters.
           </p>
         </div>
@@ -545,7 +545,7 @@ export default function TransactionsPage() {
                 backgroundColor: 'var(--bg-surface)',
                 border: '1px solid var(--border-default)',
                 borderRadius: 'var(--radius-md)',
-                boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
+                boxShadow: 'var(--shadow-lg)',
                 zIndex: 70,
                 padding: '0.6rem',
                 maxHeight: '220px',
@@ -611,7 +611,7 @@ export default function TransactionsPage() {
                         handleToggleSearchTag(t.name);
                       }}
                       style={{
-                        background: isSelected ? tagColor : `${tagColor}15`,
+                        background: isSelected ? tagColor : `color-mix(in srgb, ${tagColor} 8%, transparent)`,
                         color: isSelected ? '#ffffff' : tagColor,
                         border: `1px solid ${isSelected ? tagColor : `${tagColor}35`}`,
                         padding: '3px 8px',
@@ -736,7 +736,7 @@ export default function TransactionsPage() {
                 backgroundColor: 'var(--bg-surface)',
                 border: '1px solid var(--border-default)',
                 borderRadius: 'var(--radius-md)',
-                boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
+                boxShadow: 'var(--shadow-lg)',
                 zIndex: 80,
                 maxHeight: '280px',
                 overflowY: 'auto',
@@ -778,7 +778,7 @@ export default function TransactionsPage() {
                   justifyContent: 'space-between',
                   color: !selectedCategoryId ? 'var(--brand-primary)' : 'var(--text-muted)',
                   fontWeight: !selectedCategoryId ? 600 : 400,
-                  backgroundColor: !selectedCategoryId ? 'rgba(79, 70, 229, 0.12)' : 'transparent',
+                  backgroundColor: !selectedCategoryId ? 'var(--brand-light)' : 'transparent',
                   marginBottom: '0.25rem',
                 }}
                 onClick={() => {
@@ -812,7 +812,7 @@ export default function TransactionsPage() {
                           alignItems: 'center',
                           justifyContent: 'space-between',
                           color: parent.color || 'var(--text-primary)',
-                          backgroundColor: isParentSelected ? 'rgba(79, 70, 229, 0.12)' : 'transparent',
+                          backgroundColor: isParentSelected ? 'var(--brand-light)' : 'transparent',
                         }}
                         onClick={() => {
                           setSelectedCategoryId(parent.id);
@@ -826,7 +826,7 @@ export default function TransactionsPage() {
                               width: '10px',
                               height: '10px',
                               borderRadius: '50%',
-                              backgroundColor: parent.color || '#6B7280',
+                              backgroundColor: parent.color || 'var(--cat-11)',
                               flexShrink: 0,
                             }}
                           />
@@ -850,7 +850,7 @@ export default function TransactionsPage() {
                               alignItems: 'center',
                               justifyContent: 'space-between',
                               color: isSubSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
-                              backgroundColor: isSubSelected ? 'rgba(79, 70, 229, 0.12)' : 'transparent',
+                              backgroundColor: isSubSelected ? 'var(--brand-light)' : 'transparent',
                             }}
                             onClick={() => {
                               setSelectedCategoryId(sub.id);
@@ -864,7 +864,7 @@ export default function TransactionsPage() {
                                   width: '6px',
                                   height: '6px',
                                   borderRadius: '50%',
-                                  backgroundColor: sub.color || parent.color || '#6B7280',
+                                  backgroundColor: sub.color || parent.color || 'var(--cat-11)',
                                   opacity: 0.8,
                                   flexShrink: 0,
                                 }}
@@ -1063,7 +1063,7 @@ export default function TransactionsPage() {
                                         fontWeight: 500,
                                         padding: '1px 6px',
                                         borderRadius: '4px',
-                                        backgroundColor: isTagActive ? tagColor : `${tagColor}18`,
+                                        backgroundColor: isTagActive ? tagColor : `color-mix(in srgb, ${tagColor} 9%, transparent)`,
                                         color: isTagActive ? '#ffffff' : tagColor,
                                         border: `1px solid ${tagColor}35`,
                                         display: 'inline-flex',
@@ -1100,7 +1100,7 @@ export default function TransactionsPage() {
                               <span
                                 className="badge"
                                 style={{
-                                  backgroundColor: `${tx.category_color || '#4f46e5'}20`,
+                                  backgroundColor: `color-mix(in srgb, ${tx.category_color || '#4f46e5'} 12%, transparent)`,
                                   color: tx.category_color || 'var(--brand-primary)',
                                   maxWidth: '100%',
                                   overflow: 'hidden',
@@ -1158,7 +1158,7 @@ export default function TransactionsPage() {
                                 onClick={() => handleDelete(tx.id, tx.merchant_name)}
                                 disabled={isDeleting}
                                 title={isDeleting ? 'Deleting...' : 'Delete transaction (with undo)'}
-                                style={{ color: isDeleting ? 'var(--color-danger)' : 'var(--text-muted)', width: '28px', height: '28px' }}
+                                style={{ color: isDeleting ? 'var(--color-expense)' : 'var(--text-muted)', width: '28px', height: '28px' }}
                               >
                                 {isDeleting ? (
                                   <Loader2 size={14} className="animate-spin" />

@@ -106,7 +106,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
               position: 'absolute',
               inset: 0,
               borderRadius: '50%',
-              border: '3px solid rgba(99, 102, 241, 0.15)',
+              border: '3px solid var(--brand-light)',
             }}
           />
           <div
@@ -199,7 +199,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
           width: '320px',
           height: '320px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0) 70%)',
+          background: 'radial-gradient(circle, var(--brand-light) 0%, transparent 70%)',
           pointerEvents: 'none',
         }}
       />
@@ -220,18 +220,9 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
           <div
             style={{
               position: 'absolute',
-              inset: '-6px',
-              borderRadius: '50%',
-              border: '2px solid rgba(99, 102, 241, 0.25)',
-              animation: 'ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
               inset: 0,
               borderRadius: '50%',
-              border: '3.5px solid rgba(99, 102, 241, 0.12)',
+              border: '3.5px solid var(--brand-light)',
             }}
           />
           <div
@@ -248,24 +239,14 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
           <div
             style={{
               position: 'absolute',
-              inset: '4px',
-              borderRadius: '50%',
-              border: '2px dashed rgba(99, 102, 241, 0.3)',
-              animation: 'spinReverse 3s linear infinite',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
               inset: '9px',
               borderRadius: '50%',
-              backgroundColor: 'var(--brand-primary)',
-              color: '#ffffff',
+              background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-mint))',
+              color: '#0b0c10',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 18px rgba(99, 102, 241, 0.45)',
-              animation: 'pulseGlow 2s ease-in-out infinite',
+              boxShadow: 'var(--shadow-md)',
             }}
           >
             <Sparkles size={22} />

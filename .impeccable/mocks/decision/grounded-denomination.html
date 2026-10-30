@@ -1,0 +1,87 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1440px;height:900px;overflow:hidden;font-family:Onest,sans-serif;background:#F4F4F9;color:#14152A;display:grid;grid-template-columns:236px 1fr}
+aside{background:#0F1020;color:#C9CAE0;padding:22px 14px;display:flex;flex-direction:column;gap:4px}
+.logo{display:flex;align-items:center;gap:10px;color:#fff;font-weight:700;font-size:17px;margin:0 8px 22px}
+.logo i{width:30px;height:30px;border-radius:9px;background:linear-gradient(160deg,#9B8CE0 0 33%,#E2479B 33% 66%,#F2A93B 66%);display:block}
+aside a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:14px}
+aside a b{width:8px;height:8px;border-radius:3px;background:#3A3B55}
+aside a.on{background:#1D1E36;color:#fff;font-weight:600}
+aside a.on b{background:#9B8CE0}
+.side-card{margin-top:auto;background:#1D1E36;border-radius:14px;padding:14px;font-size:12px;line-height:1.5}
+.side-card strong{display:block;color:#fff;font-size:13px;margin-bottom:4px}
+main{padding:26px 32px;display:grid;grid-template-columns:1.35fr 1fr;grid-template-rows:auto 1fr;gap:20px}
+.head{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center}
+.head h1{font-size:26px;font-weight:700;letter-spacing:-.02em}
+.head p{color:#6A6B85;font-size:14px;margin-top:2px}
+.acts{display:flex;gap:10px}
+.btn{padding:10px 16px;border-radius:11px;font-size:14px;font-weight:600;background:#fff;border:1px solid #E1E1EC}
+.btn.p{background:#14152A;color:#fff;border-color:#14152A}
+.card{background:#fff;border-radius:20px;border:1px solid #E7E7F1;box-shadow:0 1px 2px rgba(20,21,42,.04),0 8px 24px -12px rgba(20,21,42,.12);padding:20px}
+.lab{font-size:12px;font-weight:600;color:#6A6B85;text-transform:uppercase;letter-spacing:.08em}
+.nw{display:flex;justify-content:space-between;align-items:flex-start}
+.big{font-size:40px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin-top:6px}
+.chip{font-size:13px;font-weight:600;color:#1C8A5A;background:#E5F6EE;padding:4px 10px;border-radius:99px}
+.stack{position:relative;height:200px;margin:18px 0 6px}
+.note{position:absolute;width:300px;height:170px;border-radius:18px;padding:16px 18px;color:#fff;overflow:hidden;box-shadow:0 18px 30px -16px rgba(15,16,32,.5)}
+.note svg{position:absolute;inset:0;opacity:.28}
+.note small{font-size:12px;opacity:.85;font-weight:500;position:relative}
+.note div{font-size:24px;font-weight:700;margin-top:58px;font-variant-numeric:tabular-nums;position:relative}
+.note span{font-size:12px;opacity:.85;position:relative}
+.n1{left:0;top:20px;background:linear-gradient(135deg,#8B7BD6,#6E5CC4);transform:rotate(-4deg)}
+.n2{left:150px;top:8px;background:linear-gradient(135deg,#3CC0E0,#1E93B8);transform:rotate(1deg)}
+.n3{left:300px;top:22px;background:linear-gradient(135deg,#F2A93B,#DB8517);transform:rotate(5deg)}
+.n4{left:450px;top:14px;background:linear-gradient(135deg,#E2479B,#B92A77);transform:rotate(-2deg)}
+.legend{display:flex;gap:18px;font-size:13px;color:#4A4B66}
+.legend b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.right{display:flex;flex-direction:column;gap:20px}
+.bill{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid #F0F0F6;font-size:14px}
+.bill i{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-style:normal;font-weight:700;color:#fff;font-size:13px}
+.bill em{display:block;font-style:normal;font-size:12px;color:#7A7B95}
+.bill strong{font-variant-numeric:tabular-nums}
+.due{color:#C9364A;font-weight:600;font-size:12px}
+.bud{margin-top:12px}
+.bud div{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.trk{height:8px;border-radius:99px;background:#EEEEF5;margin-bottom:14px;overflow:hidden}
+.trk i{display:block;height:100%;border-radius:99px}
+</style></head><body>
+<aside>
+ <div class="logo"><i></i>Bagstack</div>
+ <a class="on"><b></b>Dashboard</a><a><b></b>Transactions</a><a><b></b>Accounts</a><a><b></b>Budgets</a><a><b></b>Subscriptions</a><a><b></b>Goals</a><a><b></b>Loans</a><a><b></b>Investments</a><a><b></b>Reports</a>
+ <div class="side-card"><strong>Import a statement</strong>CSV, PDF or a receipt photo. Every row is checked before it posts.</div>
+</aside>
+<main>
+ <div class="head"><div><h1>Good evening, Aditya</h1><p>Personal · 31 October 2026</p></div><div class="acts"><span class="btn">⌘K Search</span><span class="btn p">+ Add transaction</span></div></div>
+ <section class="card">
+  <div class="nw"><div><div class="lab">Net worth · 5 accounts</div><div class="big">₹18,42,310</div></div><span class="chip">+₹46,200 this month</span></div>
+  <div class="stack">
+   <div class="note n1"><svg viewBox="0 0 300 170"><g fill="none" stroke="#fff" stroke-width=".6"><path d="M0 40 Q75 0 150 40 T300 40"/><path d="M0 52 Q75 12 150 52 T300 52"/><path d="M0 64 Q75 24 150 64 T300 64"/><path d="M0 76 Q75 36 150 76 T300 76"/><path d="M0 88 Q75 48 150 88 T300 88"/><circle cx="240" cy="120" r="30"/><circle cx="240" cy="120" r="22"/><circle cx="240" cy="120" r="14"/></g></svg><small>HDFC Savings ··4821</small><div>₹2,84,610</div><span>Savings</span></div>
+   <div class="note n2"><svg viewBox="0 0 300 170"><g fill="none" stroke="#fff" stroke-width=".6"><path d="M0 30 Q75 70 150 30 T300 30"/><path d="M0 42 Q75 82 150 42 T300 42"/><path d="M0 54 Q75 94 150 54 T300 54"/><circle cx="60" cy="130" r="26"/><circle cx="60" cy="130" r="18"/></g></svg><small>SBI Salary ··3307</small><div>₹96,204</div><span>Checking</span></div>
+   <div class="note n3"><svg viewBox="0 0 300 170"><g fill="none" stroke="#fff" stroke-width=".6"><path d="M0 50 Q75 10 150 50 T300 50"/><path d="M0 62 Q75 22 150 62 T300 62"/><path d="M0 74 Q75 34 150 74 T300 74"/><circle cx="250" cy="40" r="24"/><circle cx="250" cy="40" r="16"/></g></svg><small>Mutual funds · 6</small><div>₹7,48,900</div><span>Investments</span></div>
+   <div class="note n4"><svg viewBox="0 0 300 170"><g fill="none" stroke="#fff" stroke-width=".6"><path d="M0 36 Q75 76 150 36 T300 36"/><path d="M0 48 Q75 88 150 48 T300 48"/><circle cx="230" cy="125" r="28"/><circle cx="230" cy="125" r="20"/></g></svg><small>ICICI Amazon Pay ··0917</small><div>−₹23,118</div><span>Credit card · 23% used</span></div>
+  </div>
+  <svg viewBox="0 0 700 150" style="width:100%;height:150px;margin-top:8px">
+   <defs><pattern id="g" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 6 L6 0" stroke="#9B8CE0" stroke-width=".8"/></pattern></defs>
+   <path d="M0 120 C80 110 120 96 180 98 S300 70 360 74 S480 52 540 46 S640 30 700 22 L700 150 L0 150Z" fill="url(#g)" opacity=".7"/>
+   <path d="M0 120 C80 110 120 96 180 98 S300 70 360 74 S480 52 540 46 S640 30 700 22" fill="none" stroke="#6E5CC4" stroke-width="3"/>
+   <g font-size="11" fill="#8A8BA5"><text x="0" y="146">May</text><text x="140" y="146">Jun</text><text x="280" y="146">Jul</text><text x="420" y="146">Aug</text><text x="560" y="146">Sep</text><text x="668" y="146">Oct</text></g>
+  </svg>
+ </section>
+ <div class="right">
+  <section class="card"><div class="lab">Due in the next 14 days</div>
+   <div class="bill"><i style="background:#9AA1A8">HL</i><div>Home loan EMI<em>HDFC Savings · 1 Nov</em></div><div style="text-align:right"><strong>₹28,450</strong><div class="due">Tomorrow</div></div></div>
+   <div class="bill"><i style="background:#E2479B">N</i><div>Netflix Premium<em>ICICI card · 3 Nov · auto-debit</em></div><strong>₹649</strong></div>
+   <div class="bill"><i style="background:#F2A93B">SIP</i><div>Parag Parikh Flexi Cap<em>HDFC Savings · 5 Nov · auto-debit</em></div><strong>₹10,000</strong></div>
+   <div class="bill"><i style="background:#35B6D8">CC</i><div>ICICI card bill<em>SBI Salary · 12 Nov</em></div><strong>₹23,118.40</strong></div>
+  </section>
+  <section class="card"><div class="lab">Budgets · October</div>
+   <div class="bud"><div><span>Food &amp; dining</span><span>₹12,300 / ₹15,000</span></div><div class="trk"><i style="width:82%;background:#9B8CE0"></i></div>
+   <div><span>Shopping</span><span style="color:#C9364A;font-weight:600">₹9,860 / ₹9,000</span></div><div class="trk"><i style="width:100%;background:#C9364A"></i></div>
+   <div><span>Transport</span><span>₹4,140 / ₹9,000</span></div><div class="trk"><i style="width:46%;background:#35B6D8"></i></div></div>
+  </section>
+ </div>
+</main>
+</body></html>

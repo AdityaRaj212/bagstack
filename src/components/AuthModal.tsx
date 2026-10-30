@@ -219,12 +219,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 width: '36px',
                 height: '36px',
                 borderRadius: 'var(--radius-md)',
-                background: 'linear-gradient(135deg, var(--brand-primary), #8b5cf6)',
-                color: '#ffffff',
+                background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-mint))',
+                color: '#0b0c10',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+                boxShadow: 'var(--shadow-sm)',
               }}
             >
               <Lock size={18} />
@@ -250,8 +250,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             style={{
               padding: '0.75rem',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
+              backgroundColor: 'var(--color-expense-subtle)',
+              border: '1px solid color-mix(in srgb, var(--color-expense) 30%, transparent)',
               color: 'var(--color-expense)',
               fontSize: '0.8125rem',
               marginBottom: '1rem',
@@ -308,14 +308,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 style={{
                   padding: '0.85rem',
                   borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                  border: '1px solid rgba(245, 158, 11, 0.35)',
-                  color: '#d97706',
+                  backgroundColor: 'var(--color-warning-subtle)',
+                  border: '1px solid color-mix(in srgb, var(--color-warning) 35%, transparent)',
+                  color: 'var(--color-warning)',
                   fontSize: '0.78rem',
                   lineHeight: 1.5,
                 }}
               >
-                <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem', color: '#f59e0b' }}>
+                <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem', color: 'var(--color-warning)' }}>
                   <AlertTriangle size={15} /> Google SMTP App Password Issue (535)
                 </div>
                 <div style={{ color: 'var(--text-secondary)' }}>

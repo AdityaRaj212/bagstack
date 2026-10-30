@@ -2518,7 +2518,7 @@ export class FinanceService {
 
     for (let i = numMonths - 1; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const mStr = d.toISOString().substring(0, 7);
+      const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 
       const rows = this.db.prepare(`
         SELECT type, COALESCE(SUM(amount), 0) as total

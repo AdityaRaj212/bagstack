@@ -1,0 +1,1020 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-30T21:07:24.514677+00:00",
+  "title": "Design System: Bagstack",
+  "extensions": {
+    "colorMeta": {
+      "periwinkle": {
+        "role": "primary",
+        "displayName": "Signal Periwinkle",
+        "cssVar": "--brand-primary / --color-asset / --border-focus",
+        "darkValue": "#7c87ff",
+        "canonical": "#5b67f5",
+        "oklch": "oklch(58.5% 0.210 274.3)",
+        "tonalRamp": [
+          "#05022d",
+          "#18195c",
+          "#2e338e",
+          "#4650c5",
+          "#616ffc",
+          "#8599ff",
+          "#adc1ff",
+          "#d7e9ff"
+        ]
+      },
+      "periwinkle-deep": {
+        "role": "primary",
+        "displayName": "Periwinkle Deep",
+        "cssVar": "--brand-hover",
+        "darkValue": "#95a0ff",
+        "canonical": "#4a55e0",
+        "oklch": "oklch(52.7% 0.208 273.3)",
+        "tonalRamp": [
+          "#05032d",
+          "#16195b",
+          "#2c348e",
+          "#4551c4",
+          "#5f70fb",
+          "#8399ff",
+          "#abc2ff",
+          "#d6eaff"
+        ]
+      },
+      "periwinkle-wash": {
+        "role": "primary",
+        "displayName": "Periwinkle Wash",
+        "cssVar": "--brand-light",
+        "darkValue": "rgba(124, 135, 255, 0.16)",
+        "canonical": "rgba(91, 103, 245, 0.1)",
+        "tonalRamp": [
+          "#05022d",
+          "#18195c",
+          "#2e338e",
+          "#4650c5",
+          "#616ffc",
+          "#8599ff",
+          "#adc1ff",
+          "#d7e9ff"
+        ]
+      },
+      "mint": {
+        "role": "secondary",
+        "displayName": "Ledger Mint",
+        "cssVar": "--brand-mint",
+        "darkValue": "#2bd4a4",
+        "canonical": "#12b98a",
+        "oklch": "oklch(69.8% 0.142 166.4)",
+        "tonalRamp": [
+          "#001206",
+          "#00301c",
+          "#005236",
+          "#007651",
+          "#009c6f",
+          "#4dbd94",
+          "#88debb",
+          "#beffe3"
+        ]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Inverted Ink",
+        "cssVar": "--text-primary / --btn-primary-bg",
+        "darkValue": "#f4f5f8",
+        "canonical": "#0b0c10",
+        "oklch": "oklch(15.5% 0.009 274.3)",
+        "tonalRamp": [
+          "#0b0b0d",
+          "#242527",
+          "#414245",
+          "#606166",
+          "#818288",
+          "#a3a5aa",
+          "#c8c9cd",
+          "#edeef2"
+        ]
+      },
+      "ink-raised": {
+        "role": "primary",
+        "displayName": "Raised Ink",
+        "cssVar": "--btn-primary-hover",
+        "darkValue": "#ffffff",
+        "canonical": "#262933",
+        "oklch": "oklch(28.2% 0.019 272.0)",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#23252a",
+          "#3f4249",
+          "#5e616b",
+          "#7e828e",
+          "#a1a5af",
+          "#c6c9d2",
+          "#eceef5"
+        ]
+      },
+      "paper-white": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "cssVar": "--bg-surface / --bg-surface-elevated / --btn-primary-fg",
+        "darkValue": "#121419",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "cool-paper": {
+        "role": "neutral",
+        "displayName": "Cool Paper / Graphite Ground",
+        "cssVar": "--bg-app",
+        "darkValue": "#0b0c10",
+        "canonical": "#f5f6f8",
+        "oklch": "oklch(97.3% 0.003 264.5)",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#252526",
+          "#414243",
+          "#606163",
+          "#818284",
+          "#a4a5a6",
+          "#c8c9ca",
+          "#eeeeef"
+        ]
+      },
+      "paper-subtle": {
+        "role": "neutral",
+        "displayName": "Paper Subtle",
+        "cssVar": "--bg-subtle",
+        "darkValue": "#16181f",
+        "canonical": "#f0f1f4",
+        "oklch": "oklch(95.8% 0.004 271.4)",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#252526",
+          "#414244",
+          "#606163",
+          "#818285",
+          "#a4a5a7",
+          "#c8c9cb",
+          "#eeeef0"
+        ]
+      },
+      "paper-hover": {
+        "role": "neutral",
+        "displayName": "Paper Hover",
+        "cssVar": "--bg-hover",
+        "darkValue": "#1e212a",
+        "canonical": "#e9ebf0",
+        "oklch": "oklch(94.0% 0.007 268.5)",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#242527",
+          "#414245",
+          "#606165",
+          "#808287",
+          "#a3a5a9",
+          "#c8c9cc",
+          "#edeef1"
+        ]
+      },
+      "paper-active": {
+        "role": "neutral",
+        "displayName": "Paper Active",
+        "cssVar": "--bg-active",
+        "darkValue": "#272b36",
+        "canonical": "#dfe2e9",
+        "oklch": "oklch(91.3% 0.010 267.4)",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#242528",
+          "#404246",
+          "#5f6166",
+          "#808288",
+          "#a3a5aa",
+          "#c7c9ce",
+          "#edeef2"
+        ]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Secondary Text",
+        "cssVar": "--text-secondary",
+        "darkValue": "#a3a7b4",
+        "canonical": "#4a4f5c",
+        "oklch": "oklch(42.8% 0.022 268.8)",
+        "tonalRamp": [
+          "#0a0b0f",
+          "#22252b",
+          "#3e424b",
+          "#5d616d",
+          "#7d8290",
+          "#a0a5b1",
+          "#c5c9d4",
+          "#ebeef7"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Muted Text",
+        "cssVar": "--text-muted",
+        "darkValue": "#7d8291",
+        "canonical": "#646978",
+        "oklch": "oklch(52.2% 0.024 270.9)",
+        "tonalRamp": [
+          "#0a0b0f",
+          "#22252c",
+          "#3e424b",
+          "#5d616e",
+          "#7d8291",
+          "#a0a5b2",
+          "#c5c9d4",
+          "#ebeef8"
+        ]
+      },
+      "hairline-subtle": {
+        "role": "neutral",
+        "displayName": "Subtle Hairline",
+        "cssVar": "--border-subtle",
+        "darkValue": "#1a1d24",
+        "canonical": "#eef0f3",
+        "oklch": "oklch(95.4% 0.005 258.3)",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#242526",
+          "#414244",
+          "#606163",
+          "#818285",
+          "#a3a5a7",
+          "#c8c9cb",
+          "#edeef0"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "cssVar": "--border-default",
+        "darkValue": "#23262f",
+        "canonical": "#e3e5ea",
+        "oklch": "oklch(92.2% 0.007 268.5)",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#242527",
+          "#414245",
+          "#606165",
+          "#808287",
+          "#a3a5a9",
+          "#c8c9cc",
+          "#edeef1"
+        ]
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "cssVar": "--border-strong",
+        "darkValue": "#323642",
+        "canonical": "#cdd1d9",
+        "oklch": "oklch(86.0% 0.012 264.5)",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#232528",
+          "#404247",
+          "#5e6167",
+          "#7f828a",
+          "#a2a5ab",
+          "#c6c9cf",
+          "#eceef3"
+        ]
+      },
+      "money-in": {
+        "role": "tertiary",
+        "displayName": "Money In, Mint",
+        "cssVar": "--color-income",
+        "darkValue": "#2bd4a4",
+        "canonical": "#0b8f63",
+        "oklch": "oklch(57.6% 0.123 162.5)",
+        "tonalRamp": [
+          "#001105",
+          "#002f1b",
+          "#005034",
+          "#06734f",
+          "#23986c",
+          "#63b992",
+          "#96dbb9",
+          "#c8fde2"
+        ]
+      },
+      "money-in-subtle": {
+        "role": "tertiary",
+        "displayName": "Money In Tint",
+        "cssVar": "--color-income-subtle",
+        "darkValue": "rgba(43, 212, 164, 0.14)",
+        "canonical": "#e3f6ee",
+        "oklch": "oklch(95.7% 0.023 168.7)",
+        "tonalRamp": [
+          "#080c0a",
+          "#1f2724",
+          "#3a4540",
+          "#57655f",
+          "#768780",
+          "#9aa9a3",
+          "#c0cdc7",
+          "#e7f1ed"
+        ]
+      },
+      "money-out": {
+        "role": "tertiary",
+        "displayName": "Money Out, Coral",
+        "cssVar": "--color-expense / --color-liability",
+        "darkValue": "#ff6b81",
+        "canonical": "#d93f4c",
+        "oklch": "oklch(59.7% 0.190 20.6)",
+        "tonalRamp": [
+          "#230001",
+          "#4c010d",
+          "#791521",
+          "#aa2b37",
+          "#dc4450",
+          "#f9777a",
+          "#ffa6a5",
+          "#ffd4d2"
+        ]
+      },
+      "money-out-subtle": {
+        "role": "tertiary",
+        "displayName": "Money Out Tint",
+        "cssVar": "--color-expense-subtle",
+        "darkValue": "rgba(255, 107, 129, 0.14)",
+        "canonical": "#fdecee",
+        "oklch": "oklch(95.7% 0.019 9.3)",
+        "tonalRamp": [
+          "#0e0a0a",
+          "#2a2324",
+          "#493f40",
+          "#6a5e5f",
+          "#8d7e80",
+          "#aea1a3",
+          "#d1c6c7",
+          "#f5eced"
+        ]
+      },
+      "transfer": {
+        "role": "tertiary",
+        "displayName": "Transfer Sky",
+        "cssVar": "--color-transfer",
+        "darkValue": "#5ab8ff",
+        "canonical": "#2570d4",
+        "oklch": "oklch(55.5% 0.170 257.3)",
+        "tonalRamp": [
+          "#000827",
+          "#002351",
+          "#0f4080",
+          "#225fb2",
+          "#3780e5",
+          "#69a6fd",
+          "#98cbff",
+          "#c8f1ff"
+        ]
+      },
+      "transfer-subtle": {
+        "role": "tertiary",
+        "displayName": "Transfer Tint",
+        "cssVar": "--color-transfer-subtle",
+        "darkValue": "rgba(90, 184, 255, 0.14)",
+        "canonical": "#e8f1fd",
+        "oklch": "oklch(95.5% 0.019 255.5)",
+        "tonalRamp": [
+          "#090b0e",
+          "#22252a",
+          "#3d4249",
+          "#5b626b",
+          "#7b838e",
+          "#9fa6af",
+          "#c4cad2",
+          "#eaeff5"
+        ]
+      },
+      "due-amber": {
+        "role": "tertiary",
+        "displayName": "Due Amber",
+        "cssVar": "--color-warning",
+        "darkValue": "#ffb547",
+        "canonical": "#b76e00",
+        "oklch": "oklch(60.5% 0.135 65.7)",
+        "tonalRamp": [
+          "#190500",
+          "#3c1b00",
+          "#633500",
+          "#8c5100",
+          "#b76f07",
+          "#d59653",
+          "#f3bd88",
+          "#ffe6bc"
+        ]
+      },
+      "due-amber-subtle": {
+        "role": "tertiary",
+        "displayName": "Due Amber Tint",
+        "cssVar": "--color-warning-subtle",
+        "darkValue": "rgba(255, 181, 71, 0.14)",
+        "canonical": "#fff4e0",
+        "oklch": "oklch(97.0% 0.029 82.6)",
+        "tonalRamp": [
+          "#0e0b06",
+          "#29241c",
+          "#474136",
+          "#686052",
+          "#8b816f",
+          "#ada494",
+          "#cfc8bb",
+          "#f4eee3"
+        ]
+      },
+      "emi-violet": {
+        "role": "tertiary",
+        "displayName": "EMI Violet",
+        "cssVar": "--color-emi",
+        "darkValue": "#b18cff",
+        "canonical": "#7c4fe0",
+        "oklch": "oklch(55.7% 0.209 292.6)",
+        "tonalRamp": [
+          "#0f002a",
+          "#2a1257",
+          "#482a87",
+          "#6844bc",
+          "#8a60f1",
+          "#aa8cff",
+          "#ccb7ff",
+          "#f0e1ff"
+        ]
+      },
+      "emi-violet-subtle": {
+        "role": "tertiary",
+        "displayName": "EMI Violet Tint",
+        "cssVar": "--color-emi-subtle",
+        "darkValue": "rgba(177, 140, 255, 0.14)",
+        "canonical": "#f1ebfd",
+        "oklch": "oklch(95.0% 0.025 301.1)",
+        "tonalRamp": [
+          "#0c0a0f",
+          "#26242b",
+          "#43404a",
+          "#635f6c",
+          "#857f8f",
+          "#a7a2b0",
+          "#cbc7d3",
+          "#f0edf6"
+        ]
+      },
+      "cat-1": {
+        "role": "tertiary",
+        "displayName": "Category 1, Periwinkle",
+        "cssVar": "--cat-1",
+        "darkValue": "#7c87ff",
+        "note": "Same value in both themes; assigned by rank in charts.",
+        "canonical": "#7c87ff",
+        "oklch": "oklch(67.1% 0.175 276.6)",
+        "tonalRamp": [
+          "#060528",
+          "#1b1c53",
+          "#333782",
+          "#4e54b4",
+          "#6a73e8",
+          "#8e9bff",
+          "#b5c2ff",
+          "#deeaff"
+        ]
+      },
+      "cat-2": {
+        "role": "tertiary",
+        "displayName": "Category 2, Mint",
+        "cssVar": "--cat-2",
+        "darkValue": "#2bd4a4",
+        "note": "Same value in both themes; assigned by rank in charts.",
+        "canonical": "#2bd4a4",
+        "oklch": "oklch(77.7% 0.149 168.0)",
+        "tonalRamp": [
+          "#001206",
+          "#00311d",
+          "#005337",
+          "#007753",
+          "#009d71",
+          "#41be96",
+          "#82dfbc",
+          "#baffe4"
+        ]
+      },
+      "cat-3": {
+        "role": "tertiary",
+        "displayName": "Category 3, Amber",
+        "cssVar": "--cat-3",
+        "darkValue": "#ffb547",
+        "note": "Same value in both themes; assigned by rank in charts.",
+        "canonical": "#ffb547",
+        "oklch": "oklch(82.4% 0.149 73.3)",
+        "tonalRamp": [
+          "#190500",
+          "#3c1c00",
+          "#623600",
+          "#8b5300",
+          "#b67100",
+          "#d49841",
+          "#f2bf7d",
+          "#ffe7b4"
+        ]
+      },
+      "cat-4": {
+        "role": "tertiary",
+        "displayName": "Category 4, Coral",
+        "cssVar": "--cat-4",
+        "darkValue": "#ff6b81",
+        "note": "Same value in both themes; assigned by rank in charts.",
+        "canonical": "#ff6b81",
+        "oklch": "oklch(71.6% 0.181 13.8)",
+        "tonalRamp": [
+          "#210003",
+          "#4a0416",
+          "#76192d",
+          "#a62f46",
+          "#d74861",
+          "#f47988",
+          "#ffa7b1",
+          "#ffd4db"
+        ]
+      },
+      "cat-5": {
+        "role": "tertiary",
+        "displayName": "Category 5, Sky",
+        "cssVar": "--cat-5",
+        "darkValue": "#5ab8ff",
+        "note": "Same value in both themes; assigned by rank in charts.",
+        "canonical": "#5ab8ff",
+        "oklch": "oklch(75.5% 0.136 243.9)",
+        "tonalRamp": [
+          "#000c20",
+          "#002746",
+          "#004671",
+          "#0d669e",
+          "#2689cc",
+          "#61ade7",
+          "#94d0ff",
+          "#c6f5ff"
+        ]
+      },
+      "cat-6": {
+        "role": "tertiary",
+        "displayName": "Category 6, Lilac",
+        "cssVar": "--cat-6",
+        "darkValue": "#b18cff",
+        "note": "Same value in both themes; assigned by rank in charts.",
+        "canonical": "#b18cff",
+        "oklch": "oklch(72.2% 0.165 296.9)",
+        "tonalRamp": [
+          "#0f0323",
+          "#2b184b",
+          "#4a3077",
+          "#6b4ba6",
+          "#8e69d7",
+          "#ae91f1",
+          "#d1baff",
+          "#f4e3ff"
+        ]
+      },
+      "cat-7": {
+        "role": "tertiary",
+        "displayName": "Category 7, Teal",
+        "cssVar": "--cat-7",
+        "darkValue": "#3dd6d0",
+        "note": "Same value in both themes; assigned by rank in charts.",
+        "canonical": "#3dd6d0",
+        "oklch": "oklch(79.8% 0.124 191.0)",
+        "tonalRamp": [
+          "#001110",
+          "#002f2d",
+          "#00504d",
+          "#007370",
+          "#009994",
+          "#44bab5",
+          "#84dbd6",
+          "#bbfdf9"
+        ]
+      },
+      "cat-8": {
+        "role": "tertiary",
+        "displayName": "Category 8, Apricot",
+        "cssVar": "--cat-8",
+        "darkValue": "#ff9f6b",
+        "note": "Same value in both themes; assigned by rank in charts.",
+        "canonical": "#ff9f6b",
+        "oklch": "oklch(79.0% 0.133 48.5)",
+        "tonalRamp": [
+          "#1c0300",
+          "#401700",
+          "#68300b",
+          "#944a1d",
+          "#c06733",
+          "#de8f65",
+          "#fbb895",
+          "#ffe1c5"
+        ]
+      },
+      "cat-9": {
+        "role": "tertiary",
+        "displayName": "Category 9, Orchid",
+        "cssVar": "--cat-9",
+        "darkValue": "#e879c6",
+        "note": "Same value in both themes; assigned by rank in charts.",
+        "canonical": "#e879c6",
+        "oklch": "oklch(72.5% 0.164 340.1)",
+        "tonalRamp": [
+          "#1b0013",
+          "#400d32",
+          "#682355",
+          "#933b7a",
+          "#bf55a0",
+          "#dd81c0",
+          "#fbace0",
+          "#ffd8ff"
+        ]
+      },
+      "cat-10": {
+        "role": "tertiary",
+        "displayName": "Category 10, Lime",
+        "cssVar": "--cat-10",
+        "darkValue": "#c7d65a",
+        "note": "Same value in both themes; assigned by rank in charts.",
+        "canonical": "#c7d65a",
+        "oklch": "oklch(84.0% 0.149 115.5)",
+        "tonalRamp": [
+          "#0b0d00",
+          "#242900",
+          "#414800",
+          "#5f6900",
+          "#808c00",
+          "#a2ae4b",
+          "#c6d283",
+          "#ecf6b9"
+        ]
+      },
+      "cat-11": {
+        "role": "tertiary",
+        "displayName": "Category 11, Slate (Other)",
+        "cssVar": "--cat-11",
+        "darkValue": "#8b90a0",
+        "note": "Same value in both themes; assigned by rank in charts.",
+        "canonical": "#8b90a0",
+        "oklch": "oklch(65.5% 0.024 271.9)",
+        "tonalRamp": [
+          "#0a0b0f",
+          "#23252c",
+          "#3f424b",
+          "#5d616e",
+          "#7d8291",
+          "#a0a5b2",
+          "#c5c9d4",
+          "#ebeef8"
+        ]
+      },
+      "cat-12": {
+        "role": "tertiary",
+        "displayName": "Category 12, Leaf",
+        "cssVar": "--cat-12",
+        "darkValue": "#6fe38f",
+        "note": "Same value in both themes; assigned by rank in charts.",
+        "canonical": "#6fe38f",
+        "oklch": "oklch(82.7% 0.159 150.6)",
+        "tonalRamp": [
+          "#001200",
+          "#00300b",
+          "#00511f",
+          "#007635",
+          "#199b4d",
+          "#5fbc78",
+          "#94dea4",
+          "#c6ffd1"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Landing hero headline only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "App page titles (.page-title)."
+      },
+      "headline-section": {
+        "displayName": "Headline Section",
+        "purpose": "Landing section heads."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "KPI values and headline money figures; always tabular."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Rows, descriptions, form values."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Card labels, deltas, form labels."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Badges, chips, keyboard hints."
+      },
+      "axis": {
+        "displayName": "Axis",
+        "purpose": "Chart axis ticks; last point at 600 weight in primary text."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Loaded as --font-geist-mono for code-like strings only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-sm",
+        "value": "0 1px 2px 0 rgba(16, 18, 27, 0.05)",
+        "darkValue": "0 1px 2px 0 rgba(0, 0, 0, 0.4)",
+        "purpose": "Rest: cards, primary button, active segment, active nav row."
+      },
+      {
+        "name": "shadow-md",
+        "value": "0 8px 24px -12px rgba(16, 18, 27, 0.16), 0 2px 6px -2px rgba(16, 18, 27, 0.06)",
+        "darkValue": "0 8px 24px -10px rgba(0, 0, 0, 0.6), 0 2px 6px -2px rgba(0, 0, 0, 0.4)",
+        "purpose": "Lift: hovered interactive cards and primary button."
+      },
+      {
+        "name": "shadow-lg",
+        "value": "0 18px 40px -18px rgba(16, 18, 27, 0.22), 0 4px 10px -4px rgba(16, 18, 27, 0.06)",
+        "darkValue": "0 18px 40px -16px rgba(0, 0, 0, 0.7), 0 4px 10px -4px rgba(0, 0, 0, 0.5)",
+        "purpose": "Float: dropdowns, demo banner, mobile add button."
+      },
+      {
+        "name": "shadow-xl",
+        "value": "0 28px 56px -24px rgba(16, 18, 27, 0.28)",
+        "darkValue": "0 28px 56px -20px rgba(0, 0, 0, 0.75)",
+        "purpose": "Showcase: landing product preview."
+      },
+      {
+        "name": "shadow-modal",
+        "value": "0 32px 80px -24px rgba(16, 18, 27, 0.35)",
+        "darkValue": "0 32px 80px -24px rgba(0, 0, 0, 0.85)",
+        "purpose": "Dialogs over the blurred scrim."
+      },
+      {
+        "name": "nav-active",
+        "value": "inset 0 0 0 1px var(--border-default), var(--shadow-sm)",
+        "purpose": "Current-page nav row."
+      },
+      {
+        "name": "focus-ring-input",
+        "value": "0 0 0 3px var(--brand-light)",
+        "purpose": "Input focus wash ring, paired with a periwinkle border."
+      },
+      {
+        "name": "focus-outline",
+        "value": "outline: 2px solid var(--border-focus); outline-offset: 2px",
+        "purpose": "Keyboard focus on every control."
+      },
+      {
+        "name": "brand-mark",
+        "value": "inset 0 0 0 1px rgba(255, 255, 255, 0.18), var(--shadow-sm)",
+        "purpose": "Inner highlight on the brand mark tile."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "House curve for transitions and entrances."
+      },
+      {
+        "name": "transition-fast",
+        "value": "150ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Colour, border, small transform state changes."
+      },
+      {
+        "name": "transition-normal",
+        "value": "250ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Card lift and theme switch."
+      },
+      {
+        "name": "chart-draw",
+        "value": "stroke-dashoffset 1 to 0, 900ms ease-out-expo, 120ms delay, once",
+        "purpose": "The one authored motion moment: chart lines draw in."
+      },
+      {
+        "name": "chart-fade",
+        "value": "opacity 0 to 1, 700ms ease-out, 300ms delay",
+        "purpose": "Chart area fills, end dots, donut slices."
+      },
+      {
+        "name": "modal-enter",
+        "value": "slideUp 260ms ease-out-expo (translateY 12px, scale 0.98)",
+        "purpose": "Dialog entrance; scrim fades 180ms."
+      },
+      {
+        "name": "popover-enter",
+        "value": "popIn 160ms ease-out-expo (translateY -4px, scale 0.98)",
+        "purpose": "Combobox dropdowns."
+      },
+      {
+        "name": "progress-fill",
+        "value": "width 600ms ease-out-expo",
+        "purpose": "Budget and goal bars."
+      },
+      {
+        "name": "card-lift",
+        "value": "translateY(-2px) with shadow-md",
+        "purpose": "Interactive card hover; primary button rises 1px."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "all animation and transition durations 1ms",
+        "purpose": "prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "560px"
+      },
+      {
+        "name": "mobile-polish",
+        "value": "640px"
+      },
+      {
+        "name": "mobile-shell",
+        "value": "768px",
+        "note": "Sidebar becomes bottom tab bar"
+      },
+      {
+        "name": "landing-pillars",
+        "value": "900px"
+      },
+      {
+        "name": "landing-hero",
+        "value": "1024px"
+      },
+      {
+        "name": "dash-2col",
+        "value": "1100px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Inverted-ink fill for the single primary action in a view.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg>Add transaction</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:.5rem;background:var(--btn-primary-bg);color:var(--btn-primary-fg);padding:.6rem 1.1rem;border:none;border-radius:var(--radius-md);font-family:var(--font-sans);font-weight:600;font-size:.875rem;box-shadow:var(--shadow-sm);cursor:pointer;transition:background-color var(--transition-fast),box-shadow var(--transition-fast),transform var(--transition-fast)}.ds-btn-primary:hover{background:var(--btn-primary-hover);box-shadow:var(--shadow-md);transform:translateY(-1px)}.ds-btn-primary:active{transform:translateY(0)}.ds-btn-primary:focus-visible{outline:2px solid var(--border-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Surface fill on a hairline for every non-primary action, including the sidebar's Record Transaction.",
+      "html": "<button class=\"ds-btn-secondary\">Import statement</button>",
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;gap:.5rem;background:var(--bg-surface);color:var(--text-primary);border:1px solid var(--border-default);padding:.6rem 1.1rem;border-radius:var(--radius-md);font-family:var(--font-sans);font-weight:550;font-size:.875rem;cursor:pointer;transition:background-color var(--transition-fast),border-color var(--transition-fast)}.ds-btn-secondary:hover{background:var(--bg-hover);border-color:var(--border-strong)}.ds-btn-secondary:focus-visible{outline:2px solid var(--border-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Fill-less tertiary action, used in the sidebar footer and nav bars.",
+      "html": "<button class=\"ds-btn-ghost\">Try the demo</button>",
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;gap:.5rem;background:none;border:none;color:var(--text-secondary);padding:.5rem .75rem;border-radius:var(--radius-md);font-family:var(--font-sans);font-size:.875rem;cursor:pointer;transition:background-color var(--transition-fast),color var(--transition-fast)}.ds-btn-ghost:hover{background:var(--bg-hover);color:var(--text-primary)}.ds-btn-ghost:focus-visible{outline:2px solid var(--border-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "custom",
+      "refersTo": "segmented",
+      "description": "Sunken track with a raised pressed segment; switches Net worth and Cash flow.",
+      "html": "<div class=\"ds-seg\" role=\"group\"><button aria-pressed=\"true\">Net worth</button><button aria-pressed=\"false\">Cash flow</button></div>",
+      "css": ".ds-seg{display:inline-flex;gap:2px;padding:3px;border-radius:var(--radius-md);background:var(--bg-subtle);border:1px solid var(--border-subtle);font-family:var(--font-sans)}.ds-seg button{border:none;background:none;padding:.35rem .8rem;border-radius:calc(var(--radius-md) - 3px);font:inherit;font-size:.8125rem;font-weight:500;color:var(--text-muted);cursor:pointer;transition:background-color var(--transition-fast),color var(--transition-fast)}.ds-seg button:hover{color:var(--text-primary)}.ds-seg button[aria-pressed='true']{background:var(--bg-surface-elevated);color:var(--text-primary);box-shadow:var(--shadow-sm)}.ds-seg button:focus-visible{outline:2px solid var(--border-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Subtle-fill well that lifts to surface with a periwinkle border and wash ring on focus.",
+      "html": "<input class=\"ds-input\" placeholder=\"Search payee or note\" />",
+      "css": ".ds-input{width:100%;padding:.625rem .875rem;border-radius:var(--radius-md);border:1px solid var(--border-default);background:var(--bg-subtle);color:var(--text-primary);font-family:var(--font-sans);font-size:.875rem;outline:none;caret-color:var(--brand-primary);transition:background-color var(--transition-fast),border-color var(--transition-fast),box-shadow var(--transition-fast)}.ds-input::placeholder{color:var(--text-muted)}.ds-input:hover{border-color:var(--border-strong)}.ds-input:focus{background:var(--bg-surface);border-color:var(--brand-primary);box-shadow:0 0 0 3px var(--brand-light)}"
+    },
+    {
+      "name": "Tag Chip and Money Badges",
+      "kind": "chip",
+      "refersTo": "tag-chip",
+      "description": "Hairline tag pill plus borderless badges tinted by money meaning.",
+      "html": "<div class=\"ds-chips\"><span class=\"ds-chip\">groceries<button class=\"ds-chip-x\" aria-label=\"Remove\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\"><path d=\"M18 6 6 18M6 6l12 12\"/></svg></button></span><span class=\"ds-badge ds-in\">income</span><span class=\"ds-badge ds-out\">expense</span><span class=\"ds-badge ds-tr\">transfer</span></div>",
+      "css": ".ds-chips{display:flex;gap:.5rem;align-items:center;font-family:var(--font-sans)}.ds-chip{display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .6rem;border-radius:var(--radius-full);font-size:.75rem;font-weight:500;background:var(--bg-subtle);border:1px solid var(--border-default);color:var(--text-primary)}.ds-chip-x{display:flex;border:none;background:none;padding:1px;border-radius:50%;color:var(--text-muted);cursor:pointer}.ds-chip-x:hover{color:var(--color-expense);background:var(--color-expense-subtle)}.ds-badge{display:inline-flex;padding:.2rem .6rem;border-radius:var(--radius-full);font-size:.75rem;font-weight:550;text-transform:capitalize}.ds-in{background:var(--color-income-subtle);color:var(--color-income)}.ds-out{background:var(--color-expense-subtle);color:var(--color-expense)}.ds-tr{background:var(--color-transfer-subtle);color:var(--color-transfer)}"
+    },
+    {
+      "name": "KPI Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Gradient-lit hairline card with label, tabular figure, delta and a draw-in sparkline.",
+      "html": "<a class=\"ds-card\" href=\"#\"><span class=\"ds-label\">Income · October</span><span class=\"ds-fig\">₹1,20,000</span><span class=\"ds-delta\"><b>↑ 8%</b> vs last month</span><svg class=\"ds-spark\" viewBox=\"0 0 240 36\" preserveAspectRatio=\"none\"><defs><linearGradient id=\"dsg\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"var(--color-income)\" stop-opacity=\".28\"/><stop offset=\"1\" stop-color=\"var(--color-income)\" stop-opacity=\"0\"/></linearGradient></defs><path d=\"M0 28 C40 26 60 18 100 20 S160 8 200 10 S230 6 240 4 L240 36 L0 36 Z\" fill=\"url(#dsg)\"/><path d=\"M0 28 C40 26 60 18 100 20 S160 8 200 10 S230 6 240 4\" fill=\"none\" stroke=\"var(--color-income)\" stroke-width=\"2\" stroke-linecap=\"round\" pathLength=\"1\" class=\"ds-draw\"/></svg></a>",
+      "css": ".ds-card{display:flex;flex-direction:column;gap:.25rem;max-width:280px;text-decoration:none;color:var(--text-primary);background:var(--surface-gradient);border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:1.25rem;box-shadow:var(--shadow-sm);font-family:var(--font-sans);transition:transform var(--transition-normal),box-shadow var(--transition-normal),border-color var(--transition-fast)}.ds-card:hover{border-color:var(--border-strong);transform:translateY(-2px);box-shadow:var(--shadow-md)}.ds-card:focus-visible{outline:2px solid var(--border-focus);outline-offset:2px}.ds-label{font-size:.8125rem;font-weight:500;color:var(--text-muted)}.ds-fig{font-size:1.5rem;font-weight:650;letter-spacing:-.025em;line-height:1.2;margin-top:.25rem;font-variant-numeric:tabular-nums}.ds-delta{font-size:.8125rem;color:var(--text-muted);font-variant-numeric:tabular-nums}.ds-delta b{color:var(--color-income);font-weight:600}.ds-spark{width:100%;height:36px;margin-top:.5rem;overflow:visible}.ds-draw{stroke-dasharray:1;stroke-dashoffset:1;animation:dsDraw 900ms var(--ease-out-expo) 120ms forwards}@keyframes dsDraw{to{stroke-dashoffset:0}}@media (prefers-reduced-motion:reduce){.ds-draw{animation-duration:1ms;animation-delay:0ms}.ds-card{transition-duration:1ms}}"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "nav-link-active",
+      "description": "Brand lockup with the periwinkle-to-mint mark, and nav rows whose current page is a raised surface with a periwinkle icon.",
+      "html": "<nav class=\"ds-nav\"><div class=\"ds-brand\"><span class=\"ds-mark\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\"><path d=\"M4 7h16M4 12h16M4 17h10\"/></svg></span><span class=\"ds-name\">Bagstack</span></div><a class=\"ds-link\" aria-current=\"page\" href=\"#\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"9\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"5\" rx=\"1\"/><rect x=\"14\" y=\"12\" width=\"7\" height=\"9\" rx=\"1\"/><rect x=\"3\" y=\"16\" width=\"7\" height=\"5\" rx=\"1\"/></svg>Dashboard</a><a class=\"ds-link\" href=\"#\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M7 4v16M17 4v16M3 8h18M3 16h18\"/></svg>Transactions</a><a class=\"ds-link\" href=\"#\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"6\" width=\"18\" height=\"13\" rx=\"2\"/><path d=\"M3 10h18\"/></svg>Accounts</a></nav>",
+      "css": ".ds-nav{display:flex;flex-direction:column;gap:2px;width:240px;padding:1.25rem .875rem;background:var(--bg-app);border-right:1px solid var(--border-default);font-family:var(--font-sans)}.ds-brand{display:flex;align-items:center;gap:.6rem;padding:0 .5rem;margin-bottom:1.25rem}.ds-mark{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:#0b0c10;background:linear-gradient(135deg,var(--brand-primary) 0%,var(--brand-mint) 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),var(--shadow-sm)}.ds-name{font-weight:650;font-size:1.0625rem;letter-spacing:-.025em;color:var(--text-primary)}.ds-link{display:flex;align-items:center;gap:.7rem;padding:.55rem .65rem;border-radius:var(--radius-md);font-size:.875rem;font-weight:500;color:var(--text-secondary);text-decoration:none;transition:background-color var(--transition-fast),color var(--transition-fast)}.ds-link:hover{background:var(--bg-hover);color:var(--text-primary)}.ds-link:focus-visible{outline:2px solid var(--border-focus);outline-offset:2px}.ds-link[aria-current='page']{background:var(--bg-surface-elevated);color:var(--text-primary);font-weight:600;box-shadow:inset 0 0 0 1px var(--border-default),var(--shadow-sm)}.ds-link[aria-current='page'] svg{color:var(--brand-primary)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Category Standard, Crafted",
+    "overview": "Bagstack looks like a modern personal-finance app, deliberately: the category's own grammar (sidebar, KPI row, net-worth trend, spending donut, recent activity) executed at the polish of Copilot Money. The ground is graphite (`#0b0c10` in dark) with a cool-paper light twin (`{colors.cool-paper}`); both themes are first-class and every surface reads from theme variables. Depth comes from hairline borders, gradient-lit neutral cards and soft offset shadows, never from colour glows.\n\nColour is semantic before it is decorative. Ink carries the primary action, periwinkle carries data, selection and focus, and a fixed set of money colours tells you what a number means before you read it: mint in, coral out, sky for transfers, amber for what is due, violet for EMIs. Figures are set in Geist with tabular numerals so columns and KPI values hold still. Density is moderate: a 4-up KPI grid, 16px gaps, 20px card padding.\n\nMotion is spent once. Charts draw their line in on load; cards lift 2px when they are links; everything else is a 150 to 250ms state transition on an expo-out curve, and all of it collapses under `prefers-reduced-motion`. The two rejected looks are confirmed by the user: never a generic indigo SaaS template, never a crypto or trading terminal.",
+    "keyCharacteristics": [
+      "Graphite ground, cool-paper light twin, full light/dark parity through CSS variables.",
+      "Inverted-ink primary action, one per view.",
+      "Periwinkle reserved for data, selection and focus.",
+      "Fixed semantic money colours; a 12-step category palette assigned by rank.",
+      "Geist only, tabular figures everywhere money appears.",
+      "Hairlines, gradient-lit cards, soft offset shadows, no glows.",
+      "One authored motion moment: charts draw in once."
+    ],
+    "rules": [
+      {
+        "name": "The Ink Primary Rule",
+        "body": "The primary action is an inverted-ink fill, never a periwinkle or indigo fill, and there is exactly one per view. Persistent chrome actions (the sidebar's \"Record Transaction\", Import) are secondary.",
+        "section": "colors"
+      },
+      {
+        "name": "The Periwinkle Reserve Rule",
+        "body": "Periwinkle marks data, selection and focus. It is never a button fill and never display or heading text.",
+        "section": "colors"
+      },
+      {
+        "name": "The Money Means Rule",
+        "body": "Mint is money in, coral is money out (card debt included), sky is a transfer, amber is due or caution, violet is an EMI. Never use these hues decoratively, and never swap them.",
+        "section": "colors"
+      },
+      {
+        "name": "The Rank Rule",
+        "body": "Chart categories take `--cat-N` by rank (largest slice is `cat-1`), with \"Other\" on `cat-11`. Colour encodes order, not identity.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Money Rule",
+        "body": "Every money figure, percentage, axis tick and subtotal uses tabular numerals (`.tabular`, `.kpi-value`, `.kpi-delta`).",
+        "section": "typography"
+      },
+      {
+        "name": "The One Face Rule",
+        "body": "Geist throughout. No second display face, no serif, no system-font display.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Glow Rule",
+        "body": "Shadows are soft, offset and neutral. No coloured glows, no hard offset shadows.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Lift-on-Link Rule",
+        "body": "Only cards that navigate or act (`card-interactive`) lift, by 2px with the Lift shadow. Static cards only darken their hairline on hover.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** read every colour, shadow and radius from the theme variables in `src/styles/tokens.css` so light and dark stay in parity.",
+      "**Do** make the one primary action per view an inverted-ink button (`.btn-primary`); make everything else secondary or ghost.",
+      "**Do** keep periwinkle for data series, the current selection and focus.",
+      "**Do** colour money by meaning: mint in, coral out (including card debt), sky transfer, amber due, violet EMI.",
+      "**Do** assign chart categories from `--cat-1` to `--cat-12` by rank, with \"Other\" on `--cat-11`.",
+      "**Do** set every figure in tabular numerals and snap chart axes to round steps.",
+      "**Do** use 1px hairlines, 16px card radius, 10px control radius and the soft offset shadow scale.",
+      "**Do** lift only interactive cards, by 2px, and let charts draw in exactly once.",
+      "**Do** honour `prefers-reduced-motion`."
+    ],
+    "donts": [
+      "**Don't** ship a generic indigo SaaS template: no indigo or periwinkle button fills, no slate-plus-indigo dashboard.",
+      "**Don't** drift toward a crypto or trading terminal: no neon, no coloured glows, no ticker density.",
+      "**Don't** use periwinkle for headings, display text or button fills.",
+      "**Don't** add a second display face or set display type in a system font.",
+      "**Don't** add gradients beyond the brand mark, the neutral card surface and chart area fills.",
+      "**Don't** hardcode hex colours in new UI; the persisted user palettes in CategoryModal, PayeeTagManagerModal, BankAndCreditAccountModal and TransactionModal store hex by design and are the only sanctioned exception.",
+      "**Don't** add new inline-style surfaces; many routes still carry inline styles as debt, and new work should use the shared classes in `src/styles/globals.css`.",
+      "**Don't** mirror the category palette in hex; `/reports` still carries a `DONUT_PALETTE` hex copy as debt, and it should read `--cat-N`.",
+      "**Don't** add uppercase tracked micro-labels or kickers above titles; label with sentence-case card labels."
+    ]
+  }
+}

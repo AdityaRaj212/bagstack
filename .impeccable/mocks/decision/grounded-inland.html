@@ -1,0 +1,63 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1440px;height:900px;overflow:hidden;font-family:'Schibsted Grotesk',sans-serif;background:#EAF1FB;color:#0E1B33}
+header{display:flex;align-items:center;gap:28px;padding:14px 32px;background:#fff;border-bottom:1px solid #D6E2F3}
+.logo{display:flex;gap:10px;align-items:center;font-weight:800;font-size:18px}
+.logo i{width:30px;height:30px;border-radius:8px;background:#2F5FA8;display:block;box-shadow:inset 0 0 0 3px #fff,0 0 0 2px #2F5FA8}
+nav{display:flex;gap:4px;font-size:14px}
+nav a{padding:8px 12px;border-radius:9px;color:#4A5B78}
+nav a.on{background:#2F5FA8;color:#fff;font-weight:600}
+.srch{margin-left:auto;background:#F2F6FC;border:1px solid #D6E2F3;border-radius:10px;padding:9px 14px;width:300px;color:#7C8BA5;font-size:14px}
+.btn{background:#D8342C;color:#fff;padding:9px 16px;border-radius:10px;font-weight:600;font-size:14px}
+main{padding:24px 32px;display:grid;grid-template-columns:2fr 1fr;gap:20px}
+.c{background:#fff;border-radius:18px;border:1px solid #D6E2F3;box-shadow:0 10px 30px -18px rgba(14,27,51,.25);padding:20px;position:relative}
+.perf:before{content:"";position:absolute;left:18px;right:18px;top:-1px;height:4px;background:repeating-linear-gradient(90deg,#2F5FA8 0 14px,transparent 14px 20px,#D8342C 20px 34px,transparent 34px 40px);border-radius:2px}
+.lab{font-size:12px;font-weight:600;color:#5A6B88;letter-spacing:.06em;text-transform:uppercase}
+.row{display:flex;gap:40px;margin-top:8px}
+.big{font-size:38px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.sm{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.g{color:#1E9E6A}.r{color:#D8342C}
+svg.ch{width:100%;height:210px;margin-top:14px}
+.right{display:flex;flex-direction:column;gap:20px}
+.due{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px dashed #D6E2F3;font-size:14px}
+.due em{display:block;font-style:normal;font-size:12px;color:#7C8BA5}
+.due b{font-variant-numeric:tabular-nums}
+.tag{font-size:11px;font-weight:700;color:#fff;background:#D8342C;padding:3px 8px;border-radius:99px}
+.imp{grid-column:1/-1}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+th{text-align:left;font-size:12px;color:#5A6B88;font-weight:600;padding:8px 10px;border-bottom:1px solid #D6E2F3}
+td{padding:10px;border-bottom:1px solid #EEF3FA;font-variant-numeric:tabular-nums}
+.am{text-align:right;font-weight:600}
+.frank{display:inline-grid;place-items:center;width:58px;height:30px;border:2px solid #2F5FA8;border-radius:50%;color:#2F5FA8;font-size:9px;font-weight:800;letter-spacing:.06em;transform:rotate(-8deg)}
+.hold{display:inline-block;border:2px dashed #D8342C;color:#D8342C;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px}
+</style></head><body>
+<header><div class="logo"><i></i>Bagstack</div>
+ <nav><a class="on">Dashboard</a><a>Transactions</a><a>Accounts</a><a>Budgets</a><a>Subscriptions</a><a>Goals</a><a>Reports</a></nav>
+ <span class="srch">Search or ask “food spend last month”</span><span class="btn">Import statement</span></header>
+<main>
+ <section class="c perf"><div class="lab">Cash flow · last 6 months</div>
+  <div class="row"><div><div class="big">₹18,42,310</div><span class="g">+₹46,200</span> net worth this month</div><div><div class="lab">In · Oct</div><div class="sm g">₹1,24,550</div></div><div><div class="lab">Out · Oct</div><div class="sm r">₹61,875</div></div></div>
+  <svg class="ch" viewBox="0 0 800 210"><defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F5FA8" stop-opacity=".35"/><stop offset="1" stop-color="#2F5FA8" stop-opacity="0"/></linearGradient></defs>
+   <g stroke="#E3EBF6"><line x1="0" y1="40" x2="800" y2="40"/><line x1="0" y1="100" x2="800" y2="100"/><line x1="0" y1="160" x2="800" y2="160"/></g>
+   <path d="M0 150 C90 140 130 120 200 124 S330 96 400 100 S530 70 600 64 S730 40 800 30 L800 190 L0 190Z" fill="url(#b)"/>
+   <path d="M0 150 C90 140 130 120 200 124 S330 96 400 100 S530 70 600 64 S730 40 800 30" fill="none" stroke="#2F5FA8" stroke-width="3"/>
+   <path d="M0 170 C100 165 160 160 220 158 S360 150 420 146 S560 150 620 138 S740 128 800 132" fill="none" stroke="#D8342C" stroke-width="2.5" stroke-dasharray="6 5"/>
+   <circle cx="800" cy="30" r="6" fill="#2F5FA8" stroke="#fff" stroke-width="3"/></svg></section>
+ <div class="right">
+  <section class="c"><div class="lab">Needs you</div>
+   <div class="due"><div>Home loan EMI<em>1 Nov · HDFC Savings</em></div><div style="text-align:right"><b>₹28,450</b><br><span class="tag">TOMORROW</span></div></div>
+   <div class="due"><div>Shopping budget<em>₹9,860 of ₹9,000</em></div><span class="tag">OVER</span></div>
+   <div class="due"><div>ICICI card bill<em>12 Nov · SBI Salary</em></div><b>₹23,118.40</b></div></section>
+  <section class="c"><div class="lab">Savings rate</div><div class="big" style="color:#2F5FA8">50.3%</div><div style="font-size:13px;color:#5A6B88">Target 40% · best month this year</div></section>
+ </div>
+ <section class="c imp"><div style="display:flex;justify-content:space-between"><div class="lab">Statement import · HDFC October.pdf</div><span style="font-size:13px;color:#5A6B88">41 rows · 38 verified · 3 held · balance reconciles</span></div>
+  <table><thead><tr><th>Date</th><th>Narration</th><th>Category</th><th style="text-align:right">Amount</th><th>Check</th></tr></thead><tbody>
+   <tr><td>30 Oct</td><td>ACH D- JIO FIBER</td><td>Bills</td><td class="am r">−₹999.00</td><td><span class="frank">VERIFIED</span></td></tr>
+   <tr><td>29 Oct</td><td>UPI-SWIGGY-8812</td><td>Food</td><td class="am r">−₹640.00</td><td><span class="frank">VERIFIED</span></td></tr>
+   <tr><td>27 Oct</td><td>NEFT CR MYNTRA REFUND</td><td>Shopping</td><td class="am g">+₹1,299.00</td><td><span class="hold">HELD · duplicate?</span></td></tr>
+  </tbody></table></section>
+</main>
+</body></html>

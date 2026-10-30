@@ -205,9 +205,9 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
           maxHeight: '85vh',
           display: 'flex',
           flexDirection: 'column',
-          backgroundColor: 'var(--card-bg)',
+          backgroundColor: 'var(--bg-surface-elevated)',
           borderRadius: 'var(--radius-lg)',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+          boxShadow: 'var(--shadow-lg)',
           overflow: 'hidden',
           padding: '1.25rem',
         }}
@@ -221,7 +221,7 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
                 width: '32px',
                 height: '32px',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(79, 70, 229, 0.12)',
+                backgroundColor: 'var(--brand-light)',
                 color: 'var(--brand-primary)',
                 display: 'flex',
                 alignItems: 'center',
@@ -368,7 +368,7 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
                           width: '10px',
                           height: '10px',
                           borderRadius: '50%',
-                          backgroundColor: parent.color || '#6B7280',
+                          backgroundColor: parent.color || 'var(--cat-11)',
                         }}
                       />
                       <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
@@ -379,8 +379,8 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
                           fontSize: '0.6875rem',
                           padding: '1px 6px',
                           borderRadius: 'var(--radius-sm)',
-                          backgroundColor: parent.type === 'income' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                          color: parent.type === 'income' ? '#10B981' : '#EF4444',
+                          backgroundColor: parent.type === 'income' ? 'var(--color-income-subtle)' : 'var(--color-expense-subtle)',
+                          color: parent.type === 'income' ? '#10B981' : 'var(--color-expense)',
                           fontWeight: 500,
                         }}
                       >
@@ -429,7 +429,7 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
                             color: 'var(--text-secondary)',
                           }}
                         >
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: sub.color || parent.color || '#6B7280' }} />
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: sub.color || parent.color || 'var(--cat-11)' }} />
                           {sub.name}
                           {!sub.id.startsWith('cat-') && (
                             <button
@@ -545,7 +545,7 @@ export const PayeeTagManagerModal: React.FC<PayeeTagManagerModalProps> = ({
                           alignItems: 'center',
                           gap: '0.5rem',
                           padding: '0.55rem 0.75rem',
-                          backgroundColor: 'rgba(79, 70, 229, 0.08)',
+                          backgroundColor: 'var(--brand-light)',
                           borderRadius: 'var(--radius-md)',
                           border: '1px solid var(--brand-primary)',
                         }}

@@ -1,0 +1,42 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1440px;height:900px;overflow:hidden;font-family:'Noto Sans',sans-serif;font-size:12px;line-height:1.4;background:#fff;color:#1A1A1A}
+.top{display:flex;align-items:center;gap:16px;padding:8px 16px;border-bottom:1px solid #1A1A1A}
+.top b{font-size:16px}
+.top nav{display:flex;gap:2px}
+.top nav a{padding:5px 10px;border:1px solid #ccc;background:#F4F4F4}
+.top nav a.on{background:#1A1A1A;color:#fff;border-color:#1A1A1A}
+.top .s{margin-left:auto;border:1px solid #999;padding:5px 10px;width:260px;color:#888}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:8px}
+.m{border:1px solid #CFCFCF}
+.m h3{display:inline-block;background:#D7261E;color:#fff;font-size:11px;padding:2px 8px;font-weight:700}
+.m .c{padding:6px 8px}
+.big{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.w2{grid-column:span 2}.w3{grid-column:span 3}.h2{grid-row:span 2}
+table{width:100%;border-collapse:collapse}
+td{padding:3px 4px;border-bottom:1px dotted #ccc;font-variant-numeric:tabular-nums}
+td.r{text-align:right}
+.red{color:#D7261E;font-weight:700}.grn{color:#16803C;font-weight:700}
+.tag{border:1px solid #D7261E;color:#D7261E;font-size:10px;padding:0 4px}
+.bar{height:6px;background:#eee;margin:3px 0 6px}.bar i{display:block;height:6px;background:#1A1A1A}
+</style></head><body>
+<div class="top"><b>BAGSTACK</b><nav><a class="on">Home</a><a>Transactions</a><a>Accounts</a><a>Budgets</a><a>Subscriptions</a><a>Goals</a><a>Loans</a><a>Investments</a><a>Reports</a></nav><span class="s">Search transactions, payees…</span></div>
+<div class="grid">
+ <div class="m"><h3>Net worth</h3><div class="c"><div class="big">₹18,42,310</div><span class="grn">+₹46,200</span> vs Sep</div></div>
+ <div class="m"><h3>Income</h3><div class="c"><div class="big">₹1,24,550</div>October</div></div>
+ <div class="m"><h3>Spent</h3><div class="c"><div class="big">₹61,875</div><span class="red">+8.4%</span> vs Sep</div></div>
+ <div class="m"><h3>Savings</h3><div class="c"><div class="big">50.3%</div>target 40%</div></div>
+ <div class="m w2"><h3>Alerts</h3><div class="c"><span class="tag">NEW</span> Shopping budget exceeded by ₹860<br><span class="tag">DUE</span> Home loan EMI tomorrow ₹28,450</div></div>
+ <div class="m w3 h2"><h3>Recent transactions</h3><div class="c"><table>
+  <tr><td>30 Oct</td><td>Jio Fiber</td><td>Bills</td><td class="r red">−₹999.00</td></tr><tr><td>29 Oct</td><td>Swiggy</td><td>Food</td><td class="r red">−₹640.00</td></tr><tr><td>28 Oct</td><td>To ICICI card</td><td>Transfer</td><td class="r">₹18,000.00</td></tr><tr><td>27 Oct</td><td>Myntra refund</td><td>Shopping</td><td class="r grn">+₹1,299.00</td></tr><tr><td>26 Oct</td><td>BigBasket</td><td>Groceries</td><td class="r red">−₹2,184.50</td></tr><tr><td>25 Oct</td><td>Uber</td><td>Transport</td><td class="r red">−₹312.00</td></tr><tr><td>24 Oct</td><td>Apollo Pharmacy</td><td>Health</td><td class="r red">−₹486.00</td></tr><tr><td>23 Oct</td><td>Zomato</td><td>Food</td><td class="r red">−₹420.00</td></tr><tr><td>22 Oct</td><td>Amazon</td><td>Shopping</td><td class="r red">−₹3,499.00</td></tr><tr><td>21 Oct</td><td>Indian Oil</td><td>Transport</td><td class="r red">−₹2,000.00</td></tr>
+ </table></div></div>
+ <div class="m w3"><h3>Upcoming bills</h3><div class="c"><table><tr><td>01 Nov</td><td>Home loan EMI</td><td class="r">₹28,450.00</td></tr><tr><td>03 Nov</td><td>Netflix</td><td class="r">₹649.00</td></tr><tr><td>05 Nov</td><td>SIP · PPFAS</td><td class="r">₹10,000.00</td></tr><tr><td>12 Nov</td><td>ICICI card</td><td class="r">₹23,118.40</td></tr></table></div></div>
+ <div class="m w3"><h3>Budgets</h3><div class="c">Food ₹12,300 / ₹15,000<div class="bar"><i style="width:82%"></i></div>Shopping <span class="red">₹9,860 / ₹9,000</span><div class="bar"><i style="width:100%;background:#D7261E"></i></div>Transport ₹4,140 / ₹9,000<div class="bar"><i style="width:46%"></i></div></div></div>
+ <div class="m w2"><h3>Accounts</h3><div class="c"><table><tr><td>HDFC Savings</td><td class="r">₹2,84,610</td></tr><tr><td>SBI Salary</td><td class="r">₹96,204</td></tr><tr><td>ICICI card</td><td class="r red">−₹23,118</td></tr><tr><td>Cash</td><td class="r">₹3,200</td></tr></table></div></div>
+ <div class="m w2"><h3>Goals</h3><div class="c">Emergency fund 72%<div class="bar"><i style="width:72%"></i></div>Goa trip 35%<div class="bar"><i style="width:35%"></i></div></div></div>
+ <div class="m w2"><h3>Investments</h3><div class="c"><div class="big">₹7,48,900</div>Mutual funds · 6 holdings</div></div>
+</div>
+</body></html>

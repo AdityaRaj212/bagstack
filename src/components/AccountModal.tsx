@@ -93,13 +93,13 @@ export const AccountModal = () => {
                 width: '40px',
                 height: '40px',
                 borderRadius: 'var(--radius-md)',
-                background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.2), rgba(139, 92, 246, 0.2))',
+                background: 'linear-gradient(135deg, color-mix(in srgb, var(--brand-primary) 20%, transparent), color-mix(in srgb, var(--color-emi) 20%, transparent))',
                 border: '1px solid var(--brand-primary)',
                 color: 'var(--brand-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 0 16px rgba(79, 70, 229, 0.2)',
+                boxShadow: '0 0 16px color-mix(in srgb, var(--brand-primary) 20%, transparent)',
               }}
             >
               <User size={22} />
@@ -214,7 +214,7 @@ export const AccountModal = () => {
                           height: '38px',
                           borderRadius: 'var(--radius-full)',
                           backgroundColor: isActive ? 'var(--brand-primary)' : 'var(--bg-surface-elevated)',
-                          color: isActive ? '#ffffff' : 'var(--text-primary)',
+                          color: isActive ? 'var(--text-on-accent)' : 'var(--text-primary)',
                           fontWeight: 700,
                           fontSize: '0.85rem',
                           display: 'flex',

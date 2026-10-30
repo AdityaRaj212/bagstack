@@ -74,7 +74,7 @@ describe('Reports Page Comprehensive Render Tests', () => {
     const html = renderToString(React.createElement(ReportsPage, { initialData: mockData, initialForecast: mockForecast }));
     expect(html).toContain('Analytics &amp; Reports');
     expect(html).toContain('Shree Krishna Properties');
-    expect(html).toContain('BUDGET UTILIZATION');
+    expect(html).toContain('Budget utilization');
   });
 
   it('renders error state safely when api returns error', () => {
@@ -202,6 +202,6 @@ describe('Reports Page Comprehensive Render Tests', () => {
       maxSpend: 1000000,
       avgSpend: 200000,
     }));
-    expect(html).toContain('linear-gradient');
+    expect(html).toContain('var(--color-expense)');
   });
 });

@@ -176,8 +176,8 @@ export default function LoansPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Loans & EMIs</h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <h1 className="page-title">Loans & EMIs</h1>
+          <p className="page-subtitle">
             Track product purchase installments (gadgets, appliances, no-cost EMIs) and bank loans with complete amortization.
           </p>
         </div>
@@ -187,11 +187,11 @@ export default function LoansPage() {
             className="btn-secondary"
             onClick={() => openCreateModal('emi')}
             style={{
-              borderColor: 'rgba(168, 85, 247, 0.4)',
+              borderColor: 'color-mix(in srgb, var(--color-emi) 40%, transparent)',
               color: 'var(--text-primary)',
             }}
           >
-            <ShoppingBag size={16} style={{ color: '#a855f7' }} />
+            <ShoppingBag size={16} style={{ color: 'var(--color-emi)' }} />
             <span>Add Purchase EMI</span>
           </button>
           <button className="btn-primary" onClick={() => openCreateModal('loan')}>
@@ -242,8 +242,8 @@ export default function LoansPage() {
             border: 'none',
             cursor: 'pointer',
             fontWeight: 600,
-            backgroundColor: tabFilter === 'emi' ? 'rgba(168, 85, 247, 0.12)' : 'transparent',
-            color: tabFilter === 'emi' ? '#a855f7' : 'var(--text-secondary)',
+            backgroundColor: tabFilter === 'emi' ? 'var(--color-emi-subtle)' : 'transparent',
+            color: tabFilter === 'emi' ? 'var(--color-emi)' : 'var(--text-secondary)',
             transition: 'all var(--transition-fast)',
           }}
         >
@@ -264,7 +264,7 @@ export default function LoansPage() {
             border: 'none',
             cursor: 'pointer',
             fontWeight: 600,
-            backgroundColor: tabFilter === 'loan' ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+            backgroundColor: tabFilter === 'loan' ? 'var(--color-transfer-subtle)' : 'transparent',
             color: tabFilter === 'loan' ? 'var(--brand-primary)' : 'var(--text-secondary)',
             transition: 'all var(--transition-fast)',
           }}
@@ -319,7 +319,7 @@ export default function LoansPage() {
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
             <button className="btn-secondary" onClick={() => openCreateModal('emi')}>
-              <ShoppingBag size={15} style={{ color: '#a855f7' }} /> Add Purchase EMI
+              <ShoppingBag size={15} style={{ color: 'var(--color-emi)' }} /> Add Purchase EMI
             </button>
             <button className="btn-primary" onClick={() => openCreateModal('loan')}>
               <Building2 size={15} /> Add Bank Loan
@@ -343,8 +343,8 @@ export default function LoansPage() {
                         width: '42px',
                         height: '42px',
                         borderRadius: 'var(--radius-md)',
-                        backgroundColor: isEmi ? 'rgba(168, 85, 247, 0.12)' : 'rgba(59, 130, 246, 0.12)',
-                        color: isEmi ? '#a855f7' : 'var(--brand-primary)',
+                        backgroundColor: isEmi ? 'var(--color-emi-subtle)' : 'var(--color-transfer-subtle)',
+                        color: isEmi ? 'var(--color-emi)' : 'var(--brand-primary)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -363,8 +363,8 @@ export default function LoansPage() {
                             fontWeight: 700,
                             padding: '0.15rem 0.5rem',
                             borderRadius: 'var(--radius-full)',
-                            backgroundColor: isEmi ? 'rgba(168, 85, 247, 0.15)' : 'rgba(59, 130, 246, 0.15)',
-                            color: isEmi ? '#a855f7' : 'var(--brand-primary)',
+                            backgroundColor: isEmi ? 'var(--color-emi-subtle)' : 'var(--color-transfer-subtle)',
+                            color: isEmi ? 'var(--color-emi)' : 'var(--brand-primary)',
                             letterSpacing: '0.02em',
                           }}
                         >
@@ -381,7 +381,7 @@ export default function LoansPage() {
                               fontWeight: 700,
                               padding: '0.15rem 0.5rem',
                               borderRadius: 'var(--radius-full)',
-                              backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                              backgroundColor: 'var(--color-income-subtle)',
                               color: 'var(--color-income)',
                             }}
                           >
@@ -409,7 +409,7 @@ export default function LoansPage() {
                         style={{
                           fontSize: '0.78rem',
                           padding: '0.4rem 0.8rem',
-                          backgroundColor: isEmi ? '#8b5cf6' : undefined,
+                          backgroundColor: isEmi ? 'var(--color-emi)' : undefined,
                         }}
                       >
                         <Wallet size={14} /> Pay Installment (₹{Math.round(loan.emi_amount / 100).toLocaleString('en-IN')})
@@ -589,7 +589,7 @@ export default function LoansPage() {
                   fontSize: '0.85rem',
                   fontWeight: 600,
                   backgroundColor: recordType === 'emi' ? 'var(--bg-surface)' : 'transparent',
-                  color: recordType === 'emi' ? '#a855f7' : 'var(--text-muted)',
+                  color: recordType === 'emi' ? 'var(--color-emi)' : 'var(--text-muted)',
                   boxShadow: recordType === 'emi' ? 'var(--shadow-sm)' : 'none',
                   border: 'none',
                   cursor: 'pointer',
@@ -666,7 +666,7 @@ export default function LoansPage() {
                       INTEREST RATE (% P.A.) *
                     </label>
                     {recordType === 'emi' && (
-                      <span style={{ fontSize: '0.68rem', color: '#a855f7', fontWeight: 600 }}>0% for No-Cost</span>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--color-emi)', fontWeight: 600 }}>0% for No-Cost</span>
                     )}
                   </div>
                   <input
@@ -757,7 +757,7 @@ export default function LoansPage() {
                 <button
                   type="submit"
                   className="btn-primary"
-                  style={{ backgroundColor: recordType === 'emi' ? '#8b5cf6' : undefined }}
+                  style={{ backgroundColor: recordType === 'emi' ? 'var(--color-emi)' : undefined }}
                 >
                   {recordType === 'emi' ? 'Save Purchase EMI' : 'Calculate & Save Loan'}
                 </button>
@@ -782,7 +782,7 @@ export default function LoansPage() {
                     width: '36px',
                     height: '36px',
                     borderRadius: 'var(--radius-md)',
-                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                    backgroundColor: 'var(--color-income-subtle)',
                     color: 'var(--color-income)',
                     display: 'flex',
                     alignItems: 'center',
@@ -835,8 +835,8 @@ export default function LoansPage() {
                   style={{
                     padding: '0.6rem 0.75rem',
                     borderRadius: 'var(--radius-md)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.08)',
-                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                    backgroundColor: 'var(--color-transfer-subtle)',
+                    border: '1px solid color-mix(in srgb, var(--color-transfer) 20%, transparent)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',

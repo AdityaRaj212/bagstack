@@ -246,8 +246,8 @@ export default function GoalsPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Savings Goals</h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <h1 className="page-title">Savings Goals</h1>
+          <p className="page-subtitle">
             Plan major milestones, contribute directly from your accounts, and track your progress.
           </p>
         </div>

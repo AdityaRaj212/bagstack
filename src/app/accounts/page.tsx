@@ -156,8 +156,8 @@ export default function AccountsPage() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Financial Accounts</h1>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <h1 className="page-title">Financial Accounts</h1>
+            <p className="page-subtitle">
               Manage bank accounts, physical cash, investments, and credit cards.
             </p>
           </div>
@@ -198,7 +198,7 @@ export default function AccountsPage() {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '0.875rem',
-                    border: isDefault ? '1px solid rgba(245, 158, 11, 0.4)' : undefined,
+                    border: isDefault ? '1px solid color-mix(in srgb, var(--color-warning) 40%, transparent)' : undefined,
                     position: 'relative',
                   }}
                 >
@@ -209,7 +209,7 @@ export default function AccountsPage() {
                           width: '40px',
                           height: '40px',
                           borderRadius: 'var(--radius-md)',
-                          backgroundColor: `${acc.color || 'var(--brand-primary)'}20`,
+                          backgroundColor: `color-mix(in srgb, ${acc.color || 'var(--brand-primary)'} 12%, transparent)`,
                           color: acc.color || 'var(--brand-primary)',
                           display: 'flex',
                           alignItems: 'center',
@@ -238,12 +238,12 @@ export default function AccountsPage() {
                                 fontWeight: 600,
                                 padding: '2px 7px',
                                 borderRadius: '12px',
-                                backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                                color: '#F59E0B',
-                                border: '1px solid rgba(245, 158, 11, 0.3)',
+                                backgroundColor: 'var(--color-warning-subtle)',
+                                color: 'var(--color-warning)',
+                                border: '1px solid color-mix(in srgb, var(--color-warning) 30%, transparent)',
                               }}
                             >
-                              <Star size={10} fill="#F59E0B" /> Default
+                              <Star size={10} fill="var(--color-warning)" /> Default
                             </span>
                           )}
                         </div>
@@ -390,7 +390,7 @@ export default function AccountsPage() {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '0.875rem',
-                    border: isDefault ? '1px solid rgba(245, 158, 11, 0.4)' : undefined,
+                    border: isDefault ? '1px solid color-mix(in srgb, var(--color-warning) 40%, transparent)' : undefined,
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -400,7 +400,7 @@ export default function AccountsPage() {
                           width: '40px',
                           height: '40px',
                           borderRadius: 'var(--radius-md)',
-                          backgroundColor: `${card.color || 'var(--color-liability)'}20`,
+                          backgroundColor: `color-mix(in srgb, ${card.color || 'var(--color-liability)'} 12%, transparent)`,
                           color: card.color || 'var(--color-liability)',
                           display: 'flex',
                           alignItems: 'center',
@@ -423,12 +423,12 @@ export default function AccountsPage() {
                                 fontWeight: 600,
                                 padding: '2px 7px',
                                 borderRadius: '12px',
-                                backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                                color: '#F59E0B',
-                                border: '1px solid rgba(245, 158, 11, 0.3)',
+                                backgroundColor: 'var(--color-warning-subtle)',
+                                color: 'var(--color-warning)',
+                                border: '1px solid color-mix(in srgb, var(--color-warning) 30%, transparent)',
                               }}
                             >
-                              <Star size={10} fill="#F59E0B" /> Default
+                              <Star size={10} fill="var(--color-warning)" /> Default
                             </span>
                           )}
                         </div>
@@ -477,7 +477,7 @@ export default function AccountsPage() {
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Outstanding Due</div>
                       <MoneyDisplay amount={card.totalDebt ?? card.current_balance} size="xl" weight="bold" colored />
                       {card.emiOutstanding > 0 && (
-                        <div style={{ fontSize: '0.725rem', color: '#a855f7', marginTop: '0.25rem', fontWeight: 500 }}>
+                        <div style={{ fontSize: '0.725rem', color: 'var(--color-emi)', marginTop: '0.25rem', fontWeight: 500 }}>
                           Includes ₹{Math.round(card.emiOutstanding / 100).toLocaleString('en-IN')} active EMI
                         </div>
                       )}
@@ -576,8 +576,8 @@ export default function AccountsPage() {
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: '0.75rem',
-                backgroundColor: 'rgba(168, 85, 247, 0.05)',
-                border: '1px solid rgba(168, 85, 247, 0.2)',
+                backgroundColor: 'var(--color-emi-subtle)',
+                border: '1px solid color-mix(in srgb, var(--color-emi) 20%, transparent)',
               }}
             >
               <div>

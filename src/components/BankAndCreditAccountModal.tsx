@@ -171,7 +171,7 @@ export const BankAndCreditAccountModal: React.FC<BankAndCreditAccountModalProps>
                 width: '40px',
                 height: '40px',
                 borderRadius: 'var(--radius-md)',
-                background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.2), rgba(139, 92, 246, 0.2))',
+                background: 'linear-gradient(135deg, color-mix(in srgb, var(--brand-primary) 20%, transparent), color-mix(in srgb, var(--color-emi) 20%, transparent))',
                 border: '1px solid var(--brand-primary)',
                 color: 'var(--brand-primary)',
                 display: 'flex',
@@ -393,7 +393,7 @@ export const BankAndCreditAccountModal: React.FC<BankAndCreditAccountModalProps>
               padding: '0.75rem',
               borderRadius: 'var(--radius-md)',
               backgroundColor: 'var(--bg-subtle)',
-              border: isDefault ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid var(--border-default)',
+              border: isDefault ? '1px solid color-mix(in srgb, var(--color-warning) 40%, transparent)' : '1px solid var(--border-default)',
               cursor: 'pointer',
             }}
           >
@@ -401,11 +401,11 @@ export const BankAndCreditAccountModal: React.FC<BankAndCreditAccountModalProps>
               type="checkbox"
               checked={isDefault}
               onChange={e => setIsDefault(e.target.checked)}
-              style={{ width: '16px', height: '16px', accentColor: '#F59E0B' }}
+              style={{ width: '16px', height: '16px', accentColor: 'var(--color-warning)' }}
             />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', color: isDefault ? '#F59E0B' : 'var(--text-primary)' }}>
-                <Star size={13} fill={isDefault ? '#F59E0B' : 'none'} /> Set as default transaction account
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', color: isDefault ? 'var(--color-warning)' : 'var(--text-primary)' }}>
+                <Star size={13} fill={isDefault ? 'var(--color-warning)' : 'none'} /> Set as default transaction account
               </span>
               <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                 Preselects this account automatically in the Record Transaction modal.

@@ -58,9 +58,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           icon: <AlertTriangle size={24} style={{ color: 'var(--color-warning)' }} />,
           iconBg: 'var(--color-warning-subtle)',
           confirmBtnBg: 'var(--color-warning)',
-          confirmBtnHover: '#d97706',
-          confirmBtnText: '#ffffff',
-          accentBorder: 'rgba(245, 158, 11, 0.3)',
+          confirmBtnHover: 'color-mix(in srgb, var(--color-warning) 88%, var(--text-primary))',
+          confirmBtnText: 'var(--text-on-accent)',
+          accentBorder: 'color-mix(in srgb, var(--color-warning) 30%, transparent)',
         };
       case 'info':
         return {
@@ -68,8 +68,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           iconBg: 'var(--brand-light)',
           confirmBtnBg: 'var(--brand-primary)',
           confirmBtnHover: 'var(--brand-hover)',
-          confirmBtnText: '#ffffff',
-          accentBorder: 'rgba(99, 102, 241, 0.3)',
+          confirmBtnText: 'var(--text-on-accent)',
+          accentBorder: 'color-mix(in srgb, var(--brand-primary) 30%, transparent)',
         };
       case 'danger':
       default:
@@ -77,9 +77,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           icon: <AlertCircle size={24} style={{ color: 'var(--color-expense)' }} />,
           iconBg: 'var(--color-expense-subtle)',
           confirmBtnBg: 'var(--color-expense)',
-          confirmBtnHover: '#dc2626',
-          confirmBtnText: '#ffffff',
-          accentBorder: 'rgba(239, 68, 68, 0.3)',
+          confirmBtnHover: 'color-mix(in srgb, var(--color-expense) 88%, var(--text-primary))',
+          confirmBtnText: 'var(--text-on-accent)',
+          accentBorder: 'color-mix(in srgb, var(--color-expense) 30%, transparent)',
         };
     }
   };
@@ -97,7 +97,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backgroundColor: 'var(--overlay-scrim)',
         backdropFilter: 'blur(6px)',
         WebkitBackdropFilter: 'blur(6px)',
         display: 'flex',
@@ -208,9 +208,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                   style={{
                     marginTop: '0.75rem',
                     padding: '0.65rem 0.85rem',
-                    backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                    backgroundColor: 'var(--brand-light)',
                     borderRadius: 'var(--radius-md)',
-                    border: '1px solid rgba(99, 102, 241, 0.25)',
+                    border: '1px solid color-mix(in srgb, var(--brand-primary) 25%, transparent)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.5rem',

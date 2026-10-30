@@ -6,17 +6,11 @@ import {
   ArrowRight,
   ShieldCheck,
   Zap,
-  TrendingUp,
   Scale,
   Target,
   Clock,
   Lock,
-  Mail,
-  CheckCircle2,
-  Sparkles,
   BarChart3,
-  Calendar,
-  Wallet,
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -24,446 +18,210 @@ interface LandingPageProps {
   onEnterDemo: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({
-  onOpenAuth,
-  onEnterDemo,
-}) => {
+// Illustrative sample values for the preview; not user data.
+const SAMPLE_NET_WORTH = [
+  { m: 'May', v: 302000 },
+  { m: 'Jun', v: 324500 },
+  { m: 'Jul', v: 341800 },
+  { m: 'Aug', v: 370200 },
+  { m: 'Sep', v: 396250 },
+  { m: 'Oct', v: 452500 },
+];
+
+const PILLARS = [
+  {
+    icon: BarChart3,
+    color: 'var(--cat-1)',
+    title: 'Deterministic Math Engine',
+    body: 'Integer-based minor currency calculations completely eliminate floating-point rounding errors. Real net balance calculations match bank ledgers down to the exact paisa.',
+  },
+  {
+    icon: Scale,
+    color: 'var(--cat-2)',
+    title: 'Bank Statement Reconciliation',
+    body: 'Compare physical bank statements against your recorded ledger in seconds. Detect discrepancies, pending transactions, and interest charges with cryptographic verification.',
+  },
+  {
+    icon: Target,
+    color: 'var(--cat-3)',
+    title: 'Savings Goals with Account Deductions',
+    body: 'Set milestone targets, calculate monthly commitments, and deduct contributions directly from existing bank accounts so your ledger and analytics remain 100% synchronized.',
+  },
+  {
+    icon: Clock,
+    color: 'var(--cat-4)',
+    title: '30 / 60 / 90-Day Liquidity Forecast',
+    body: 'Mathematical cash flow simulations track upcoming salaries, rent obligations, loan EMIs, and recurring subscriptions to predict liquidity cliffs before they occur.',
+  },
+  {
+    icon: Lock,
+    color: 'var(--cat-5)',
+    title: 'Passwordless Security via OTP',
+    body: 'Instant sign in with 6-digit cryptographic codes sent to your unique email address from adityaraj212.work@gmail.com. No passwords to leak or memorize.',
+  },
+  {
+    icon: ShieldCheck,
+    color: 'var(--cat-6)',
+    title: 'Zero Data Lock-In',
+    body: 'You own your data completely. One-click instant export of your entire ledger and profile structure into clean CSV and JSON backups anytime.',
+  },
+];
+
+const inr = (rupees: number) => `₹${rupees.toLocaleString('en-IN')}`;
+
+function PreviewChart() {
+  const W = 640;
+  const H = 170;
+  const lo = 280000;
+  const hi = 470000;
+  const x = (i: number) => 4 + (i / (SAMPLE_NET_WORTH.length - 1)) * (W - 8);
+  const y = (v: number) => 10 + (H - 34) - ((v - lo) / (hi - lo)) * (H - 34);
+  const line = SAMPLE_NET_WORTH.map((t, i) => {
+    if (i === 0) return `M${x(0)} ${y(t.v)}`;
+    const cx = (x(i - 1) + x(i)) / 2;
+    return `C${cx} ${y(SAMPLE_NET_WORTH[i - 1].v)} ${cx} ${y(t.v)} ${x(i)} ${y(t.v)}`;
+  }).join(' ');
+  const last = SAMPLE_NET_WORTH.length - 1;
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#090d16',
-        color: '#f3f4f6',
-        fontFamily: 'var(--font-sans)',
-        overflowX: 'hidden',
-        position: 'relative',
-      }}
-    >
-      {/* Background Ambient Glows */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '-120px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '800px',
-          height: '500px',
-          background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.05), transparent 70%)',
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}
-      />
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block', marginTop: '0.75rem' }} aria-hidden="true">
+      <defs>
+        <linearGradient id="lp-nw" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="var(--brand-primary)" stopOpacity="0.32" />
+          <stop offset="1" stopColor="var(--brand-primary)" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <line x1="4" x2={W - 4} y1={H - 24} y2={H - 24} stroke="var(--border-default)" />
+      <path d={`${line} L${x(last)} ${H - 24} L${x(0)} ${H - 24} Z`} fill="url(#lp-nw)" className="chart-fade" />
+      <path d={line} fill="none" stroke="var(--brand-primary)" strokeWidth="2.5" strokeLinecap="round" pathLength={1} className="chart-draw" />
+      <circle cx={x(last)} cy={y(SAMPLE_NET_WORTH[last].v)} r="4.5" fill="var(--brand-primary)" stroke="var(--bg-surface)" strokeWidth="2.5" />
+      {SAMPLE_NET_WORTH.map((t, i) => (
+        <text key={t.m} x={x(i)} y={H - 6} textAnchor={i === 0 ? 'start' : i === last ? 'end' : 'middle'} fontSize="11" fill="var(--text-muted)">
+          {t.m}
+        </text>
+      ))}
+    </svg>
+  );
+}
 
+export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAuth, onEnterDemo }) => {
+  return (
+    <div className="landing">
       {/* Top Navigation Bar */}
-      <nav
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-          backdropFilter: 'blur(16px)',
-          backgroundColor: 'rgba(9, 13, 22, 0.8)',
-          borderBottom: '1px solid rgba(31, 41, 55, 0.6)',
-          padding: '1rem 2rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          maxWidth: '1200px',
-          margin: '0 auto',
-          width: '100%',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #4f46e5, #8b5cf6)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              boxShadow: '0 4px 14px rgba(79, 70, 229, 0.4)',
-            }}
-          >
-            <Layers size={20} />
-          </div>
-          <div>
-            <span style={{ fontWeight: 800, fontSize: '1.25rem', letterSpacing: '-0.03em', color: '#ffffff' }}>
-              Bagstack
+      <nav className="landing-nav">
+        <div className="landing-nav-inner">
+          <div className="brand-lockup" style={{ margin: 0, padding: 0 }}>
+            <span className="brand-mark" aria-hidden="true">
+              <Layers size={16} strokeWidth={2.25} />
             </span>
+            <span className="brand-name">Bagstack</span>
           </div>
-        </div>
-
-        {/* Right CTA Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button
-            type="button"
-            onClick={onEnterDemo}
-            style={{
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              backgroundColor: 'rgba(255, 255, 255, 0.06)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              color: '#e5e7eb',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            Try Live Demo
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenAuth}
-            style={{
-              padding: '0.5rem 1.15rem',
-              borderRadius: '8px',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              background: 'linear-gradient(135deg, #4f46e5, #6366f1)',
-              border: '1px solid rgba(99, 102, 241, 0.5)',
-              color: '#ffffff',
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(79, 70, 229, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            Sign In with OTP <ArrowRight size={15} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button type="button" className="btn-ghost landing-nav-demo" onClick={onEnterDemo}>
+              Try Live Demo
+            </button>
+            <button type="button" className="btn-primary" onClick={onOpenAuth}>
+              Sign In <ArrowRight size={15} />
+            </button>
+          </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section
-        style={{
-          maxWidth: '1100px',
-          margin: '0 auto',
-          padding: '4.5rem 1.5rem 3rem 1.5rem',
-          textAlign: 'center',
-          position: 'relative',
-          zIndex: 1,
-        }}
-      >
-        {/* Badge */}
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '6px 14px',
-            borderRadius: '20px',
-            backgroundColor: 'rgba(99, 102, 241, 0.1)',
-            border: '1px solid rgba(99, 102, 241, 0.3)',
-            color: '#a5b4fc',
-            fontSize: '0.8125rem',
-            fontWeight: 600,
-            marginBottom: '1.75rem',
-          }}
-        >
-          <Sparkles size={14} style={{ color: '#818cf8' }} />
-          <span>Next-Generation Personal Financial Command Center</span>
-        </div>
-
-        {/* Main Headline */}
-        <h1
-          style={{
-            fontSize: 'clamp(2.5rem, 5vw, 4rem)',
-            fontWeight: 800,
-            letterSpacing: '-0.03em',
-            lineHeight: 1.15,
-            marginBottom: '1.5rem',
-            color: '#ffffff',
-          }}
-        >
-          Take sovereign control of your wealth with{' '}
-          <span
-            style={{
-              background: 'linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #38bdf8 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            deterministic precision.
-          </span>
-        </h1>
-
-        {/* Subtitle */}
-        <p
-          style={{
-            fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-            color: '#9ca3af',
-            maxWidth: '750px',
-            margin: '0 auto 2.5rem auto',
-            lineHeight: 1.6,
-          }}
-        >
-          Zero tracking ads. Zero data broker scrapers. Complete manual ledger control, bank statement reconciliation, multi-account cash flow velocity, and 90-day liquidity forecasting.
-        </p>
-
-        {/* Hero CTAs */}
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '3.5rem' }}>
-          <button
-            type="button"
-            onClick={onOpenAuth}
-            style={{
-              padding: '0.85rem 1.75rem',
-              borderRadius: '10px',
-              fontSize: '1rem',
-              fontWeight: 700,
-              background: 'linear-gradient(135deg, #4f46e5, #6366f1)',
-              border: 'none',
-              color: '#ffffff',
-              boxShadow: '0 8px 24px rgba(79, 70, 229, 0.4)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'transform 0.15s ease',
-            }}
-          >
-            Get Started with Email OTP <ArrowRight size={18} />
-          </button>
-
-          <button
-            type="button"
-            onClick={onEnterDemo}
-            style={{
-              padding: '0.85rem 1.5rem',
-              borderRadius: '10px',
-              fontSize: '1rem',
-              fontWeight: 600,
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              color: '#f3f4f6',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <Zap size={16} style={{ color: '#f59e0b' }} /> Launch Live Demo Sandbox
-          </button>
-        </div>
-
-        {/* Interactive Preview Mockup Showcase */}
-        <div
-          style={{
-            borderRadius: '16px',
-            border: '1px solid rgba(55, 65, 81, 0.6)',
-            backgroundColor: 'rgba(17, 24, 39, 0.8)',
-            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.6)',
-            padding: '1.5rem',
-            textAlign: 'left',
-            backdropFilter: 'blur(20px)',
-          }}
-        >
-          {/* Mockup Header Bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(31, 41, 55, 0.8)', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
-              <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#f59e0b' }} />
-              <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-              <span style={{ marginLeft: '12px', fontSize: '0.8125rem', color: '#6b7280', fontFamily: 'monospace' }}>
-                https://bagstack.tech/command-center
-              </span>
-            </div>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-              Live Ledger Verified
-            </span>
-          </div>
-
-          {/* Grid Preview Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-            <div style={{ backgroundColor: 'rgba(3, 7, 18, 0.6)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(31, 41, 55, 0.6)' }}>
-              <div style={{ fontSize: '0.75rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>NET WORTH</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#ffffff', margin: '4px 0' }}>₹4,52,500</div>
-              <div style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>↑ +14.2% from last month</div>
-            </div>
-
-            <div style={{ backgroundColor: 'rgba(3, 7, 18, 0.6)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(31, 41, 55, 0.6)' }}>
-              <div style={{ fontSize: '0.75rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>MONTHLY CASH INFLOW</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#10b981', margin: '4px 0' }}>+₹1,20,000</div>
-              <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Verified direct deposit</div>
-            </div>
-
-            <div style={{ backgroundColor: 'rgba(3, 7, 18, 0.6)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(31, 41, 55, 0.6)' }}>
-              <div style={{ fontSize: '0.75rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>TOTAL EXPENSES</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#f43f5e', margin: '4px 0' }}>-₹34,800</div>
-              <div style={{ fontSize: '0.75rem', color: '#60a5fa' }}>Savings rate: 71%</div>
-            </div>
-
-            <div style={{ backgroundColor: 'rgba(3, 7, 18, 0.6)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(31, 41, 55, 0.6)' }}>
-              <div style={{ fontSize: '0.75rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>90-DAY FORECAST</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#818cf8', margin: '4px 0' }}>₹6,85,000</div>
-              <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Deterministic obligations</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Feature Pillars Grid */}
-      <section
-        style={{
-          maxWidth: '1100px',
-          margin: '3rem auto 5rem auto',
-          padding: '0 1.5rem',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <h2 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em', color: '#ffffff', marginBottom: '0.5rem' }}>
-            Built for Financial Sovereignty & Speed
-          </h2>
-          <p style={{ color: '#9ca3af', fontSize: '0.95rem' }}>
-            Engineered from first principles without fragile API syncs or third-party tracking.
+      {/* Hero: claim on the left, the product itself on the right */}
+      <section className="landing-hero">
+        <div className="landing-hero-copy">
+          <h1 className="landing-title">Take sovereign control of your wealth with deterministic precision.</h1>
+          <p className="landing-lede">
+            Zero tracking ads. Zero data broker scrapers. Complete manual ledger control, bank statement reconciliation,
+            multi-account cash flow velocity, and 90-day liquidity forecasting.
           </p>
+          <div className="landing-ctas">
+            <button type="button" className="btn-primary landing-cta" onClick={onOpenAuth}>
+              Get Started with Email OTP <ArrowRight size={18} />
+            </button>
+            <button type="button" className="btn-secondary landing-cta" onClick={onEnterDemo}>
+              <Zap size={16} style={{ color: 'var(--color-warning)' }} /> Launch Live Demo Sandbox
+            </button>
+          </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
-          {/* Pillar 1 */}
-          <div style={{ backgroundColor: 'rgba(17, 24, 39, 0.6)', border: '1px solid rgba(31, 41, 55, 0.8)', padding: '1.75rem', borderRadius: '14px' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
-              <BarChart3 size={22} />
-            </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: '#ffffff', marginBottom: '0.5rem' }}>
-              Deterministic Math Engine
-            </h3>
-            <p style={{ color: '#9ca3af', fontSize: '0.875rem', lineHeight: 1.6 }}>
-              Integer-based minor currency calculations completely eliminate floating-point rounding errors. Real net balance calculations match bank ledgers down to the exact paisa.
-            </p>
+        {/* Product preview built from the app's own components (sample data) */}
+        <div className="landing-preview">
+          <div className="landing-preview-bar">
+            <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Dashboard</span>
+            <span className="badge badge-neutral" style={{ textTransform: 'none' }}>Sample data</span>
           </div>
-
-          {/* Pillar 2 */}
-          <div style={{ backgroundColor: 'rgba(17, 24, 39, 0.6)', border: '1px solid rgba(31, 41, 55, 0.8)', padding: '1.75rem', borderRadius: '14px' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
-              <Scale size={22} />
+          <div className="landing-preview-grid">
+            <div className="card landing-preview-chart">
+              <span className="card-label">Net worth</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.15rem' }}>
+                <span className="kpi-value" style={{ fontSize: '1.75rem', marginTop: 0 }}>{inr(452500)}</span>
+                <span className="kpi-delta" style={{ color: 'var(--color-income)', fontWeight: 600 }}>+14.2% from last month</span>
+              </div>
+              <PreviewChart />
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: '#ffffff', marginBottom: '0.5rem' }}>
-              Bank Statement Reconciliation
-            </h3>
-            <p style={{ color: '#9ca3af', fontSize: '0.875rem', lineHeight: 1.6 }}>
-              Compare physical bank statements against your recorded ledger in seconds. Detect discrepancies, pending transactions, and interest charges with cryptographic verification.
-            </p>
-          </div>
-
-          {/* Pillar 3 */}
-          <div style={{ backgroundColor: 'rgba(17, 24, 39, 0.6)', border: '1px solid rgba(31, 41, 55, 0.8)', padding: '1.75rem', borderRadius: '14px' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
-              <Target size={22} />
+            <div className="card kpi-card">
+              <span className="card-label">Monthly cash inflow</span>
+              <span className="kpi-value" style={{ color: 'var(--color-income)' }}>+{inr(120000)}</span>
+              <span className="kpi-delta" style={{ color: 'var(--text-muted)' }}>Verified direct deposit</span>
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: '#ffffff', marginBottom: '0.5rem' }}>
-              Savings Goals with Account Deductions
-            </h3>
-            <p style={{ color: '#9ca3af', fontSize: '0.875rem', lineHeight: 1.6 }}>
-              Set milestone targets, calculate monthly commitments, and deduct contributions directly from existing bank accounts so your ledger and analytics remain 100% synchronized.
-            </p>
-          </div>
-
-          {/* Pillar 4 */}
-          <div style={{ backgroundColor: 'rgba(17, 24, 39, 0.6)', border: '1px solid rgba(31, 41, 55, 0.8)', padding: '1.75rem', borderRadius: '14px' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: 'rgba(236, 72, 153, 0.15)', color: '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
-              <Clock size={22} />
+            <div className="card kpi-card">
+              <span className="card-label">Total expenses</span>
+              <span className="kpi-value" style={{ color: 'var(--color-expense)' }}>−{inr(34800)}</span>
+              <span className="kpi-delta" style={{ color: 'var(--text-muted)' }}>Savings rate: 71%</span>
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: '#ffffff', marginBottom: '0.5rem' }}>
-              30 / 60 / 90-Day Liquidity Forecast
-            </h3>
-            <p style={{ color: '#9ca3af', fontSize: '0.875rem', lineHeight: 1.6 }}>
-              Mathematical cash flow simulations track upcoming salaries, rent obligations, loan EMIs, and recurring subscriptions to predict liquidity cliffs before they occur.
-            </p>
-          </div>
-
-          {/* Pillar 5 */}
-          <div style={{ backgroundColor: 'rgba(17, 24, 39, 0.6)', border: '1px solid rgba(31, 41, 55, 0.8)', padding: '1.75rem', borderRadius: '14px' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: 'rgba(6, 182, 212, 0.15)', color: '#06b6d4', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
-              <Lock size={22} />
+            <div className="card kpi-card">
+              <span className="card-label">90-day forecast</span>
+              <span className="kpi-value">{inr(685000)}</span>
+              <span className="kpi-delta" style={{ color: 'var(--text-muted)' }}>Deterministic obligations</span>
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: '#ffffff', marginBottom: '0.5rem' }}>
-              Passwordless Security via OTP
-            </h3>
-            <p style={{ color: '#9ca3af', fontSize: '0.875rem', lineHeight: 1.6 }}>
-              Instant sign in with 6-digit cryptographic codes sent to your unique email address from <code>adityaraj212.work@gmail.com</code>. No passwords to leak or memorize.
-            </p>
-          </div>
-
-          {/* Pillar 6 */}
-          <div style={{ backgroundColor: 'rgba(17, 24, 39, 0.6)', border: '1px solid rgba(31, 41, 55, 0.8)', padding: '1.75rem', borderRadius: '14px' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: 'rgba(139, 92, 246, 0.15)', color: '#a78bfa', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
-              <ShieldCheck size={22} />
-            </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: '#ffffff', marginBottom: '0.5rem' }}>
-              Zero Data Lock-In
-            </h3>
-            <p style={{ color: '#9ca3af', fontSize: '0.875rem', lineHeight: 1.6 }}>
-              You own your data completely. One-click instant export of your entire ledger and profile structure into clean CSV and JSON backups anytime.
-            </p>
           </div>
         </div>
       </section>
 
-      {/* Bottom CTA Banner */}
-      <section
-        style={{
-          maxWidth: '900px',
-          margin: '0 auto 5rem auto',
-          padding: '3rem 2rem',
-          borderRadius: '16px',
-          background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(139, 92, 246, 0.15))',
-          border: '1px solid rgba(99, 102, 241, 0.3)',
-          textAlign: 'center',
-        }}
-      >
-        <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#ffffff', marginBottom: '1rem', letterSpacing: '-0.02em' }}>
-          Ready to experience genuine financial clarity?
-        </h2>
-        <p style={{ color: '#9ca3af', fontSize: '1rem', marginBottom: '2rem', maxWidth: '600px', margin: '0 auto 2rem auto' }}>
+      {/* Feature pillars */}
+      <section className="landing-section">
+        <h2 className="landing-h2">Built for Financial Sovereignty &amp; Speed</h2>
+        <p className="landing-sub">Engineered from first principles without fragile API syncs or third-party tracking.</p>
+        <div className="landing-pillars">
+          {PILLARS.map(p => {
+            const Icon = p.icon;
+            return (
+              <div key={p.title} className="landing-pillar">
+                <span className="landing-pillar-icon" style={{ color: p.color, backgroundColor: `color-mix(in srgb, ${p.color} 14%, transparent)` }}>
+                  <Icon size={18} />
+                </span>
+                <h3>{p.title}</h3>
+                <p>{p.body}</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Closing CTA */}
+      <section className="landing-close">
+        <h2 className="landing-h2">Ready to experience genuine financial clarity?</h2>
+        <p className="landing-sub" style={{ marginBottom: '1.75rem' }}>
           Enter your email to verify your code and get immediate access to your command center.
         </p>
-        <button
-          type="button"
-          onClick={onOpenAuth}
-          style={{
-            padding: '0.9rem 2rem',
-            borderRadius: '10px',
-            fontSize: '1rem',
-            fontWeight: 700,
-            background: 'linear-gradient(135deg, #4f46e5, #6366f1)',
-            border: 'none',
-            color: '#ffffff',
-            boxShadow: '0 8px 24px rgba(79, 70, 229, 0.4)',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
+        <button type="button" className="btn-primary landing-cta" onClick={onOpenAuth}>
           Sign In with Email OTP <ArrowRight size={18} />
         </button>
       </section>
 
       {/* Footer */}
-      <footer
-        style={{
-          borderTop: '1px solid rgba(31, 41, 55, 0.8)',
-          padding: '2rem 1.5rem',
-          textAlign: 'center',
-          color: '#6b7280',
-          fontSize: '0.8125rem',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-          <span style={{ fontWeight: 600, color: '#9ca3af' }}>Bagstack Financial Command Center</span>
-          <span>•</span>
-          <span>Contact: <a href="mailto:adityaraj212.work@gmail.com" style={{ color: '#818cf8' }}>adityaraj212.work@gmail.com</a></span>
+      <footer className="landing-footer">
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+          <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Bagstack Financial Command Center</span>
+          <span aria-hidden="true">·</span>
+          <span>
+            Contact:{' '}
+            <a href="mailto:adityaraj212.work@gmail.com" style={{ color: 'var(--brand-primary)', textDecoration: 'underline' }}>
+              adityaraj212.work@gmail.com
+            </a>
+          </span>
         </div>
-        <p style={{ margin: 0 }}>
-          Designed and engineered with deterministic rigor. All rights reserved.
-        </p>
+        <p>Designed and engineered with deterministic rigor. All rights reserved.</p>
       </footer>
     </div>
   );
